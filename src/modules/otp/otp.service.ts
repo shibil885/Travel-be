@@ -25,7 +25,10 @@ export class OtpService {
         .json({ Message: 'Invalid Otp', email: otpdata.email });
     }
     try {
-      this.userModel.updateOne({ email: otpdata.email }, { is_Verified: true });
+      await this.userModel.updateOne(
+        { email: otpdata.email },
+        { is_Verified: true },
+      );
       return res
         .status(HttpStatus.OK)
         .json({ Message: 'OTP verified successfully', email: otpdata.email });

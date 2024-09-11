@@ -14,5 +14,6 @@ import { Otp, OtpSchema } from '../otp/schema/otp.schema';
   ],
   controllers: [UserController],
   providers: [UserService],
+  exports: [UserService],
 })
 export class UserModule {}
