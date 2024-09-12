@@ -87,7 +87,6 @@ export class CategoryService {
 
   async changeStatus(id: string, res: Response, action: string) {
     try {
-      console.log('ddd', action);
       const category = await this.CategoryModel.findById(id);
       if (!category) {
         return res
