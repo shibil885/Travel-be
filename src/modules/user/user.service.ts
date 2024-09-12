@@ -52,12 +52,17 @@ export class UserService {
         mailsenderFunc(userData.email, subject, 'otp', { otp }),
         new this.OtpModel({ email: userData.email, otp }).save(),
         createdUser.save(),
-      ]);
-      return res.status(HttpStatus.CREATED).json({
-        message: 'User successfully created and OTP sent to email',
-        status: HttpStatus.CREATED,
-        email: userData.email,
-      });
+      ])
+        .then(() => {
+          return res.status(HttpStatus.CREATED).json({
+            message: 'User Created and OTP sent to email',
+            email: userData.email,
+          });
+        })
+        .catch((err) => {
+          console.log('Error:', err);
+          throw new InternalServerErrorException();
+        });
     } catch (error) {
       console.error('Error during user creation:', error);
       return res
