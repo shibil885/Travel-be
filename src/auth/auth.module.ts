@@ -7,6 +7,7 @@ import { jwtConstants } from './auth.constant';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Otp, OtpSchema } from 'src/modules/otp/schema/otp.schema';
 import { AgencyModule } from 'src/modules/agency/agency.module';
+import { AdminModule } from 'src/modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AgencyModule } from 'src/modules/agency/agency.module';
     }),
     MongooseModule.forFeature([{ name: Otp.name, schema: OtpSchema }]),
     AgencyModule,
+    AdminModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

@@ -11,6 +11,7 @@ import { Response } from 'express';
 import { LoginUserDto } from 'src/common/dtos/loginUser.dto';
 import { AuthService } from './auth.service';
 import { LoginAgencyDto } from 'src/common/dtos/loginAgency.dto';
+import { AdminDto } from 'src/common/dtos/admin.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -51,6 +52,20 @@ export class AuthController {
         });
       }
       return res.status(500).json({ message: 'Internal Server Error' });
+    }
+  }
+
+  @Post('admin')
+  async adminSignIn(@Res() res: Response, @Body() adminData: AdminDto) {
+    try {
+      const token = await this.authService.adminSignIn(adminData);
+      return res.status(HttpStatus.OK).json(token);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        return res
+          .status(HttpStatus.UNAUTHORIZED)
+          .json({ message: 'Invalid email or password' });
+      }
     }
   }
 }

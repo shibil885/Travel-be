@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { OtpModule } from './modules/otp/otp.module';
 import { AuthModule } from './auth/auth.module';
 import { AgencyModule } from './modules/agency/agency.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AgencyModule } from './modules/agency/agency.module';
     OtpModule,
     AuthModule,
     AgencyModule,
+    AdminModule,
   ],
   controllers: [],
   providers: [],
