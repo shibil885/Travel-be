@@ -6,15 +6,17 @@ import { Response } from 'express';
 import { OtpDto } from 'src/common/dtos/otp.dto';
 import { User } from '../user/schemas/user.schema';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
+import { Agency } from '../agency/schema/agency.schema';
 
 @Injectable()
 export class OtpService {
   constructor(
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
   ) {}
 
-  async otpSubmission(res: Response, otpdata: OtpDto) {
+  async userOtpSubmission(res: Response, otpdata: OtpDto) {
     const isMatched = await this.OtpModel.findOne({
       email: otpdata.email,
       otp: otpdata.otp,
@@ -28,6 +30,30 @@ export class OtpService {
       await this.userModel.updateOne(
         { email: otpdata.email },
         { is_Verified: true },
+      );
+      return res
+        .status(HttpStatus.OK)
+        .json({ Message: 'OTP verified successfully', email: otpdata.email });
+    } catch (error) {
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ Message: 'An error occurred during OTP submission', error });
+    }
+  }
+  async agencyOtpSubmission(res: Response, otpdata: OtpDto) {
+    const isMatched = await this.OtpModel.findOne({
+      email: otpdata.email,
+      otp: otpdata.otp,
+    });
+    if (!isMatched) {
+      return res
+        .status(HttpStatus.NOT_ACCEPTABLE)
+        .json({ Message: 'Invalid Otp', email: otpdata.email });
+    }
+    try {
+      await this.AgencyModel.updateOne(
+        { 'contact.email': otpdata.email },
+        { isVerified: true },
       );
       return res
         .status(HttpStatus.OK)

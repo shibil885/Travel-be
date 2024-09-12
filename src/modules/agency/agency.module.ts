@@ -14,5 +14,6 @@ import { Otp, OtpSchema } from '../otp/schema/otp.schema';
   ],
   controllers: [AgencyController],
   providers: [AgencyService],
+  exports: [AgencyService],
 })
 export class AgencyModule {}

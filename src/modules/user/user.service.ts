@@ -74,9 +74,8 @@ export class UserService {
   async findOne(email: string) {
     try {
       const user = await this.userModel.findOne({ email });
-      if (!user) {
-        return null;
-      }
+      if (!user) return null;
+
       return {
         email: user.email,
         password: user.password,

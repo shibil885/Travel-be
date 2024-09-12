@@ -11,6 +11,7 @@ import { CreateAgencyDto } from 'src/common/dtos/CreateAgency.dto';
 import * as bcrypt from 'bcrypt';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Otp } from '../otp/schema/otp.schema';
+
 @Injectable()
 export class AgencyService {
   constructor(
@@ -49,7 +50,7 @@ export class AgencyService {
       });
 
       const otp = Math.floor(1000 + Math.random() * 9000);
-
+      console.log('Generated OTP:', otp);
       const subject = 'Verification email from "Travel"';
 
       await Promise.all([
@@ -72,6 +73,23 @@ export class AgencyService {
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ message: 'Internal Server Error' });
+    }
+  }
+
+  async findOne(email: string) {
+    try {
+      const agency = await this.AgencyModel.findOne({ 'contact.email': email });
+      console.log('Ageencu serviceeeeeeeeeeeeeeeeeee', agency);
+      if (!agency) return null;
+      return {
+        email: agency.contact.email,
+        password: agency.password,
+        agencyId: agency._id,
+        isVerified: agency.isVerified,
+      };
+    } catch (error) {
+      console.log('Error occured while fetching user:', error);
+      throw new InternalServerErrorException();
     }
   }
 }

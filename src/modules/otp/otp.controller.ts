@@ -6,9 +6,13 @@ import { OtpService } from './otp.service';
 @Controller('otp')
 export class OtpController {
   constructor(private otpService: OtpService) {}
-  @Post('submit')
-  otpSubmission(@Res() res: Response, @Body() otpdata: OtpDto) {
-    return this.otpService.otpSubmission(res, otpdata);
+  @Post('user')
+  userOtpSubmission(@Res() res: Response, @Body() otpdata: OtpDto) {
+    return this.otpService.userOtpSubmission(res, otpdata);
+  }
+  @Post('agency')
+  AgencyOtpSubmission(@Res() res: Response, @Body() Otpdata: OtpDto) {
+    return this.otpService.agencyOtpSubmission(res, Otpdata);
   }
   @Post('resend')
   resentOtp(@Res() res: Response, @Body() otpData: OtpDto) {

@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './auth.constant';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Otp, OtpSchema } from 'src/modules/otp/schema/otp.schema';
+import { AgencyModule } from 'src/modules/agency/agency.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Otp, OtpSchema } from 'src/modules/otp/schema/otp.schema';
       signOptions: { expiresIn: '2hr' },
     }),
     MongooseModule.forFeature([{ name: Otp.name, schema: OtpSchema }]),
+    AgencyModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
