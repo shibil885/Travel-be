@@ -7,6 +7,7 @@ import { OtpDto } from 'src/common/dtos/otp.dto';
 import { User } from '../user/schemas/user.schema';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Agency } from '../agency/schema/agency.schema';
+import { Packages } from '../package/schema/package.schema';
 
 @Injectable()
 export class OtpService {
@@ -14,6 +15,7 @@ export class OtpService {
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
+    @InjectModel(Packages.name) private PackagesModel: Model<Packages>,
   ) {}
 
   async userOtpSubmission(res: Response, otpdata: OtpDto) {
@@ -31,6 +33,7 @@ export class OtpService {
         { email: otpdata.email },
         { is_Verified: true },
       );
+
       return res
         .status(HttpStatus.OK)
         .json({ Message: 'OTP verified successfully', email: otpdata.email });
@@ -40,6 +43,7 @@ export class OtpService {
         .json({ Message: 'An error occurred during OTP submission', error });
     }
   }
+
   async agencyOtpSubmission(res: Response, otpdata: OtpDto) {
     const isMatched = await this.OtpModel.findOne({
       email: otpdata.email,
@@ -55,6 +59,13 @@ export class OtpService {
         { 'contact.email': otpdata.email },
         { isVerified: true },
       );
+      const createdAgency = await this.AgencyModel.findOne({
+        'contact.email': otpdata.email,
+      });
+      await new this.PackagesModel({
+        agencyId: createdAgency._id,
+        packages: [],
+      }).save();
       return res
         .status(HttpStatus.OK)
         .json({ Message: 'OTP verified successfully', email: otpdata.email });
