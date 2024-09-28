@@ -23,6 +23,9 @@ export class Agency {
 
   @Prop({ default: false })
   isVerified: boolean;
+
+  @Prop({ default: false })
+  isConfirmed: boolean;
 }
 
 export const AgencySchema = SchemaFactory.createForClass(Agency);

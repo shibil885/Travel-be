@@ -48,7 +48,7 @@ export class Package {
   no_of_days: string;
 
   @Prop({ type: TourPlanSchema, required: true })
-  tour_plan: TourPlan;
+  tour_plan: TourPlan[];
 
   @Prop({ type: [String], required: true })
   images: string[];

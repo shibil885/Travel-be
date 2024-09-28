@@ -14,6 +14,47 @@ export class AdminService {
     @InjectModel(User.name) private UserModel: Model<User>,
   ) {}
 
+  async findAllAgencies(res: Response) {
+    try {
+      const agencies = await this.AgencyModel.find();
+      if (!agencies) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ message: 'No Agencies', success: false });
+      }
+      return res.status(HttpStatus.OK).json({
+        message: 'List of Agencies',
+        success: true,
+        agencies: agencies,
+      });
+    } catch (error) {
+      console.log('Error while fetching all Agencies:', error);
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ message: 'Internal Server Error', success: false });
+    }
+  }
+
+  async findAllUsers(res: Response) {
+    try {
+      const Users = await this.UserModel.find();
+      if (!Users) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ message: 'No Users', success: false });
+      }
+      console.log(Users);
+      return res
+        .status(HttpStatus.OK)
+        .json({ message: 'List of Users', success: true, users: Users });
+    } catch (error) {
+      console.log('Error while fetching all Users:', error);
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ message: 'Internal Server Error', success: false });
+    }
+  }
+
   async findOne(email: string, password: string) {
     const admin = await this.AdminModel.findOne({
       email: email,
@@ -47,7 +88,7 @@ export class AdminService {
         .status(HttpStatus.BAD_REQUEST)
         .json({ success: false, message: 'Invalid Action' });
     } catch (error) {
-      console.log('Error while changing category status:', error);
+      console.log('Error while changing agency status:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Internal Server Error',
@@ -55,6 +96,7 @@ export class AdminService {
       });
     }
   }
+
   async changeUserStatus(id: string, res: Response, action: string) {
     try {
       const user = await this.UserModel.findById(id);
@@ -76,7 +118,7 @@ export class AdminService {
         .status(HttpStatus.BAD_REQUEST)
         .json({ success: false, message: 'Invalid Action' });
     } catch (error) {
-      console.log('Error while changing category status:', error);
+      console.log('Error while changing user status:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Internal Server Error',

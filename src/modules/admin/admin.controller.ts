@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Res } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { Response } from 'express';
 
@@ -6,12 +6,23 @@ import { Response } from 'express';
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
-  @Post('changeAgencyStatus/:id')
+  @Get('agencies')
+  findAllAgenciees(@Res() res: Response) {
+    return this.adminService.findAllAgencies(res);
+  }
+
+  @Get('users')
+  findAllUsers(@Res() res: Response) {
+    console.log('working');
+    return this.adminService.findAllUsers(res);
+  }
+
+  @Patch('changeAgencyStatus/:id')
   changeAgencyStatus(@Param() param, @Res() res: Response, @Body() action) {
     return this.adminService.changeAgencyStatus(param.id, res, action.action);
   }
 
-  @Post('changeUserStatus/:id')
+  @Patch('changeUserStatus/:id')
   changeUserStatus(@Param() param, @Res() res: Response, @Body() action) {
     return this.adminService.changeUserStatus(param.id, res, action.action);
   }

@@ -19,14 +19,19 @@ export class AuthController {
   @Post('user')
   async signIn(@Res() res: Response, @Body() userData: LoginUserDto) {
     try {
-      const token = await this.authService.signIn(userData);
-      return res.status(200).json(token);
+      const response = await this.authService.signIn(userData);
+      console.log(response);
+
+      return res
+        .status(200)
+        .json({ token: response.access_token, user: response.user });
     } catch (error) {
       if (error instanceof UnauthorizedException) {
-        return res.status(401).json({ message: 'Invalid email or password' });
+        return res.status(401).json({ message: error.message });
       } else if (error instanceof NotAcceptableException) {
         return res.status(HttpStatus.NOT_ACCEPTABLE).json({
           message: 'We sended an otp to your email account',
+          type: 'PENDING OTP',
           email: userData.email,
         });
       }
@@ -40,25 +45,28 @@ export class AuthController {
     @Body() AgencyData: LoginAgencyDto,
   ) {
     try {
-      const token = await this.authService.agencySignIn(AgencyData);
-      return res.status(HttpStatus.OK).json(token);
+      const response = await this.authService.agencySignIn(AgencyData);
+      console.log(response);
+      return res
+        .status(HttpStatus.OK)
+        .json({ token: response.access_token, agency: response.agency });
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         return res.status(401).json({ message: 'Invalid email or password' });
       } else if (error instanceof NotAcceptableException) {
         return res.status(HttpStatus.NOT_ACCEPTABLE).json({
-          message: 'We sended an otp to your email account',
-          email: AgencyData.email,
+          message: 'We send an otp to your email account',
+          agency: error,
         });
       }
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   }
-
   @Post('admin')
   async adminSignIn(@Res() res: Response, @Body() adminData: AdminDto) {
     try {
       const token = await this.authService.adminSignIn(adminData);
+      console.log(token);
       return res.status(HttpStatus.OK).json(token);
     } catch (error) {
       if (error instanceof UnauthorizedException) {

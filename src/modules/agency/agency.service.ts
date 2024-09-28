@@ -7,7 +7,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Agency } from './schema/agency.schema';
 import { Model } from 'mongoose';
 import { Response } from 'express';
-import { CreateAgencyDto } from 'src/common/dtos/CreateAgency.dto';
 import * as bcrypt from 'bcrypt';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Otp } from '../otp/schema/otp.schema';
@@ -19,33 +18,69 @@ export class AgencyService {
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
   ) {}
 
-  async signup(res: Response, agencyData: CreateAgencyDto) {
+  async findEmail(res: Response, email: string) {
     try {
       const isExisting = await this.AgencyModel.findOne({
-        name: agencyData.name,
+        'contact.email': email,
       });
-
       if (isExisting) {
-        return res
-          .status(HttpStatus.CONFLICT)
-          .json({ message: 'Name Already taken' });
-      } else if (isExisting && isExisting.contact.email === agencyData.email) {
-        return res
-          .status(HttpStatus.CONFLICT)
-          .json({ message: 'Email already exist' });
+        return res.status(HttpStatus.OK).json({ isExisting: true });
       }
 
+      return res.status(HttpStatus.OK).json({ isExisting: false });
+    } catch (error) {
+      console.log('Error occured while fetching Agency email:', error);
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async findName(res: Response, name: string) {
+    try {
+      const isExisting = await this.AgencyModel.findOne({
+        name: name,
+      });
+      if (isExisting) {
+        return res.status(HttpStatus.OK).json({ isExisting: true });
+      }
+
+      return res.status(HttpStatus.OK).json({ isExisting: false });
+    } catch (error) {
+      console.log('Error occured while fetching Agency name:', error);
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async isConfirmed(res: Response, email: string) {
+    try {
+      const isConfirmed = await this.AgencyModel.findOne({
+        'contact.email': email,
+        isConfirmed: true,
+      });
+      if (isConfirmed) {
+        console.log(isConfirmed);
+        return res.status(HttpStatus.OK).json({ isConfirmed: true });
+      }
+      return res.status(HttpStatus.OK).json({ isConfirmed: false });
+    } catch (error) {
+      console.log('error while checking agency confirmed or not:', error);
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async signup(res: Response, agencyData, file: Express.Multer.File) {
+    try {
+      const { password, email, place, phone, agencyName } = agencyData;
       const saltRound = 10;
-      const hashedPassword = await bcrypt.hash(agencyData.password, saltRound);
-      console.log(agencyData);
+      const hashedPassword = await bcrypt.hash(password, saltRound);
+
       const createdAgency = new this.AgencyModel({
-        ...agencyData,
+        name: agencyName,
         password: hashedPassword,
         contact: {
-          email: agencyData.email,
-          place: agencyData.place,
-          phone: agencyData.phone,
-          document: agencyData.document,
+          email: email,
+          place: place,
+          phone: phone,
+          document: file.filename,
         },
       });
 
@@ -54,14 +89,16 @@ export class AgencyService {
       const subject = 'Verification email from "Travel"';
 
       await Promise.all([
-        mailsenderFunc(agencyData.email, subject, 'otp', { otp }),
-        new this.OtpModel({ email: agencyData.email, otp: otp }).save(),
+        mailsenderFunc(email, subject, 'otp', { otp }),
+        new this.OtpModel({ email: email, otp: otp }).save(),
         createdAgency.save(),
       ])
-        .then(() => {
+        .then(async () => {
+          const agency = await this.AgencyModel.findOne({
+            'contact.email': agencyData.email,
+          });
           return res.status(HttpStatus.CREATED).json({
-            message: 'Agency Created and OTP sent to email',
-            email: agencyData.email,
+            agency: agency,
           });
         })
         .catch((err) => {
@@ -69,26 +106,19 @@ export class AgencyService {
           throw new InternalServerErrorException();
         });
     } catch (error) {
-      console.error('Error during user creation:', error);
+      console.error('Error during agency creation:', error);
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ message: 'Internal Server Error' });
+        .json({ message: 'Internal Server Error', success: false });
     }
   }
-
   async findOne(email: string) {
     try {
       const agency = await this.AgencyModel.findOne({ 'contact.email': email });
-      console.log('Ageencu serviceeeeeeeeeeeeeeeeeee', agency);
       if (!agency) return null;
-      return {
-        email: agency.contact.email,
-        password: agency.password,
-        agencyId: agency._id,
-        isVerified: agency.isVerified,
-      };
+      return agency;
     } catch (error) {
-      console.log('Error occured while fetching user:', error);
+      console.log('Error occured while fetching Agency:', error);
       throw new InternalServerErrorException();
     }
   }

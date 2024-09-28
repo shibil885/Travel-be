@@ -12,6 +12,28 @@ export class CategoryService {
     @InjectModel(Category.name) private CategoryModel: Model<Category>,
   ) {}
 
+  async findAll(res: Response) {
+    try {
+      const categories = await this.CategoryModel.find();
+      if (!categories) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ message: 'No Categories', success: false });
+      }
+      return res.status(HttpStatus.OK).json({
+        message: 'List of categories',
+        success: true,
+        categories: categories,
+      });
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: 'Failed to fetch categories',
+        error: error.message || 'Unknown error',
+      });
+    }
+  }
+
   async addCategory(res: Response, categoryData: CreateCategoryDto) {
     try {
       const lowerCaseName = categoryData.name.toLowerCase();

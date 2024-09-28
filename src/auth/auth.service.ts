@@ -26,14 +26,13 @@ export class AuthService {
   ) {}
   async signIn(userData: LoginUserDto) {
     const user = await this.userservice.findOne(userData.email);
-
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
     const isMatched = await bcrypt.compare(userData.password, user.password);
     if (!isMatched) {
-      throw new UnauthorizedException('Invalid email or password llllll');
-    } else if (user.isVerified === false) {
+      throw new UnauthorizedException('Invalid email or password');
+    } else if (user.is_Verified === false) {
       const otp = Math.floor(1000 + Math.random() * 9000);
       console.log('Generated OTP:', otp);
       const subject = 'Verification Mail from "TRAVEL"';
@@ -44,9 +43,12 @@ export class AuthService {
       ]);
       throw new NotAcceptableException();
     }
-    const payload = { sub: user.userId, email: userData.email };
+    const payload = { sub: user._id, email: userData.email };
     return {
+      user: user,
       access_token: await this.jwtService.signAsync(payload),
+      success: true,
+      message: '',
     };
   }
 
@@ -71,10 +73,11 @@ export class AuthService {
         mailsenderFunc(agencyData.email, subject, 'otp', { otp }),
         new this.OtpModel({ email: agencyData.email, otp }).save(),
       ]);
-      throw new NotAcceptableException();
+      throw new NotAcceptableException(agency);
     }
-    const payload = { sub: agency.agencyId, email: agency.email };
+    const payload = { sub: agency._id, email: agency.contact.email };
     return {
+      agency: agency,
       access_token: await this.jwtService.signAsync(payload),
     };
   }

@@ -11,8 +11,6 @@ export class User {
   password: string;
   @Prop(
     raw({
-      firstName: { type: String },
-      secondName: { type: String },
       profilePicture: { type: String },
       phone: { type: Number },
       address: { type: String },

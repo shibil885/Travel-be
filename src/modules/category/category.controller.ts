@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
 import { CreateCategoryDto } from 'src/common/dtos/createCategory.dto';
 import { CategoryService } from './category.service';
 import { Response } from 'express';
@@ -7,6 +7,10 @@ import { EditCategoryDto } from 'src/common/dtos/editCategory.dto';
 @Controller('category')
 export class CategoryController {
   constructor(private categoryService: CategoryService) {}
+  @Get('categories')
+  findAll(@Res() res: Response) {
+    return this.categoryService.findAll(res);
+  }
 
   @Post('add')
   addCategory(@Res() res: Response, @Body() categoryData: CreateCategoryDto) {

@@ -20,14 +20,17 @@ export class PackageService {
   ) {
     try {
       if (!Types.ObjectId.isValid(agencyId)) {
-        return res.status(400).json({ message: 'Invalid Agency ID format.' });
+        return res
+          .status(400)
+          .json({ message: 'Invalid Agency ID format.', success: false });
       }
 
       const agencyPackages = await this.packagesModel.findOne({ agencyId });
       if (!agencyPackages) {
-        return res
-          .status(404)
-          .json({ message: `Agency with ID ${agencyId} not found.` });
+        return res.status(404).json({
+          message: `Agency with ID ${agencyId} not found.`,
+          success: false,
+        });
       }
 
       const existingPackage = agencyPackages.packages.find(
@@ -35,9 +38,10 @@ export class PackageService {
       );
 
       if (existingPackage) {
-        return res
-          .status(400)
-          .json({ message: 'A package with the same name already exists.' });
+        return res.status(400).json({
+          message: 'A package with the same name already exists.',
+          success: false,
+        });
       }
 
       const newPackage = new this.packageModel(createPackageDto);
@@ -45,6 +49,7 @@ export class PackageService {
       if (validationError) {
         return res.status(400).json({
           message: `Package validation error: ${validationError.message}`,
+          success: false,
         });
       }
 
@@ -54,6 +59,7 @@ export class PackageService {
       return res.status(201).json({
         message: 'Package added successfully.',
         package: newPackage,
+        success: true,
       });
     } catch (error) {
       console.log(
@@ -63,6 +69,7 @@ export class PackageService {
       return res.status(500).json({
         message: 'Failed to add package due to an unexpected error.',
         error: error.message,
+        success: false,
       });
     }
   }

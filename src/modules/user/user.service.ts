@@ -11,13 +11,30 @@ import { Response } from 'express';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Otp } from '../otp/schema/otp.schema';
 import * as bcrypt from 'bcrypt';
+import { Agency } from '../agency/schema/agency.schema';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
+    @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
   ) {}
+
+  async findEmail(res: Response, email: string) {
+    try {
+      const isExisting = await this.userModel.findOne({
+        email: email,
+      });
+      if (isExisting) {
+        return res.status(HttpStatus.OK).json({ isExisting: true });
+      }
+      return res.status(HttpStatus.OK).json({ isExisting: false });
+    } catch (error) {
+      console.log('Error occured while fetching Agency email:', error);
+      throw new InternalServerErrorException();
+    }
+  }
 
   async createUser(res: Response, userData: CreateUserDto) {
     try {
@@ -25,9 +42,11 @@ export class UserService {
         .findOne({ email: userData.email })
         .exec();
       if (existingUser) {
-        return res
-          .status(HttpStatus.CONFLICT)
-          .json({ message: 'User with this email already exists' });
+        return res.status(HttpStatus.CONFLICT).json({
+          message: 'User with this email already exists',
+          success: false,
+          user: null,
+        });
       }
       const saltRound = 10;
       const hashedPassword = await bcrypt.hash(userData.password, saltRound);
@@ -53,10 +72,13 @@ export class UserService {
         new this.OtpModel({ email: userData.email, otp }).save(),
         createdUser.save(),
       ])
-        .then(() => {
+        .then(async () => {
+          const user = await this.userModel.findOne({ email: userData.email });
+          console.log(user);
           return res.status(HttpStatus.CREATED).json({
-            message: 'User Created and OTP sent to email',
-            email: userData.email,
+            user: user,
+            success: true,
+            message: '',
           });
         })
         .catch((err) => {
@@ -75,13 +97,7 @@ export class UserService {
     try {
       const user = await this.userModel.findOne({ email });
       if (!user) return null;
-
-      return {
-        email: user.email,
-        password: user.password,
-        userId: user._id,
-        isVerified: user.is_Verified,
-      };
+      return user;
     } catch (error) {
       console.error('Error occurred while fetching user:', error);
       throw new InternalServerErrorException('Internal Server Error');

@@ -7,15 +7,16 @@ import { OtpService } from './otp.service';
 export class OtpController {
   constructor(private otpService: OtpService) {}
   @Post('user')
-  userOtpSubmission(@Res() res: Response, @Body() otpdata: OtpDto) {
+  userOtpSubmission(@Res() res: Response, @Body() otpdata) {
     return this.otpService.userOtpSubmission(res, otpdata);
   }
   @Post('agency')
   AgencyOtpSubmission(@Res() res: Response, @Body() Otpdata: OtpDto) {
+    console.log(Otpdata);
     return this.otpService.agencyOtpSubmission(res, Otpdata);
   }
   @Post('resend')
-  resentOtp(@Res() res: Response, @Body() otpData: OtpDto) {
+  resentOtp(@Res() res: Response, @Body() otpData) {
     return this.otpService.resendOtp(res, otpData);
   }
   @Post('resendSubmission')
