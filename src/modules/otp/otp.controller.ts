@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Post, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { OtpDto } from 'src/common/dtos/otp.dto';
 import { OtpService } from './otp.service';
@@ -7,14 +7,58 @@ import { OtpService } from './otp.service';
 export class OtpController {
   constructor(private otpService: OtpService) {}
   @Post('user')
-  userOtpSubmission(@Res() res: Response, @Body() otpdata) {
-    return this.otpService.userOtpSubmission(res, otpdata);
+  async userOtpSubmission(@Res() res: Response, @Body() otpdata) {
+    const response = await this.otpService.userOtpSubmission(otpdata);
+
+    if (response.success) {
+      res.cookie('user_access_token', response.accessToken, {
+        httpOnly: true,
+      });
+      res.cookie('user_refresh_token', response.refreshToken, {
+        httpOnly: true,
+      });
+
+      return res.status(HttpStatus.OK).json({
+        message: response.message,
+        user: response.user,
+        success: response.success,
+        token: response.accessToken,
+      });
+    } else {
+      return res.status(HttpStatus.NOT_ACCEPTABLE).json({
+        message: response.message,
+        success: response.success,
+      });
+    }
   }
+
   @Post('agency')
-  AgencyOtpSubmission(@Res() res: Response, @Body() Otpdata: OtpDto) {
-    console.log(Otpdata);
-    return this.otpService.agencyOtpSubmission(res, Otpdata);
+  async agencyOtpSubmission(@Res() res: Response, @Body() otpdata: OtpDto) {
+    const response = await this.otpService.agencyOtpSubmission(otpdata);
+    console.log('reeeeeeeeeeeeeeeeeeeeeeeeeeeeee', response);
+    if (response.success) {
+      res.cookie('agency_access_token', response.accessToken, {
+        httpOnly: true,
+      });
+
+      res.cookie('agency_refresh_token', response.refreshToken, {
+        httpOnly: true,
+      });
+
+      return res.status(HttpStatus.OK).json({
+        message: response.message,
+        agency: response.agency,
+        success: response.success,
+        token: response.accessToken,
+      });
+    } else {
+      return res.status(HttpStatus.NOT_ACCEPTABLE).json({
+        message: response.message,
+        success: response.success,
+      });
+    }
   }
+
   @Post('resend')
   resentOtp(@Res() res: Response, @Body() otpData) {
     return this.otpService.resendOtp(res, otpData);

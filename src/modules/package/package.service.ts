@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-
+import { ObjectId } from 'mongodb';
 import { CreatePackageDto } from 'src/common/dtos/createPackage.dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { Package, Packages } from './schema/package.schema';
 
 @Injectable()
@@ -14,23 +14,30 @@ export class PackageService {
   ) {}
 
   async addPackage(
-    agencyId: string,
+    req: Request,
     res: Response,
     createPackageDto: CreatePackageDto,
   ) {
     try {
+      const agencyId = new ObjectId(req['agency'].sub);
+      console.log('Agency ID:', agencyId);
+
       if (!Types.ObjectId.isValid(agencyId)) {
         return res
           .status(400)
           .json({ message: 'Invalid Agency ID format.', success: false });
       }
 
-      const agencyPackages = await this.packagesModel.findOne({ agencyId });
+      let agencyPackages = await this.packagesModel.findOne({ agencyId });
+
       if (!agencyPackages) {
-        return res.status(404).json({
-          message: `Agency with ID ${agencyId} not found.`,
-          success: false,
+        agencyPackages = new this.packagesModel({
+          agencyId,
+          packages: [],
         });
+      }
+      if (!Array.isArray(agencyPackages.packages)) {
+        agencyPackages.packages = [];
       }
 
       const existingPackage = agencyPackages.packages.find(
@@ -46,6 +53,7 @@ export class PackageService {
 
       const newPackage = new this.packageModel(createPackageDto);
       const validationError = newPackage.validateSync();
+
       if (validationError) {
         return res.status(400).json({
           message: `Package validation error: ${validationError.message}`,
@@ -54,6 +62,7 @@ export class PackageService {
       }
 
       agencyPackages.packages.push(newPackage);
+
       await agencyPackages.save();
 
       return res.status(201).json({
@@ -62,10 +71,7 @@ export class PackageService {
         success: true,
       });
     } catch (error) {
-      console.log(
-        `Failed to add package for agency ID: ${agencyId}`,
-        error.stack,
-      );
+      console.log(`Failed to add package for agency:`, error.stack);
       return res.status(500).json({
         message: 'Failed to add package due to an unexpected error.',
         error: error.message,

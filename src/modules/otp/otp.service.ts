@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Otp } from './schema/otp.schema';
 import { Model } from 'mongoose';
@@ -7,8 +7,9 @@ import { OtpDto } from 'src/common/dtos/otp.dto';
 import { User } from '../user/schemas/user.schema';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Agency } from '../agency/schema/agency.schema';
-import { Packages } from '../package/schema/package.schema';
 import { JwtService } from '@nestjs/jwt';
+import { AuthService } from 'src/auth/auth.service';
+import { Packages } from '../package/schema/package.schema';
 
 @Injectable()
 export class OtpService {
@@ -16,81 +17,108 @@ export class OtpService {
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
-    @InjectModel(Packages.name) private PackagesModel: Model<Packages>,
+    @InjectModel(Packages.name) private PackageModel: Model<Packages>,
     private jwtService: JwtService,
+    @Inject(forwardRef(() => AuthService))
+    private authService: AuthService,
   ) {}
 
-  async userOtpSubmission(res: Response, otpdata) {
-    const isMatched = await this.OtpModel.findOne({
-      email: otpdata.email,
-      otp: otpdata.otp,
-    });
-    if (!isMatched) {
-      return res.status(HttpStatus.NOT_ACCEPTABLE).json({
-        message: 'Invalid Otp',
-        email: otpdata.email,
-        success: false,
-        token: null,
-        user: null,
-      });
-    }
+  async userOtpSubmission(otpdata) {
     try {
+      const isMatched = await this.OtpModel.findOne({
+        email: otpdata.email,
+        otp: otpdata.otp,
+      });
+      if (!isMatched) {
+        return {
+          message: 'Invalid Otp',
+          success: false,
+          accessToken: null,
+          refreshToken: null,
+          user: null,
+        };
+      }
+
       await this.userModel.updateOne(
         { email: otpdata.email },
         { is_Verified: true },
       );
       const userData = await this.userModel.findOne({ email: otpdata.email });
-      const payload = { sub: userData._id, email: otpdata.email };
-      const access_token = await this.jwtService.signAsync(payload);
-      return res.status(HttpStatus.OK).json({
+      const payload = { sub: userData._id, email: otpdata.email, role: 'user' };
+      const tokens = await this.authService.generateTokens(payload);
+
+      return {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
         user: userData,
-        token: access_token,
         success: true,
-        message: '',
-      });
+        message: 'Otp matched and user verified',
+      };
     } catch (error) {
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ Message: 'An error occurred during OTP submission', error });
+      return {
+        message: 'An error occurred during OTP submission',
+        error,
+        success: false,
+        accessToken: null,
+        refreshToken: null,
+        user: null,
+      };
     }
   }
 
-  async agencyOtpSubmission(res: Response, otpdata: OtpDto) {
+  async agencyOtpSubmission(otpdata: OtpDto) {
     const isMatched = await this.OtpModel.findOne({
       email: otpdata.email,
       otp: otpdata.otp,
     });
+
     if (!isMatched) {
-      return res
-        .status(HttpStatus.NOT_ACCEPTABLE)
-        .json({ Message: 'Invalid Otp', email: otpdata.email });
+      return {
+        success: false,
+        message: 'Invalid Otp',
+        agency: null,
+        accessToken: null,
+        refreshToken: null,
+      };
     }
+
     try {
       await this.AgencyModel.updateOne(
         { 'contact.email': otpdata.email },
         { isVerified: true },
       );
-      const createdAgency = await this.AgencyModel.findOne({
-        'contact.email': otpdata.email,
-      });
-      await new this.PackagesModel({
-        agencyId: createdAgency._id,
-        packages: [],
-      }).save();
+
       const agencyData = await this.AgencyModel.findOne({
         'contact.email': otpdata.email,
       });
-      const payload = { sub: agencyData._id, email: otpdata.email };
-      const access_token = await this.jwtService.signAsync(payload);
-      console.log(access_token);
-      return res.status(HttpStatus.OK).json({
+      await this.PackageModel.updateOne(
+        { agencyId: agencyData._id },
+        { packages: [] },
+      );
+
+      const payload = {
+        sub: agencyData._id,
+        email: otpdata.email,
+        role: 'agency',
+      };
+      const tokens = await this.authService.generateTokens(payload);
+
+      return {
+        success: true,
+        message: 'Otp matched and agency verified',
         agency: agencyData,
-        token: access_token,
-      });
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
     } catch (error) {
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ Message: 'An error occurred during OTP submission', error });
+      console.log('error occurred during OTP submission :', error);
+      return {
+        success: false,
+        message: 'An error occurred during OTP submission',
+        agency: null,
+        accessToken: null,
+        refreshToken: null,
+      };
     }
   }
 

@@ -1,4 +1,8 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Admin } from './schema/admin.schema';
 import { Model } from 'mongoose';
@@ -22,6 +26,7 @@ export class AdminService {
           .status(HttpStatus.OK)
           .json({ message: 'No Agencies', success: false });
       }
+      console.log('agencies', agencies);
       return res.status(HttpStatus.OK).json({
         message: 'List of Agencies',
         success: true,
@@ -43,7 +48,6 @@ export class AdminService {
           .status(HttpStatus.OK)
           .json({ message: 'No Users', success: false });
       }
-      console.log(Users);
       return res
         .status(HttpStatus.OK)
         .json({ message: 'List of Users', success: true, users: Users });
@@ -62,31 +66,39 @@ export class AdminService {
     });
     if (!admin) return null;
 
-    return {
-      id: admin.id,
-    };
+    return admin;
   }
-
+  async findAdmin(email: string) {
+    try {
+      const admin = await this.AdminModel.findOne({ email: email });
+      if (!admin) return null;
+      return admin;
+    } catch (error) {
+      console.log('Error occured while fetching Admin:', error);
+      throw new InternalServerErrorException();
+    }
+  }
   async changeAgencyStatus(id: string, res: Response, action: string) {
     try {
+      console.log(id, action);
       const agency = await this.AgencyModel.findById(id);
+      console.log(agency);
       if (!agency) {
         return res
           .status(HttpStatus.NOT_FOUND)
           .json({ message: 'Agency Not Found', success: false });
       }
-      if (action === 'true' || action === 'false') {
-        const isActive = action === 'true';
-        agency.isActive = isActive;
-        await agency.save();
-        return res.status(HttpStatus.OK).json({
-          message: `Agency status successfully updated to ${isActive ? 'active' : 'inactive'}`,
-          success: true,
-        });
+      if (action !== 'block' && action !== 'unblock') {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ success: false, message: 'Invalid Action' });
       }
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ success: false, message: 'Invalid Action' });
+      agency.isActive = action === 'unblock';
+      await agency.save();
+      return res.status(HttpStatus.OK).json({
+        message: `User successfully ${action}ed`,
+        success: true,
+      });
     } catch (error) {
       console.log('Error while changing agency status:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
@@ -105,20 +117,48 @@ export class AdminService {
           .status(HttpStatus.NOT_FOUND)
           .json({ message: 'User Not Found', success: false });
       }
-      if (action === 'true' || action === 'false') {
-        const isActive = action === 'true';
-        user.is_Active = isActive;
-        await user.save();
-        return res.status(HttpStatus.OK).json({
-          message: `User status successfully updated to ${isActive ? 'active' : 'inactive'}`,
-          success: true,
-        });
+      if (action !== 'block' && action !== 'unblock') {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ success: false, message: 'Invalid Action' });
       }
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ success: false, message: 'Invalid Action' });
+      user.is_Active = action === 'unblock';
+      await user.save();
+      return res.status(HttpStatus.OK).json({
+        message: `User successfully ${action}ed`,
+        success: true,
+      });
     } catch (error) {
       console.log('Error while changing user status:', error);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'Internal Server Error',
+        error: error.message,
+      });
+    }
+  }
+  async confirmation(id: string, res: Response, action: string) {
+    try {
+      console.log('ffffffffffff', action);
+      const agency = await this.AgencyModel.findById(id);
+      if (!agency) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ message: 'Agency Not Found', success: false });
+      }
+      if (action !== 'declin' && action !== 'confirm') {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ success: false, message: 'Invalid Action' });
+      }
+      agency.isConfirmed = action === 'confirm';
+      await agency.save();
+      return res.status(HttpStatus.OK).json({
+        message: `Agency successfully ${action}ed`,
+        success: true,
+      });
+    } catch (error) {
+      console.log('Error while changing Agency status:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Internal Server Error',

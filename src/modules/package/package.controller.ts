@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { PackageService } from './package.service';
 import { Response } from 'express';
 
@@ -6,8 +6,9 @@ import { Response } from 'express';
 export class PackageController {
   constructor(private packageService: PackageService) {}
 
-  @Post('add/:id')
-  addPackage(@Param() param, @Res() res: Response, @Body() packageData) {
-    return this.packageService.addPackage(param.id, res, packageData);
+  @Post('add')
+  addPackage(@Req() req, @Res() res: Response, @Body() packageData) {
+    console.log('package data', packageData);
+    return this.packageService.addPackage(req, res, packageData);
   }
 }

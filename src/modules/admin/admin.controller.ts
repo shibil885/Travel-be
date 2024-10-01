@@ -8,6 +8,7 @@ export class AdminController {
 
   @Get('agencies')
   findAllAgenciees(@Res() res: Response) {
+    console.log('callled');
     return this.adminService.findAllAgencies(res);
   }
 
@@ -19,11 +20,16 @@ export class AdminController {
 
   @Patch('changeAgencyStatus/:id')
   changeAgencyStatus(@Param() param, @Res() res: Response, @Body() action) {
-    return this.adminService.changeAgencyStatus(param.id, res, action.action);
+    console.log('param', param);
+    return this.adminService.changeAgencyStatus(param.id, res, action.status);
   }
 
   @Patch('changeUserStatus/:id')
   changeUserStatus(@Param() param, @Res() res: Response, @Body() action) {
-    return this.adminService.changeUserStatus(param.id, res, action.action);
+    return this.adminService.changeUserStatus(param.id, res, action.status);
+  }
+  @Patch('confirmation/:id')
+  confirmation(@Param() param, @Res() res: Response, @Body() action) {
+    return this.adminService.confirmation(param.id, res, action.status);
   }
 }
