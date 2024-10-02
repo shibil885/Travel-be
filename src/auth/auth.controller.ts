@@ -25,21 +25,10 @@ export class AuthController {
     return this.authService.validateToken(token);
   }
 
-  @Post('validate-token-agency')
-  validateTokenAgency(@Body('token') token: string) {
-    return this.authService.validateTokenAgency(token);
-  }
-  @Post('validate-token-admin')
-  validateTokenAdmin(@Body('token') token: string) {
-    console.log('ooooooooooooooooooooot', token);
-    return this.authService.validateTokenAdmin(token);
-  }
-
   @Post('refresh')
   async refreshAccessToken(@Req() req: Request, @Res() res: Response) {
-    const refreshToken = req.cookies['user_refresh_token'];
-    console.log('eeee', req.cookies['user_refresh_token']);
-    console.log('ddddd', refreshToken);
+    const refreshToken = req.cookies['refresh_token'];
+    console.log('refresh token from refresh', req.cookies['refresh_token']);
     if (!refreshToken) {
       return res.status(HttpStatus.FORBIDDEN).json({
         success: false,
@@ -53,84 +42,32 @@ export class AuthController {
         message: 'Invalid or expired refresh token',
       });
     }
-    res.cookie('user_access_token', tokens.access_token, {
+    res.cookie('access_token', tokens.access_token, {
       httpOnly: true,
+      sameSite: 'strict',
     });
-    res.cookie('user_refresh_token', tokens.refresh_token, {
+    res.cookie('refresh_token', tokens.refresh_token, {
       httpOnly: true,
+      sameSite: 'strict',
     });
     return res.status(HttpStatus.OK).json({
       success: true,
       message: 'Access token refreshed successfully',
     });
   }
-  @Post('agencyRefresh')
-  async agencyRefreshAccessToken(@Req() req: Request, @Res() res: Response) {
-    const refreshToken = req.cookies['agency_refresh_token'];
-    if (!refreshToken) {
-      return res.status(HttpStatus.FORBIDDEN).json({
-        success: false,
-        message: 'Refresh token not found',
-      });
-    }
-    const tokens =
-      await this.authService.agencyRefreshAccessToken(refreshToken);
-    if (!tokens) {
-      return res.status(HttpStatus.FORBIDDEN).json({
-        success: false,
-        message: 'Invalid or expired refresh token',
-      });
-    }
-    res.cookie('agency_access_token', tokens.access_token, {
-      httpOnly: true,
-    });
-    res.cookie('agency_refresh_token', tokens.refresh_token, {
-      httpOnly: true,
-    });
-    return res.status(HttpStatus.OK).json({
-      success: true,
-      message: 'Access token refreshed successfully',
-    });
-  }
-  @Post('adminRefresh')
-  async adminRefreshAccessToken(@Req() req: Request, @Res() res: Response) {
-    const refreshToken = req.cookies['admin_refresh_token'];
-    if (!refreshToken) {
-      return res.status(HttpStatus.FORBIDDEN).json({
-        success: false,
-        message: 'Refresh token not found',
-      });
-    }
-    const tokens = await this.authService.adminRefreshAccessToken(refreshToken);
-    if (!tokens) {
-      return res.status(HttpStatus.FORBIDDEN).json({
-        success: false,
-        message: 'Invalid or expired refresh token',
-      });
-    }
-    res.cookie('admin_access_token', tokens.access_token, {
-      httpOnly: true,
-    });
-    res.cookie('admin_refresh_token', tokens.refresh_token, {
-      httpOnly: true,
-    });
-    return res.status(HttpStatus.OK).json({
-      success: true,
-      message: 'Access token refreshed successfully',
-    });
-  }
-
   @Post('user')
   async signIn(@Res() res: Response, @Body() userData: LoginUserDto) {
     try {
       const response = await this.authService.signIn(userData);
-      console.log(response);
-      res.cookie('user_access_token', response.token, {
+      console.log('response, after user get authenticated :', response);
+      res.cookie('access_token', response.token, {
         httpOnly: true,
+        sameSite: 'strict',
       });
 
-      res.cookie('user_refresh_token', response.refreshToken, {
+      res.cookie('refresh_token', response.refreshToken, {
         httpOnly: true,
+        sameSite: 'strict',
       });
       return res.status(200).json({
         user: response.user,
@@ -144,7 +81,7 @@ export class AuthController {
       } else if (error instanceof NotAcceptableException) {
         return res.status(HttpStatus.NOT_ACCEPTABLE).json({
           message: 'We sended an otp to your email account',
-          type: 'PENDING OTP',
+          success: false,
           email: userData.email,
         });
       }
@@ -156,11 +93,13 @@ export class AuthController {
   async agencySignIn(@Res() res: Response, @Body() agencyData: LoginAgencyDto) {
     try {
       const response = await this.authService.agencySignIn(agencyData);
-      res.cookie('agency_access_token', response.token, {
+      res.cookie('access_token', response.token, {
         httpOnly: true,
+        sameSite: 'strict',
       });
-      res.cookie('agency_refresh_token', response.refreshToken, {
+      res.cookie('refresh_token', response.refreshToken, {
         httpOnly: true,
+        sameSite: 'strict',
       });
       return res.status(HttpStatus.OK).json({
         agency: response.agency,
@@ -185,11 +124,13 @@ export class AuthController {
   async adminSignIn(@Res() res: Response, @Body() adminData: AdminDto) {
     try {
       const response = await this.authService.adminSignIn(adminData);
-      res.cookie('admin_access_token', response.token, {
+      res.cookie('access_token', response.token, {
         httpOnly: true,
+        sameSite: 'strict',
       });
-      res.cookie('admin_refresh_token', response.refreshToken, {
+      res.cookie('refresh_token', response.refreshToken, {
         httpOnly: true,
+        sameSite: 'strict',
       });
       return res.status(HttpStatus.OK).json({
         admin: response.admin,

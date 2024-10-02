@@ -35,7 +35,7 @@ export class AppModule implements NestModule {
     consumer
       .apply(AgencyMiddleware)
       .forRoutes(
-        { path: 'agency/*', method: RequestMethod.ALL },
+        { path: '/agency/isConfirmed', method: RequestMethod.GET },
         { path: 'package/*', method: RequestMethod.ALL },
       );
   }

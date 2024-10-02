@@ -11,11 +11,13 @@ export class OtpController {
     const response = await this.otpService.userOtpSubmission(otpdata);
 
     if (response.success) {
-      res.cookie('user_access_token', response.accessToken, {
+      res.cookie('access_token', response.accessToken, {
         httpOnly: true,
+        sameSite: 'strict',
       });
-      res.cookie('user_refresh_token', response.refreshToken, {
+      res.cookie('refresh_token', response.refreshToken, {
         httpOnly: true,
+        sameSite: 'strict',
       });
 
       return res.status(HttpStatus.OK).json({
@@ -35,14 +37,15 @@ export class OtpController {
   @Post('agency')
   async agencyOtpSubmission(@Res() res: Response, @Body() otpdata: OtpDto) {
     const response = await this.otpService.agencyOtpSubmission(otpdata);
-    console.log('reeeeeeeeeeeeeeeeeeeeeeeeeeeeee', response);
     if (response.success) {
-      res.cookie('agency_access_token', response.accessToken, {
+      res.cookie('access_token', response.accessToken, {
         httpOnly: true,
+        sameSite: 'strict',
       });
 
-      res.cookie('agency_refresh_token', response.refreshToken, {
+      res.cookie('refresh_token', response.refreshToken, {
         httpOnly: true,
+        sameSite: 'strict',
       });
 
       return res.status(HttpStatus.OK).json({

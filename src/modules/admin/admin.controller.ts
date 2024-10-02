@@ -14,7 +14,6 @@ export class AdminController {
 
   @Get('users')
   findAllUsers(@Res() res: Response) {
-    console.log('working');
     return this.adminService.findAllUsers(res);
   }
 

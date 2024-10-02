@@ -52,7 +52,6 @@ export class AgencyService {
 
   async isConfirmed(req, res: Response) {
     try {
-      console.log('boooom', req.agency);
       const isConfirmed = await this.AgencyModel.findOne({
         'contact.email': req.agency.email,
         isConfirmed: true,

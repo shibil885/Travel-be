@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpStatus,
   Patch,
   Post,
@@ -56,7 +57,7 @@ export class AgencyController {
   findName(@Res() res: Response, @Body() body) {
     return this.agencyService.findName(res, body.name);
   }
-  @Post('isConfirmed')
+  @Get('isConfirmed')
   isConfirmed(@Req() req: Request, @Res() res: Response) {
     return this.agencyService.isConfirmed(req, res);
   }
