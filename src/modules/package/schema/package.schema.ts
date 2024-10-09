@@ -2,15 +2,15 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
-export class TourPlan {
+export class TourPlans {
   @Prop({ required: true })
-  day: string;
+  day: number;
 
   @Prop({ required: true })
-  description: string[];
+  description: string;
 }
 
-export const TourPlanSchema = SchemaFactory.createForClass(TourPlan);
+export const TourPlanSchema = SchemaFactory.createForClass(TourPlans);
 
 @Schema({ timestamps: true })
 export class Package {
@@ -18,7 +18,7 @@ export class Package {
   name: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Category' })
-  category_id: Types.ObjectId;
+  category: Types.ObjectId;
 
   @Prop({ required: true })
   country: string;
@@ -27,16 +27,16 @@ export class Package {
   description: string;
 
   @Prop({ required: true })
-  departure_from: string;
+  departure: string;
 
   @Prop({ required: true })
-  destination: string;
+  finalDestination: string;
 
-  @Prop({ required: true })
+  @Prop()
   price: string;
 
   @Prop({ required: true })
-  no_of_people: string;
+  people: string;
 
   @Prop({ type: [String], required: true })
   included: string[];
@@ -45,10 +45,10 @@ export class Package {
   notIncluded: string[];
 
   @Prop({ required: true })
-  no_of_days: string;
+  days: string;
 
-  @Prop({ type: TourPlanSchema, required: true })
-  tour_plan: TourPlan[];
+  @Prop({ type: [TourPlanSchema], required: true })
+  TourPlans: TourPlans[];
 
   @Prop({ type: [String], required: true })
   images: string[];

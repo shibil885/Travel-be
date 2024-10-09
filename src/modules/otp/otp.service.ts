@@ -17,7 +17,7 @@ export class OtpService {
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
-    @InjectModel(Packages.name) private PackageModel: Model<Packages>,
+    @InjectModel(Packages.name) private PackagesModel: Model<Packages>,
     private jwtService: JwtService,
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
@@ -25,6 +25,7 @@ export class OtpService {
 
   async userOtpSubmission(otpdata) {
     try {
+      console.log('otp data', otpdata);
       const isMatched = await this.OtpModel.findOne({
         email: otpdata.email,
         otp: otpdata.otp,
@@ -41,10 +42,11 @@ export class OtpService {
 
       await this.userModel.updateOne(
         { email: otpdata.email },
-        { is_Verified: true },
+        { isVerified: true },
       );
       const userData = await this.userModel.findOne({ email: otpdata.email });
       const payload = { sub: userData._id, email: otpdata.email, role: 'user' };
+      console.log('payload =>', payload);
       const tokens = await this.authService.generateTokens(payload);
 
       return {
@@ -83,18 +85,22 @@ export class OtpService {
     }
 
     try {
+      console.log('dddddddddddd---->', otpdata);
       await this.AgencyModel.updateOne(
-        { 'contact.email': otpdata.email },
+        { email: otpdata.email },
         { isVerified: true },
       );
 
       const agencyData = await this.AgencyModel.findOne({
-        'contact.email': otpdata.email,
+        email: otpdata.email,
       });
-      await this.PackageModel.updateOne(
+      console.log('agency data ---->', agencyData);
+      const updatedPackage = await new this.PackagesModel(
         { agencyId: agencyData._id },
         { packages: [] },
       );
+      console.log('booooom', updatedPackage);
+      await updatedPackage.save();
 
       const payload = {
         sub: agencyData._id,

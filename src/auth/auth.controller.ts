@@ -21,14 +21,16 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('validate-token')
-  validateToken(@Body('token') token: string) {
-    return this.authService.validateToken(token);
+  validateToken(@Req() req: Request) {
+    const tokenToValidate = req.cookies['access_token'];
+    console.log('token validate metho', tokenToValidate);
+    return this.authService.validateToken(tokenToValidate);
   }
 
   @Post('refresh')
   async refreshAccessToken(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies['refresh_token'];
-    console.log('refresh token from refresh', req.cookies['refresh_token']);
+    console.log('refresh token methode', refreshToken);
     if (!refreshToken) {
       return res.status(HttpStatus.FORBIDDEN).json({
         success: false,
@@ -53,11 +55,13 @@ export class AuthController {
     return res.status(HttpStatus.OK).json({
       success: true,
       message: 'Access token refreshed successfully',
+      accessToken: tokens.access_token,
     });
   }
   @Post('user')
   async signIn(@Res() res: Response, @Body() userData: LoginUserDto) {
     try {
+      console.log('user data', userData);
       const response = await this.authService.signIn(userData);
       console.log('response, after user get authenticated :', response);
       res.cookie('access_token', response.token, {
@@ -82,7 +86,7 @@ export class AuthController {
         return res.status(HttpStatus.NOT_ACCEPTABLE).json({
           message: 'We sended an otp to your email account',
           success: false,
-          email: userData.email,
+          user: error.getResponse(),
         });
       }
       return res.status(500).json({ message: 'Internal Server Error' });
@@ -92,6 +96,7 @@ export class AuthController {
   @Post('agency')
   async agencySignIn(@Res() res: Response, @Body() agencyData: LoginAgencyDto) {
     try {
+      console.log('agencyData: ', agencyData);
       const response = await this.authService.agencySignIn(agencyData);
       res.cookie('access_token', response.token, {
         httpOnly: true,

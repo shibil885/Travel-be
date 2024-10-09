@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Res } from '@nestjs/common';
 import { CreateCategoryDto } from 'src/common/dtos/createCategory.dto';
 import { CategoryService } from './category.service';
 import { Response } from 'express';
@@ -17,7 +17,7 @@ export class CategoryController {
     return this.categoryService.addCategory(res, categoryData);
   }
 
-  @Post('edit/:id')
+  @Put('edit/:id')
   editCategory(
     @Param() param,
     @Res() res: Response,

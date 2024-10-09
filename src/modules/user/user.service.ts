@@ -12,6 +12,7 @@ import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Otp } from '../otp/schema/otp.schema';
 import * as bcrypt from 'bcrypt';
 import { Agency } from '../agency/schema/agency.schema';
+import { Package, Packages } from '../package/schema/package.schema';
 
 @Injectable()
 export class UserService {
@@ -19,6 +20,7 @@ export class UserService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
     @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
+    @InjectModel(Packages.name) private PackageModel: Model<Packages>,
   ) {}
 
   async findEmail(res: Response, email: string) {
@@ -48,19 +50,15 @@ export class UserService {
           user: null,
         });
       }
+
       const saltRound = 10;
       const hashedPassword = await bcrypt.hash(userData.password, saltRound);
+
       const createdUser = new this.userModel({
-        ...userData,
+        email: userData.email,
+        username: userData.userName,
         password: hashedPassword,
-        profile: {
-          firstName: userData.firstName,
-          secondName: userData.secondName,
-          profilePicture: userData.profilePicture,
-          phone: userData.phone,
-          address: userData.address,
-          preferences: userData.preferences,
-        },
+        phone: userData.phone,
       });
 
       const otp = Math.floor(1000 + Math.random() * 9000);
@@ -102,5 +100,12 @@ export class UserService {
       console.error('Error occurred while fetching user:', error);
       throw new InternalServerErrorException('Internal Server Error');
     }
+  }
+  async findPackages(): Promise<Package[]> {
+    const agencies = await this.PackageModel.find().exec();
+    console.log(agencies);
+    const allPackages = agencies.flatMap((agency) => agency.packages);
+    console.log('dataaaaaa', allPackages);
+    return allPackages;
   }
 }

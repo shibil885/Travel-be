@@ -1,13 +1,24 @@
-import { Body, Controller, Get, Param, Patch, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { Response } from 'express';
-
+import { FilterDataDto } from 'src/common/dtos/filterData.dto';
 @Controller('admin')
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
   @Get('agencies')
-  findAllAgenciees(@Res() res: Response) {
+  findAllAgencies(@Res() res: Response) {
     console.log('callled');
     return this.adminService.findAllAgencies(res);
   }
@@ -30,5 +41,33 @@ export class AdminController {
   @Patch('confirmation/:id')
   confirmation(@Param() param, @Res() res: Response, @Body() action) {
     return this.adminService.confirmation(param.id, res, action.status);
+  }
+  @Post('filter')
+  async getFilteredData(@Query() filterData: FilterDataDto, @Body() user) {
+    return this.adminService.getFilteredData(filterData, user.user);
+  }
+  @Post('searchUsers')
+  async searchUsers(@Query() searchText, @Body() user) {
+    return this.adminService.searchUsers(searchText.searchText, user.user);
+  }
+  @Patch('logout')
+  async agencyLogout(@Req() req: Request, @Res() res: Response) {
+    res.clearCookie('accessToken', {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+    });
+    res.clearCookie('refreshToken', {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+    });
+
+    return res.status(HttpStatus.OK).json({
+      message: 'Successfully logged out',
+      success: true,
+    });
   }
 }

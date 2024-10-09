@@ -2,6 +2,8 @@ import {
   HttpStatus,
   Injectable,
   InternalServerErrorException,
+  Patch,
+  Res,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Agency } from './schema/agency.schema';
@@ -21,7 +23,7 @@ export class AgencyService {
   async findEmail(res: Response, email: string) {
     try {
       const isExisting = await this.AgencyModel.findOne({
-        'contact.email': email,
+        email: email,
       });
       if (isExisting) {
         return res.status(HttpStatus.OK).json({ isExisting: true });
@@ -53,7 +55,7 @@ export class AgencyService {
   async isConfirmed(req, res: Response) {
     try {
       const isConfirmed = await this.AgencyModel.findOne({
-        'contact.email': req.agency.email,
+        email: req.agency.email,
         isConfirmed: true,
       });
       if (isConfirmed) {
@@ -72,16 +74,13 @@ export class AgencyService {
       const { password, email, place, phone, agencyName } = agencyData;
       const saltRound = 10;
       const hashedPassword = await bcrypt.hash(password, saltRound);
-
       const createdAgency = new this.AgencyModel({
         name: agencyName,
+        email: email,
         password: hashedPassword,
-        contact: {
-          email: email,
-          place: place,
-          phone: phone,
-          document: file.filename,
-        },
+        place: place,
+        phone: phone,
+        document: file.filename,
       });
 
       const otp = Math.floor(1000 + Math.random() * 9000);
@@ -95,7 +94,7 @@ export class AgencyService {
       ])
         .then(async () => {
           const agency = await this.AgencyModel.findOne({
-            'contact.email': agencyData.email,
+            email: agencyData.email,
           });
           return res.status(HttpStatus.CREATED).json({
             agency: agency,
@@ -112,14 +111,30 @@ export class AgencyService {
         .json({ message: 'Internal Server Error', success: false });
     }
   }
+
   async findOne(email: string) {
     try {
-      const agency = await this.AgencyModel.findOne({ 'contact.email': email });
+      const agency = await this.AgencyModel.findOne({ email: email });
       if (!agency) return null;
       return agency;
     } catch (error) {
       console.log('Error occured while fetching Agency:', error);
       throw new InternalServerErrorException();
     }
+  }
+  @Patch('logout')
+  userLogout(@Res() res: Response) {
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+    return res.status(200).json({
+      message: 'Logout successful',
+    });
   }
 }

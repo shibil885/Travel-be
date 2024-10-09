@@ -9,6 +9,7 @@ import { Model } from 'mongoose';
 import { Agency } from '../agency/schema/agency.schema';
 import { Response } from 'express';
 import { User } from '../user/schemas/user.schema';
+import { FilterDataDto } from 'src/common/dtos/filterData.dto';
 
 @Injectable()
 export class AdminService {
@@ -20,13 +21,12 @@ export class AdminService {
 
   async findAllAgencies(res: Response) {
     try {
-      const agencies = await this.AgencyModel.find();
+      const agencies = await this.AgencyModel.find({ isVerified: true });
       if (!agencies) {
         return res
           .status(HttpStatus.OK)
           .json({ message: 'No Agencies', success: false });
       }
-      console.log('agencies', agencies);
       return res.status(HttpStatus.OK).json({
         message: 'List of Agencies',
         success: true,
@@ -80,9 +80,7 @@ export class AdminService {
   }
   async changeAgencyStatus(id: string, res: Response, action: string) {
     try {
-      console.log(id, action);
       const agency = await this.AgencyModel.findById(id);
-      console.log(agency);
       if (!agency) {
         return res
           .status(HttpStatus.NOT_FOUND)
@@ -122,7 +120,7 @@ export class AdminService {
           .status(HttpStatus.BAD_REQUEST)
           .json({ success: false, message: 'Invalid Action' });
       }
-      user.is_Active = action === 'unblock';
+      user.isActive = action === 'unblock';
       await user.save();
       return res.status(HttpStatus.OK).json({
         message: `User successfully ${action}ed`,
@@ -164,6 +162,61 @@ export class AdminService {
         message: 'Internal Server Error',
         error: error.message,
       });
+    }
+  }
+  async getFilteredData(filterData: FilterDataDto, user: string) {
+    const { isActive, isVerified, isConfirmed } = filterData;
+    const query: any = {};
+
+    if (isActive !== undefined) {
+      query.isActive = isActive;
+    }
+
+    if (isVerified !== undefined) {
+      query.isVerified = isVerified;
+    }
+
+    if (user === 'agency' && isConfirmed !== undefined) {
+      query.isConfirmed = isConfirmed;
+    }
+    let filteredData;
+    try {
+      if (user === 'agency') {
+        filteredData = await this.AgencyModel.find(query).exec();
+      } else if (user === 'user') {
+        filteredData = await this.UserModel.find(query).exec();
+      } else {
+        throw new Error('Invalid user type provided.');
+      }
+
+      return filteredData;
+    } catch (error) {
+      console.error('Error fetching filtered data:', error.message);
+      return new Error('Failed to retrieve filtered data');
+    }
+  }
+
+  async searchUsers(searchText: string, user: string) {
+    try {
+      let searchResult;
+      const query: any = {
+        $or: [
+          { name: { $regex: searchText, $options: 'i' } },
+          { email: { $regex: searchText, $options: 'i' } },
+        ],
+      };
+
+      if (user === 'agency') {
+        searchResult = await this.AgencyModel.find(query).exec();
+      } else if (user === 'user') {
+        searchResult = await this.UserModel.find(query).exec();
+      } else {
+        throw new Error('Invalid user type');
+      }
+      return searchResult;
+    } catch (error) {
+      console.error('Error searching users:', error.message);
+      return new Error('Failed to search users. Please try again later.');
     }
   }
 }

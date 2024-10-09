@@ -35,7 +35,7 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(payload, {
       expiresIn: '7d',
     });
-
+    console.log('accc ->', accessToken, 're =>', refreshToken);
     return {
       accessToken,
       refreshToken,
@@ -43,7 +43,9 @@ export class AuthService {
   }
   async validateToken(token: string): Promise<{ valid: boolean }> {
     try {
+      console.log('token from validate : ', token);
       const decodedData: JwtPayload = this.jwtService.verify(token);
+      console.log('decode =>', decodedData);
       let entity;
 
       switch (decodedData.role) {
@@ -60,7 +62,6 @@ export class AuthService {
           console.log('Unknown role in token');
           return { valid: false };
       }
-      console.log(token);
       if (!entity) {
         return { valid: false };
       }
@@ -79,7 +80,7 @@ export class AuthService {
     const isMatched = await bcrypt.compare(userData.password, user.password);
     if (!isMatched) {
       throw new UnauthorizedException('Invalid email or password');
-    } else if (user.is_Verified === false) {
+    } else if (user.isVerified === false) {
       const otp = Math.floor(1000 + Math.random() * 9000);
       console.log('Generated OTP:', otp);
       const subject = 'Verification Mail from "TRAVEL"';
@@ -88,7 +89,7 @@ export class AuthService {
         mailsenderFunc(userData.email, subject, 'otp', { otp }),
         new this.OtpModel({ email: userData.email, otp }).save(),
       ]);
-      throw new NotAcceptableException();
+      throw new NotAcceptableException(user);
     }
     const payload = { sub: user._id, email: userData.email, role: 'user' };
     const tokens = await this.generateTokens(payload);
@@ -110,6 +111,7 @@ export class AuthService {
       agencyData.password,
       agency.password,
     );
+    console.log(isMatched);
     if (!isMatched) {
       throw new UnauthorizedException('Invalid email or password');
     } else if (agency.isVerified === false) {
@@ -126,7 +128,7 @@ export class AuthService {
 
     const payload = {
       sub: agency._id,
-      email: agency.contact.email,
+      email: agency.email,
       role: 'agency',
     };
     const tokens = await this.generateTokens(payload);
@@ -164,6 +166,7 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
+      console.log('refreshhhhhhh  =>', refreshToken);
       const decodedData: JwtPayload = this.jwtService.verify(refreshToken);
       let entity;
       switch (decodedData.role) {
@@ -185,26 +188,17 @@ export class AuthService {
       if (!entity) {
         throw new ForbiddenException('Entity not found or inactive');
       }
+      const payload = {
+        sub: entity._id,
+        email: entity.email,
+        role: decodedData.role,
+      };
+      console.log('payload', payload);
 
-      const access_token = await this.jwtService.sign(
-        { sub: entity.id, email: entity.email, role: decodedData.role },
-        {
-          secret: process.env.JWT_SECRET,
-          expiresIn: '15m',
-        },
-      );
-
-      const refresh_token = await this.jwtService.sign(
-        { sub: entity.id, email: entity.email, role: decodedData.role },
-        {
-          secret: process.env.JWT_SECRET,
-          expiresIn: '7d',
-        },
-      );
-
+      const tokens = await this.generateTokens(payload);
       return {
-        access_token,
-        refresh_token,
+        access_token: tokens.accessToken,
+        refresh_token: tokens.refreshToken,
       };
     } catch (error) {
       console.log('Error while refreshing token:', error);

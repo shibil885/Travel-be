@@ -7,6 +7,8 @@ import {
   Packages,
   PackageSchema,
   PackagesSchema,
+  TourPlans,
+  TourPlanSchema,
 } from './schema/package.schema';
 
 @Module({
@@ -14,6 +16,7 @@ import {
     MongooseModule.forFeature([
       { name: Packages.name, schema: PackagesSchema },
       { name: Package.name, schema: PackageSchema },
+      { name: TourPlans.name, schema: TourPlanSchema },
     ]),
   ],
   controllers: [PackageController],

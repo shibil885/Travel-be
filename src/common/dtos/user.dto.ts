@@ -24,14 +24,6 @@ export class CreateUserDto {
   })
   password: string;
 
-  @IsString()
-  @IsNotEmpty({ message: 'First name is required' })
-  firstName: string;
-
-  @IsString()
-  @IsNotEmpty({ message: 'Seecond name is required' })
-  secondName: string;
-
   @IsNotEmpty({ message: 'profile picture is required' })
   profilePicture?: string;
 

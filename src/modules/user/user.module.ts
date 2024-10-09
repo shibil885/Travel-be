@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
 import { Otp, OtpSchema } from '../otp/schema/otp.schema';
 import { Agency, AgencySchema } from '../agency/schema/agency.schema';
+import { Packages, PackageSchema } from '../package/schema/package.schema';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { Agency, AgencySchema } from '../agency/schema/agency.schema';
       { name: User.name, schema: UserSchema },
       { name: Otp.name, schema: OtpSchema },
       { name: Agency.name, schema: AgencySchema },
+      { name: Packages.name, schema: PackageSchema },
     ]),
   ],
   controllers: [UserController],

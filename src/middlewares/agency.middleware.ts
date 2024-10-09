@@ -8,9 +8,8 @@ export class AgencyMiddleware implements NestMiddleware {
     try {
       const token = req.cookies['refresh_token'];
       if (!token) {
-        return res.status(401).json({ message: 'No token provided' });
+        return res.status(403).json({ message: 'No token provided' });
       }
-
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       if (decoded && decoded['role'] === 'agency') {
         req['agency'] = decoded;
