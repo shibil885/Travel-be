@@ -3,14 +3,19 @@ import {
   Controller,
   Get,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
+  Put,
   Req,
   Res,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PackageService } from './package.service';
 import { Response, Request } from 'express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('package')
 export class PackageController {
@@ -19,25 +24,29 @@ export class PackageController {
   @Get('getAllPackages')
   async getAllPackages(@Req() req: Request, @Res() res: Response) {
     try {
-      console.log('get called');
-      const packages = await this.packageService.getAllPackages(req, res);
-      console.log('packages', packages);
-      if (packages) {
-        return res.status(HttpStatus.OK).json({
-          message: 'List of packages',
-          success: true,
-          packages: packages,
-        });
-      }
+      const packages = await this.packageService.getAllPackages();
       return res.status(HttpStatus.OK).json({
-        message: 'Cant find Packages ',
+        message: 'List of packages',
         success: true,
-        packages: [],
+        packages: packages,
       });
     } catch (error) {
-      console.log('error while fetching packages from an agency', error);
+      if (error instanceof NotFoundException) {
+        return res.status(HttpStatus.NOT_FOUND).json({
+          message: error.message,
+          success: false,
+          error: error.message,
+        });
+      }
+      console.error('Error while fetching packages:', error);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: 'Internal server error',
+        success: false,
+        error: error.message,
+      });
     }
   }
+
   @Patch('changeStatus/:id')
   async changeStatus(
     @Param('id') id: string,
@@ -57,12 +66,67 @@ export class PackageController {
         .json({ message: error.message, success: false });
     }
   }
-  @Post('saveChanges')
-  saveChanges(@Req() req, @Res() res: Response, @Body() packageData) {
-    return this.packageService.saveChanges(req, res, packageData);
+  @Put('saveChanges/:id')
+  async saveChanges(
+    @Param('id') packageId,
+    @Res() res: Response,
+    @Body() packageData,
+  ) {
+    try {
+      const response = await this.packageService.saveChanges(
+        packageData,
+        packageId,
+      );
+      if (response) {
+        return res.status(HttpStatus.OK).json({
+          message: 'Changes saved',
+          success: true,
+        });
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return res.status(HttpStatus.NOT_FOUND).json({
+          message: '',
+          success: false,
+          error: error.message,
+        });
+      }
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: '',
+        success: false,
+        error: error.message,
+      });
+    }
   }
+
   @Post('add')
-  addPackage(@Req() req, @Res() res: Response, @Body() packageData) {
-    return this.packageService.addPackage(req, res, packageData);
+  @UseInterceptors(FilesInterceptor('images'))
+  async addPackage(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() createPackageDto: any,
+    @UploadedFiles() images: Express.Multer.File[],
+  ) {
+    try {
+      const agencyId = req['agency'].sub;
+      const result = await this.packageService.addPackage(
+        agencyId,
+        createPackageDto,
+        images,
+      );
+
+      return res.status(201).json({
+        message: 'Package added successfully.',
+        package: result,
+        success: true,
+      });
+    } catch (error) {
+      console.error('Error adding package:', error);
+      return res.status(500).json({
+        message: 'Failed to add package due to an unexpected error.',
+        error: error.message,
+        success: false,
+      });
+    }
   }
 }

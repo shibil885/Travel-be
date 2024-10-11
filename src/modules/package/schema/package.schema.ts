@@ -2,22 +2,11 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
-export class TourPlans {
-  @Prop({ required: true })
-  day: number;
-
-  @Prop({ required: true })
-  description: string;
-}
-
-export const TourPlanSchema = SchemaFactory.createForClass(TourPlans);
-
-@Schema({ timestamps: true })
 export class Package {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Category' })
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
   category: Types.ObjectId;
 
   @Prop({ required: true })
@@ -32,7 +21,7 @@ export class Package {
   @Prop({ required: true })
   finalDestination: string;
 
-  @Prop()
+  @Prop({ required: true })
   price: string;
 
   @Prop({ required: true })
@@ -47,11 +36,24 @@ export class Package {
   @Prop({ required: true })
   days: string;
 
-  @Prop({ type: [TourPlanSchema], required: true })
-  TourPlans: TourPlans[];
-
-  @Prop({ type: [String], required: true })
+  @Prop({
+    type: [
+      {
+        day: { type: Number, required: true },
+        title: { type: String, required: true },
+        description: { type: String, required: true },
+      },
+    ],
+    required: true,
+  })
+  tourPlans: {
+    day: number;
+    description: string;
+  }[];
+  @Prop({ required: true })
   images: string[];
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Agency', required: true })
+  agencyId: Types.ObjectId;
 
   @Prop({ default: true })
   isActive: boolean;
@@ -59,16 +61,4 @@ export class Package {
 
 export const PackageSchema = SchemaFactory.createForClass(Package);
 
-@Schema({ timestamps: true })
-export class Packages {
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Agency' })
-  agencyId: Types.ObjectId;
-
-  @Prop({ type: [Package], required: true })
-  packages: Package[];
-}
-
-export const PackagesSchema = SchemaFactory.createForClass(Packages);
-
 export type PackageDocument = Package & Document;
-export type PackagesDocument = Packages & Document;

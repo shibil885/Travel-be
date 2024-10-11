@@ -1,137 +1,112 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { ObjectId } from 'mongodb';
-import { Request, Response } from 'express';
-import { Package, Packages, TourPlans } from './schema/package.schema';
+import { Model } from 'mongoose';
+import { Package } from './schema/package.schema';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class PackageService {
   constructor(
-    @InjectModel(Packages.name) private packagesModel: Model<Packages>,
     @InjectModel(Package.name) private packageModel: Model<Package>,
-    @InjectModel(TourPlans.name) private tourPlanModel: Model<TourPlans>,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
-  async addPackage(req: Request, res: Response, createPackageDto) {
+  async addPackage(
+    agencyId: string,
+    createPackageDto: any,
+    images: Express.Multer.File[],
+  ): Promise<Package> {
     try {
-      console.log('called');
-      console.log('call', createPackageDto);
-
-      const agencyId = new ObjectId(req['agency'].sub);
-      if (!Types.ObjectId.isValid(agencyId)) {
-        return res
-          .status(400)
-          .json({ message: 'Invalid Agency ID format.', success: false });
-      }
-
-      const newPackage = new this.packageModel(createPackageDto);
-      console.log('new package', newPackage);
-      let agencyPackages = await this.packagesModel.findOne({ agencyId });
-
-      if (!agencyPackages) {
-        agencyPackages = new this.packagesModel({
-          agencyId,
-          packages: [newPackage],
-        });
-      } else {
-        agencyPackages.packages.push(newPackage);
-      }
-      await agencyPackages.save();
-
-      return res.status(201).json({
-        message: 'Package added successfully.',
-        package: newPackage,
-        success: true,
-      });
-    } catch (error) {
-      console.log(`Failed to add package for agency:`, error.stack);
-      return res.status(500).json({
-        message: 'Failed to add package due to an unexpected error.',
-        error: error.message,
-        success: false,
-      });
-    }
-  }
-
-  async saveChanges(req: Request, res: Response, changedData) {
-    try {
-      const agencyId = new ObjectId(req['agency'].sub);
-
-      if (!Types.ObjectId.isValid(agencyId)) {
-        return res
-          .status(400)
-          .json({ message: 'Invalid Agency ID format.', success: false });
-      }
-
-      const newPackage = new this.packageModel(changedData);
-
-      const agencyPackages = await this.packagesModel.findOne({
+      const parsedPackageInfo = JSON.parse(createPackageDto.packageInfo);
+      const parsedTravelInfo = JSON.parse(createPackageDto.travelInfo);
+      const parsedPackageFeatures = JSON.parse(
+        createPackageDto.packageFeatures,
+      );
+      const parsedTourPlans = JSON.parse(createPackageDto.tourPlans);
+      const imageUploadPromises = images.map((file) =>
+        this.cloudinaryService
+          .uploadFile(file)
+          .then((response) => response.url),
+      );
+      const imageUrls = await Promise.all(imageUploadPromises);
+      const newPackageData = {
+        name: parsedPackageInfo.name,
+        category: parsedPackageInfo.category,
+        country: parsedPackageInfo.country,
+        description: parsedPackageInfo.description,
+        departure: parsedTravelInfo.departure,
+        finalDestination: parsedTravelInfo.finalDestination,
+        price: parsedTravelInfo.price,
+        people: parsedTravelInfo.people,
+        days: parsedTravelInfo.days,
+        included: parsedPackageFeatures.included,
+        notIncluded: parsedPackageFeatures.notIncluded,
+        tourPlans: parsedTourPlans,
+        images: imageUrls,
         agencyId: agencyId,
-      });
+      };
 
-      if (agencyPackages) {
-        agencyPackages.packages.push(newPackage);
-        await agencyPackages.save();
-      } else {
-        const newAgencyPackages = new this.packagesModel({
-          agencyId: agencyId,
-          packages: [newPackage],
-        });
-        await newAgencyPackages.save();
-      }
-
-      return res.status(201).json({
-        message: 'Package added successfully.',
-        package: newPackage,
-        success: true,
-      });
+      const newPackage = new this.packageModel(newPackageData);
+      return await newPackage.save();
     } catch (error) {
-      console.log(`Failed to add package for agency:`, error.stack);
-      return res.status(500).json({
-        message: 'Failed to add package due to an unexpected error.',
-        error: error.message,
-        success: false,
-      });
+      console.error('Error adding package:', error);
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Could not create package: ' + error.message,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
-  async getAllPackages(req, res): Promise<Package[]> {
+  async saveChanges(changedData, packageId) {
     try {
-      const agencyId = req['agency'].sub;
-      if (!Types.ObjectId.isValid(agencyId)) {
-        return res
-          .status(400)
-          .json({ message: 'Invalid Agency ID format.', success: false });
+      const existingPackage = await this.packageModel.findOne({
+        _id: packageId,
+      });
+      if (!existingPackage) {
+        throw new NotFoundException('Package Not Found');
       }
 
-      const objectId = new ObjectId(agencyId);
-      const agencyPackages = await this.packagesModel
-        .find({ agencyId: objectId })
-        .populate('category');
-
-      if (!agencyPackages || agencyPackages.length === 0) {
-        return res.status(404).json({
-          message: 'No packages found for this agency.',
-          success: false,
-        });
-      }
-
-      return res.status(200).json({ packages: agencyPackages, success: true });
+      Object.assign(existingPackage, changedData);
+      await existingPackage.save();
+      return true;
     } catch (error) {
-      console.error(error);
-      return res
-        .status(500)
-        .json({ message: 'Internal server error', success: false });
+      console.log(`Failed to add package for agency:`, error);
+      throw new InternalServerErrorException('Internal Server Error');
+    }
+  }
+
+  async getAllPackages(): Promise<Package[]> {
+    try {
+      const packages = await this.packageModel.find().populate('category');
+      console.log(packages);
+      if (!packages || packages.length == 0) {
+        throw new NotFoundException();
+      }
+      return packages;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('No packages found for this agency');
+      }
+      console.error('Error fetching packages:', error);
+      throw new InternalServerErrorException();
     }
   }
 
   async changeStatus(req, id: string, action: boolean): Promise<void> {
     console.log(action);
-    const agencyId = new ObjectId(req['agency'].sub);
+    const packageId = req.params.packageId;
 
-    const result = await this.packagesModel.updateOne(
-      { agencyId: agencyId, 'packages._id': id },
+    const result = await this.packageModel.updateOne(
+      { _id: packageId, 'packages._id': id },
       { $set: { 'packages.$.isActive': action } },
     );
     if (result.modifiedCount === 0) {

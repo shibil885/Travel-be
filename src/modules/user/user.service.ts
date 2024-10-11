@@ -2,6 +2,7 @@ import {
   HttpStatus,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
@@ -12,7 +13,7 @@ import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Otp } from '../otp/schema/otp.schema';
 import * as bcrypt from 'bcrypt';
 import { Agency } from '../agency/schema/agency.schema';
-import { Package, Packages } from '../package/schema/package.schema';
+import { Package } from '../package/schema/package.schema';
 
 @Injectable()
 export class UserService {
@@ -20,7 +21,7 @@ export class UserService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
     @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
-    @InjectModel(Packages.name) private PackageModel: Model<Packages>,
+    @InjectModel(Package.name) private PackageModel: Model<Package>,
   ) {}
 
   async findEmail(res: Response, email: string) {
@@ -102,10 +103,18 @@ export class UserService {
     }
   }
   async findPackages(): Promise<Package[]> {
-    const agencies = await this.PackageModel.find().exec();
-    console.log(agencies);
-    const allPackages = agencies.flatMap((agency) => agency.packages);
-    console.log('dataaaaaa', allPackages);
-    return allPackages;
+    try {
+      const packages = await this.PackageModel.find().exec();
+      if (!packages || packages.length === 0) {
+        throw new NotFoundException();
+      }
+      return packages;
+    } catch (error) {
+      console.log('error while fetching data from db', error);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('No Packages Found');
+      }
+      throw new InternalServerErrorException();
+    }
   }
 }

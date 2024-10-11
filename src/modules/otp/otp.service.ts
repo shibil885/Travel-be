@@ -9,7 +9,6 @@ import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Agency } from '../agency/schema/agency.schema';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
-import { Packages } from '../package/schema/package.schema';
 
 @Injectable()
 export class OtpService {
@@ -17,7 +16,6 @@ export class OtpService {
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
-    @InjectModel(Packages.name) private PackagesModel: Model<Packages>,
     private jwtService: JwtService,
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
@@ -95,12 +93,6 @@ export class OtpService {
         email: otpdata.email,
       });
       console.log('agency data ---->', agencyData);
-      const updatedPackage = await new this.PackagesModel(
-        { agencyId: agencyData._id },
-        { packages: [] },
-      );
-      console.log('booooom', updatedPackage);
-      await updatedPackage.save();
 
       const payload = {
         sub: agencyData._id,

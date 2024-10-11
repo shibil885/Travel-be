@@ -14,6 +14,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { PackageModule } from './modules/package/package.module';
 import { CategoryModule } from './modules/category/category.module';
 import { AgencyMiddleware } from './middlewares/agency.middleware';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AgencyMiddleware } from './middlewares/agency.middleware';
     AdminModule,
     PackageModule,
     CategoryModule,
+    CloudinaryModule,
   ],
   controllers: [],
   providers: [],

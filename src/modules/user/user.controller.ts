@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Response } from 'express';
+import { NotFoundError } from 'rxjs';
 
 @Controller('user')
 export class UserController {
@@ -16,12 +17,27 @@ export class UserController {
 
   @Get('getPackages')
   async getPackages(@Res() res: Response) {
-    const packages = await this.userService.findPackages();
-    return res.status(HttpStatus.OK).json({
-      message: 'List of Packages',
-      success: true,
-      packages,
-    });
+    try {
+      const packages = await this.userService.findPackages();
+      return res.status(HttpStatus.OK).json({
+        message: 'List of Packages',
+        success: true,
+        packages,
+      });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return res.status(HttpStatus.NOT_FOUND).json({
+          message: '',
+          success: false,
+          error: error.message,
+        });
+      }
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: '',
+        success: false,
+        error: error.message,
+      });
+    }
   }
 
   @Post('signup')

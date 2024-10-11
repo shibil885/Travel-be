@@ -6,7 +6,6 @@ import { Otp, OtpSchema } from './schema/otp.schema';
 import { User, UserSchema } from '../user/schemas/user.schema';
 import { Agency, AgencySchema } from '../agency/schema/agency.schema';
 import { AuthModule } from 'src/auth/auth.module';
-import { Packages, PackagesSchema } from '../package/schema/package.schema';
 
 @Module({
   imports: [
@@ -14,7 +13,6 @@ import { Packages, PackagesSchema } from '../package/schema/package.schema';
       { name: Otp.name, schema: OtpSchema },
       { name: User.name, schema: UserSchema },
       { name: Agency.name, schema: AgencySchema },
-      { name: Packages.name, schema: PackagesSchema },
     ]),
     forwardRef(() => AuthModule),
   ],
