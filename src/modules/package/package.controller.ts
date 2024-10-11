@@ -114,12 +114,12 @@ export class PackageController {
         createPackageDto,
         images,
       );
-
-      return res.status(201).json({
-        message: 'Package added successfully.',
-        package: result,
-        success: true,
-      });
+      if (result) {
+        return res.status(201).json({
+          message: 'Package added successfully.',
+          success: true,
+        });
+      }
     } catch (error) {
       console.error('Error adding package:', error);
       return res.status(500).json({
