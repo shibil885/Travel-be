@@ -11,16 +11,44 @@ import {
   Res,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
 @Controller('admin')
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
   @Get('agencies')
-  findAllAgencies(@Res() res: Response) {
-    console.log('callled');
-    return this.adminService.findAllAgencies(res);
+  async getAllAgencies(
+    @Req() req: Request,
+    @Query('page') page: number,
+    @Query('limit') limit: number = 5,
+    @Res() res: Response,
+  ) {
+    try {
+      console.log('ffffffffff', req.query);
+      const { agencies, totalAgencies, totalPages, currentPage } =
+        await this.adminService.findAllAgencies(page, limit);
+
+      if (!agencies.length) {
+        return res.status(HttpStatus.OK).json({
+          message: 'No Agencies',
+          success: false,
+        });
+      }
+      return res.status(HttpStatus.OK).json({
+        message: 'List of Agencies',
+        success: true,
+        agencies,
+        total: totalAgencies,
+        currentPage,
+        totalPages,
+      });
+    } catch (error) {
+      console.error('Error while fetching paginated agencies:', error);
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ message: 'Internal Server Error', success: false });
+    }
   }
 
   @Get('users')

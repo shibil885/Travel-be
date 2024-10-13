@@ -19,25 +19,20 @@ export class AdminService {
     @InjectModel(User.name) private UserModel: Model<User>,
   ) {}
 
-  async findAllAgencies(res: Response) {
-    try {
-      const agencies = await this.AgencyModel.find({ isVerified: true });
-      if (!agencies) {
-        return res
-          .status(HttpStatus.OK)
-          .json({ message: 'No Agencies', success: false });
-      }
-      return res.status(HttpStatus.OK).json({
-        message: 'List of Agencies',
-        success: true,
-        agencies: agencies,
-      });
-    } catch (error) {
-      console.log('Error while fetching all Agencies:', error);
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ message: 'Internal Server Error', success: false });
-    }
+  async findAllAgencies(page: number, pageSize: number) {
+    const skip = (page - 1) * pageSize;
+
+    const [agencies, totalAgencies] = await Promise.all([
+      this.AgencyModel.find({ isVerified: true }).skip(skip).limit(pageSize),
+      this.AgencyModel.countDocuments({ isVerified: true }),
+    ]);
+
+    return {
+      agencies,
+      totalAgencies,
+      totalPages: Math.ceil(totalAgencies / pageSize),
+      currentPage: page,
+    };
   }
 
   async findAllUsers(res: Response) {

@@ -1,4 +1,3 @@
-// create-package.dto.ts
 import { IsArray, IsNotEmpty } from 'class-validator';
 
 export class CreatePackageDto {
