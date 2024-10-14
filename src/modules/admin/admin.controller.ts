@@ -19,13 +19,11 @@ export class AdminController {
 
   @Get('agencies')
   async getAllAgencies(
-    @Req() req: Request,
-    @Query('page') page: number,
-    @Query('limit') limit: number = 5,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
     @Res() res: Response,
   ) {
     try {
-      console.log('ffffffffff', req.query);
       const { agencies, totalAgencies, totalPages, currentPage } =
         await this.adminService.findAllAgencies(page, limit);
 
@@ -39,7 +37,7 @@ export class AdminController {
         message: 'List of Agencies',
         success: true,
         agencies,
-        total: totalAgencies,
+        totalAgencies,
         currentPage,
         totalPages,
       });
@@ -52,8 +50,35 @@ export class AdminController {
   }
 
   @Get('users')
-  findAllUsers(@Res() res: Response) {
-    return this.adminService.findAllUsers(res);
+  async getAllUsers(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Res() res: Response,
+  ) {
+    try {
+      const { users, totalUsers, totalPages, currentPage } =
+        await this.adminService.findAllUsers(page, limit);
+
+      if (!users.length) {
+        return res.status(HttpStatus.OK).json({
+          message: 'No Users',
+          success: false,
+        });
+      }
+      return res.status(HttpStatus.OK).json({
+        message: 'List of Users',
+        success: true,
+        users,
+        totalUsers,
+        currentPage,
+        totalPages,
+      });
+    } catch (error) {
+      console.error('Error while fetching paginated users:', error);
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ message: 'Internal Server Error', success: false });
+    }
   }
 
   @Patch('changeAgencyStatus/:id')

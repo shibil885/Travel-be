@@ -35,23 +35,20 @@ export class AdminService {
     };
   }
 
-  async findAllUsers(res: Response) {
-    try {
-      const Users = await this.UserModel.find();
-      if (!Users) {
-        return res
-          .status(HttpStatus.OK)
-          .json({ message: 'No Users', success: false });
-      }
-      return res
-        .status(HttpStatus.OK)
-        .json({ message: 'List of Users', success: true, users: Users });
-    } catch (error) {
-      console.log('Error while fetching all Users:', error);
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ message: 'Internal Server Error', success: false });
-    }
+  async findAllUsers(page: number, pageSize: number) {
+    const skip = (page - 1) * pageSize;
+
+    const [users, totalUsers] = await Promise.all([
+      this.UserModel.find({ isVerified: true }).skip(skip).limit(pageSize),
+      this.UserModel.countDocuments({ isVerified: true }),
+    ]);
+
+    return {
+      users,
+      totalUsers,
+      totalPages: Math.ceil(totalUsers / pageSize),
+      currentPage: page,
+    };
   }
 
   async findOne(email: string, password: string) {
@@ -63,6 +60,7 @@ export class AdminService {
 
     return admin;
   }
+
   async findAdmin(email: string) {
     try {
       const admin = await this.AdminModel.findOne({ email: email });
