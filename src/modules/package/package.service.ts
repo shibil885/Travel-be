@@ -87,7 +87,6 @@ export class PackageService {
   async getAllPackages(): Promise<Package[]> {
     try {
       const packages = await this.packageModel.find().populate('category');
-      console.log(packages);
       if (!packages || packages.length == 0) {
         throw new NotFoundException();
       }
@@ -102,7 +101,6 @@ export class PackageService {
   }
 
   async changeStatus(req, id: string, action: boolean): Promise<void> {
-    console.log(action);
     const packageId = req.params.packageId;
 
     const result = await this.packageModel.updateOne(

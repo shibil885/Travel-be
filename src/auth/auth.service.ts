@@ -35,17 +35,17 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(payload, {
       expiresIn: '7d',
     });
-    console.log('accc ->', accessToken, 're =>', refreshToken);
     return {
       accessToken,
       refreshToken,
     };
   }
-  async validateToken(token: string): Promise<{ valid: boolean }> {
+
+  async validateToken(
+    token: string,
+  ): Promise<{ valid: boolean; role: string }> {
     try {
-      console.log('token from validate : ', token);
       const decodedData: JwtPayload = this.jwtService.verify(token);
-      console.log('decode =>', decodedData);
       let entity;
 
       switch (decodedData.role) {
@@ -59,16 +59,15 @@ export class AuthService {
           entity = await this.adminService.findAdmin(decodedData.email);
           break;
         default:
-          console.log('Unknown role in token');
-          return { valid: false };
+          return { valid: false, role: decodedData.role };
       }
-      if (!entity) {
-        return { valid: false };
-      }
-      return { valid: true };
+
+      return entity
+        ? { valid: true, role: decodedData.role }
+        : { valid: false, role: decodedData.role };
     } catch (error) {
-      console.error('Error occurred while validating token', error);
-      return { valid: false };
+      console.error('Error occurred while validating token:', error);
+      return { valid: false, role: '' }; // No need to decode the invalid token again
     }
   }
 
@@ -111,7 +110,6 @@ export class AuthService {
       agencyData.password,
       agency.password,
     );
-    console.log(isMatched);
     if (!isMatched) {
       throw new UnauthorizedException('Invalid email or password');
     } else if (agency.isVerified === false) {
@@ -166,9 +164,9 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
-      console.log('refreshhhhhhh  =>', refreshToken);
       const decodedData: JwtPayload = this.jwtService.verify(refreshToken);
       let entity;
+
       switch (decodedData.role) {
         case 'user':
           entity = await this.userservice.findOne(decodedData.email);
@@ -181,21 +179,21 @@ export class AuthService {
           break;
         default:
           console.log('Unknown role in token');
-          return { valid: false };
+          throw new ForbiddenException('Unknown role');
       }
-      console.log('entity:', entity);
-      console.log('decodedData:', decodedData);
+
       if (!entity) {
         throw new ForbiddenException('Entity not found or inactive');
       }
+
       const payload = {
         sub: entity._id,
         email: entity.email,
         role: decodedData.role,
       };
-      console.log('payload', payload);
 
       const tokens = await this.generateTokens(payload);
+
       return {
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,

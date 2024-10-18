@@ -7,14 +7,12 @@ import {
   Req,
   Res,
   UnauthorizedException,
-  // UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { LoginUserDto } from 'src/common/dtos/loginUser.dto';
 import { AuthService } from './auth.service';
 import { LoginAgencyDto } from 'src/common/dtos/loginAgency.dto';
 import { AdminDto } from 'src/common/dtos/admin.dto';
-// import { RolesGuard } from './guards/guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,47 +21,50 @@ export class AuthController {
   @Post('validate-token')
   validateToken(@Req() req: Request) {
     const tokenToValidate = req.cookies['access_token'];
-    console.log('token validate metho', tokenToValidate);
     return this.authService.validateToken(tokenToValidate);
   }
 
   @Post('refresh')
   async refreshAccessToken(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies['refresh_token'];
-    console.log('refresh token methode', refreshToken);
     if (!refreshToken) {
-      return res.status(HttpStatus.FORBIDDEN).json({
+      return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
         message: 'Refresh token not found',
       });
     }
+
     const tokens = await this.authService.refreshToken(refreshToken);
     if (!tokens) {
-      return res.status(HttpStatus.FORBIDDEN).json({
+      return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
         message: 'Invalid or expired refresh token',
       });
     }
+
     res.cookie('access_token', tokens.access_token, {
       httpOnly: true,
       sameSite: 'strict',
+      secure: true,
     });
     res.cookie('refresh_token', tokens.refresh_token, {
       httpOnly: true,
       sameSite: 'strict',
+      secure: true,
     });
+
     return res.status(HttpStatus.OK).json({
       success: true,
       message: 'Access token refreshed successfully',
       accessToken: tokens.access_token,
     });
   }
+
   @Post('user')
   async signIn(@Res() res: Response, @Body() userData: LoginUserDto) {
     try {
-      console.log('user data', userData);
       const response = await this.authService.signIn(userData);
-      console.log('response, after user get authenticated :', response);
+      console.log('hited the user sign in -->', response);
       res.cookie('access_token', response.token, {
         httpOnly: true,
         sameSite: 'strict',
@@ -96,7 +97,6 @@ export class AuthController {
   @Post('agency')
   async agencySignIn(@Res() res: Response, @Body() agencyData: LoginAgencyDto) {
     try {
-      console.log('agencyData: ', agencyData);
       const response = await this.authService.agencySignIn(agencyData);
       res.cookie('access_token', response.token, {
         httpOnly: true,
@@ -139,7 +139,7 @@ export class AuthController {
       });
       return res.status(HttpStatus.OK).json({
         admin: response.admin,
-        token: response.token,
+        access_token: response.token,
         message: response.message,
         success: response.success,
       });

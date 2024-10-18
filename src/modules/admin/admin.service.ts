@@ -56,9 +56,7 @@ export class AdminService {
       email: email,
       password: password,
     });
-    if (!admin) return null;
-
-    return admin;
+    return admin ? admin : null;
   }
 
   async findAdmin(email: string) {

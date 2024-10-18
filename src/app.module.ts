@@ -15,6 +15,7 @@ import { PackageModule } from './modules/package/package.module';
 import { CategoryModule } from './modules/category/category.module';
 import { AgencyMiddleware } from './middlewares/agency.middleware';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { AuthMiddleware } from './middlewares/auth.middleware';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     MongooseModule.forRoot('mongodb://127.0.0.1/travel'),
     ConfigModule.forRoot({ isGlobal: true }),
     OtpModule,
-    AuthModule,
+    AuthModule, // <-- AuthModule which contains AuthController
     AgencyModule,
     AdminModule,
     PackageModule,
@@ -40,5 +41,9 @@ export class AppModule implements NestModule {
         { path: '/agency/isConfirmed', method: RequestMethod.GET },
         { path: 'package/*', method: RequestMethod.ALL },
       );
+    consumer
+      .apply(AuthMiddleware)
+      .exclude({ path: 'auth/(.*)', method: RequestMethod.ALL })
+      .forRoutes('*');
   }
 }
