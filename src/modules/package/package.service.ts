@@ -13,7 +13,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 @Injectable()
 export class PackageService {
   constructor(
-    @InjectModel(Package.name) private packageModel: Model<Package>,
+    @InjectModel(Package.name) private PackageModel: Model<Package>,
     private cloudinaryService: CloudinaryService,
   ) {}
 
@@ -52,7 +52,7 @@ export class PackageService {
         agencyId: agencyId,
       };
 
-      const newPackage = new this.packageModel(newPackageData);
+      const newPackage = new this.PackageModel(newPackageData);
       return await newPackage.save();
     } catch (error) {
       console.error('Error adding package:', error);
@@ -68,7 +68,7 @@ export class PackageService {
 
   async saveChanges(changedData, packageId) {
     try {
-      const existingPackage = await this.packageModel.findOne({
+      const existingPackage = await this.PackageModel.findOne({
         _id: packageId,
       });
       if (!existingPackage) {
@@ -86,7 +86,7 @@ export class PackageService {
 
   async getAllPackages(): Promise<Package[]> {
     try {
-      const packages = await this.packageModel.find().populate('category');
+      const packages = await this.PackageModel.find().populate('category');
       if (!packages || packages.length == 0) {
         throw new NotFoundException();
       }
@@ -100,17 +100,16 @@ export class PackageService {
     }
   }
 
-  async changeStatus(req, id: string, action: boolean): Promise<void> {
-    const packageId = req.params.packageId;
-
-    const result = await this.packageModel.updateOne(
-      { _id: packageId, 'packages._id': id },
-      { $set: { 'packages.$.isActive': action } },
+  async changeStatus(id: string, action: boolean): Promise<boolean> {
+    const result = await this.PackageModel.updateOne(
+      { _id: id },
+      { $set: { isActive: action } },
     );
     if (result.modifiedCount === 0) {
       throw new NotFoundException(
         'Package not found or not owned by the agency',
       );
     }
+    return true;
   }
 }

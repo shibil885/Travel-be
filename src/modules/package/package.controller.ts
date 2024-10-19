@@ -51,16 +51,22 @@ export class PackageController {
   async changeStatus(
     @Param('id') id: string,
     @Body('action') action: boolean,
-    @Req() req: Request,
     @Res() res: Response,
   ) {
     try {
-      await this.packageService.changeStatus(req, id, action);
-      return res
-        .status(HttpStatus.OK)
-        .json({ message: 'Status changed successfully', success: true });
+      const result = await this.packageService.changeStatus(id, action);
+      if (result) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ message: 'Status changed successfully', success: true });
+      }
     } catch (error) {
       console.error('Error:', error.message);
+      if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ message: error.message, success: false });
+      }
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ message: error.message, success: false });

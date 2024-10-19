@@ -40,7 +40,6 @@ export class AuthService {
       refreshToken,
     };
   }
-
   async validateToken(
     token: string,
   ): Promise<{ valid: boolean; role: string }> {
@@ -61,7 +60,6 @@ export class AuthService {
         default:
           return { valid: false, role: decodedData.role };
       }
-
       return entity
         ? { valid: true, role: decodedData.role }
         : { valid: false, role: decodedData.role };

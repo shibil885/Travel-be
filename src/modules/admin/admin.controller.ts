@@ -20,7 +20,7 @@ export class AdminController {
   @Get('agencies')
   async getAllAgencies(
     @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query('limit') limit: number = 5,
     @Res() res: Response,
   ) {
     try {

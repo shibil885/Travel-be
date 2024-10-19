@@ -9,15 +9,17 @@ export class OtpController {
   @Post('user')
   async userOtpSubmission(@Res() res: Response, @Body() otpdata) {
     const response = await this.otpService.userOtpSubmission(otpdata);
-
+    console.log('response after user verified ------->', response);
     if (response.success) {
       res.cookie('access_token', response.accessToken, {
         httpOnly: true,
         sameSite: 'strict',
+        secure: true,
       });
       res.cookie('refresh_token', response.refreshToken, {
         httpOnly: true,
         sameSite: 'strict',
+        secure: true,
       });
 
       return res.status(HttpStatus.OK).json({
@@ -41,13 +43,13 @@ export class OtpController {
       res.cookie('access_token', response.accessToken, {
         httpOnly: true,
         sameSite: 'strict',
+        secure: true,
       });
-
       res.cookie('refresh_token', response.refreshToken, {
         httpOnly: true,
         sameSite: 'strict',
+        secure: true,
       });
-
       return res.status(HttpStatus.OK).json({
         message: response.message,
         agency: response.agency,

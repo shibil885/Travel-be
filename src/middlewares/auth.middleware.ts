@@ -10,9 +10,7 @@ export class AuthMiddleware implements NestMiddleware {
     const token = req.cookies['access_token'];
     if (!token) return res.status(401).json({ message: 'Unauthorized' });
     try {
-      console.log('Access token received:', token);
       const decoded = await this.jwtService.verifyAsync(token);
-      console.log('Decoded token:', decoded);
       req['user'] = decoded;
       next();
     } catch (error) {

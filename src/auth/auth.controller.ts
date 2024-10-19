@@ -64,7 +64,6 @@ export class AuthController {
   async signIn(@Res() res: Response, @Body() userData: LoginUserDto) {
     try {
       const response = await this.authService.signIn(userData);
-      console.log('hited the user sign in -->', response);
       res.cookie('access_token', response.token, {
         httpOnly: true,
         sameSite: 'strict',
@@ -85,8 +84,9 @@ export class AuthController {
         return res.status(401).json({ message: error.message });
       } else if (error instanceof NotAcceptableException) {
         return res.status(HttpStatus.NOT_ACCEPTABLE).json({
-          message: 'We sended an otp to your email account',
+          message: 'We sent an otp to your email account',
           success: false,
+          warning: true,
           user: error.getResponse(),
         });
       }
@@ -118,6 +118,8 @@ export class AuthController {
       } else if (error instanceof NotAcceptableException) {
         return res.status(HttpStatus.NOT_ACCEPTABLE).json({
           message: 'We sent an OTP to your email account',
+          success: false,
+          warning: true,
           agency: error,
         });
       }
