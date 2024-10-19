@@ -24,7 +24,7 @@ export class AdminController {
     @Res() res: Response,
   ) {
     try {
-      const { agencies, totalAgencies, totalPages, currentPage } =
+      const { agencies, totalPages, currentPage } =
         await this.adminService.findAllAgencies(page, limit);
 
       if (!agencies.length) {
@@ -37,7 +37,6 @@ export class AdminController {
         message: 'List of Agencies',
         success: true,
         agencies,
-        totalAgencies,
         currentPage,
         totalPages,
       });

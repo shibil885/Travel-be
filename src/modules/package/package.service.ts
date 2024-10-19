@@ -84,13 +84,29 @@ export class PackageService {
     }
   }
 
-  async getAllPackages(): Promise<Package[]> {
+  async getAllPackages(
+    id: string,
+    page: number,
+    limit: number,
+  ): Promise<{ totalPages: number; currentPage: number; packages: Package[] }> {
     try {
-      const packages = await this.PackageModel.find().populate('category');
+      console.log(limit);
+      const skip = (page - 1) * limit;
+      const [packages, totalPackages] = await Promise.all([
+        this.PackageModel.find({ agencyId: id })
+          .populate('category')
+          .skip(skip)
+          .limit(limit),
+        this.PackageModel.countDocuments(),
+      ]);
       if (!packages || packages.length == 0) {
         throw new NotFoundException();
       }
-      return packages;
+      return {
+        packages,
+        totalPages: Math.ceil(totalPackages / limit),
+        currentPage: page,
+      };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('No packages found for this agency');

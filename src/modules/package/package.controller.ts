@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
   Res,
   UploadedFiles,
@@ -22,20 +23,33 @@ export class PackageController {
   constructor(private packageService: PackageService) {}
 
   @Get('getAllPackages')
-  async getAllPackages(@Req() req: Request, @Res() res: Response) {
+  async getAllPackages(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
     try {
-      const packages = await this.packageService.getAllPackages();
+      const { totalPages, currentPage, packages } =
+        await this.packageService.getAllPackages(
+          req['agency'].sub,
+          page,
+          limit,
+        );
       return res.status(HttpStatus.OK).json({
         message: 'List of packages',
         success: true,
         packages: packages,
+        totalPages,
+        currentPage,
       });
     } catch (error) {
       if (error instanceof NotFoundException) {
         return res.status(HttpStatus.NOT_FOUND).json({
           message: error.message,
-          success: false,
+          info: true,
           error: error.message,
+          packages: [],
         });
       }
       console.error('Error while fetching packages:', error);
