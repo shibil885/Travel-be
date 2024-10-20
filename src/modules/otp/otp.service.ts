@@ -7,7 +7,6 @@ import { OtpDto } from 'src/common/dtos/otp.dto';
 import { User } from '../user/schemas/user.schema';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Agency } from '../agency/schema/agency.schema';
-import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
@@ -16,7 +15,6 @@ export class OtpService {
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
-    private jwtService: JwtService,
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
   ) {}
@@ -83,7 +81,6 @@ export class OtpService {
     }
 
     try {
-      console.log('dddddddddddd---->', otpdata);
       await this.AgencyModel.updateOne(
         { email: otpdata.email },
         { isVerified: true },
@@ -92,8 +89,6 @@ export class OtpService {
       const agencyData = await this.AgencyModel.findOne({
         email: otpdata.email,
       });
-      console.log('agency data ---->', agencyData);
-
       const payload = {
         sub: agencyData._id,
         email: otpdata.email,

@@ -14,11 +14,11 @@ const transporter = nodemailer.createTransport({
 export async function mailsenderFunc(
   to: string,
   subject: string,
-  messageType: 'otp',
+  messageType: 'otp' | 'agencyRegistration',
   data: any,
 ) {
+  console.log('data ----------->', data);
   let htmlContent: string;
-
   if (messageType === 'otp') {
     htmlContent = `
     <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
@@ -40,6 +40,16 @@ export async function mailsenderFunc(
         </div>
       </div>
     </div>`;
+  } else if (messageType === 'agencyRegistration') {
+    htmlContent = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #4CAF50;">Registration Successful</h2>
+          <p>Dear ${data.agencyName},</p>
+          <p>Thank you for registering with us! Your registration has been received and is currently under review.</p>
+          <p>Please wait for the admin's approval. You will be notified via email once your account has been approved.</p>
+          <p>If you have any questions, feel free to reach out.</p>
+          <p>Thanks,<br>Your System Team</p>
+        </div>`;
   }
 
   const info = await transporter.sendMail({
@@ -48,6 +58,5 @@ export async function mailsenderFunc(
     subject: subject,
     html: htmlContent,
   });
-
   console.log('Message sent: %s', info.messageId);
 }

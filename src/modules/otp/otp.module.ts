@@ -6,6 +6,7 @@ import { Otp, OtpSchema } from './schema/otp.schema';
 import { User, UserSchema } from '../user/schemas/user.schema';
 import { Agency, AgencySchema } from '../agency/schema/agency.schema';
 import { AuthModule } from 'src/auth/auth.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AuthModule } from 'src/auth/auth.module';
       { name: Agency.name, schema: AgencySchema },
     ]),
     forwardRef(() => AuthModule),
+    NotificationModule,
   ],
   controllers: [OtpController],
   providers: [OtpService],

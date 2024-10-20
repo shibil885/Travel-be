@@ -18,6 +18,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 import { AgencyMiddleware } from './middlewares/agency.middleware';
 import { AuthMiddleware } from './middlewares/auth.middleware';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AuthMiddleware } from './middlewares/auth.middleware';
     PackageModule,
     CategoryModule,
     CloudinaryModule,
+    NotificationModule,
   ],
   controllers: [],
   providers: [],
