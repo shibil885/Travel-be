@@ -29,7 +29,7 @@ export class AdminService {
 
     return {
       agencies,
-      totalPages: Math.ceil(totalAgencies / pageSize),
+      totalAgencies: totalAgencies,
       currentPage: page,
     };
   }

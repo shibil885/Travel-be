@@ -24,7 +24,7 @@ export class AdminController {
     @Res() res: Response,
   ) {
     try {
-      const { agencies, totalPages, currentPage } =
+      const { agencies, totalAgencies, currentPage } =
         await this.adminService.findAllAgencies(page, limit);
 
       if (!agencies.length) {
@@ -38,7 +38,7 @@ export class AdminController {
         success: true,
         agencies,
         currentPage,
-        totalPages,
+        totalAgencies,
       });
     } catch (error) {
       console.error('Error while fetching paginated agencies:', error);

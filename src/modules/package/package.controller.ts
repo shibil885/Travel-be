@@ -30,7 +30,7 @@ export class PackageController {
     @Query('limit') limit: number,
   ) {
     try {
-      const { totalPages, currentPage, packages } =
+      const { totalItems, currentPage, packages } =
         await this.packageService.getAllPackages(
           req['agency'].sub,
           page,
@@ -40,7 +40,7 @@ export class PackageController {
         message: 'List of packages',
         success: true,
         packages: packages,
-        totalPages,
+        totalItems,
         currentPage,
       });
     } catch (error) {
@@ -55,6 +55,31 @@ export class PackageController {
       console.error('Error while fetching packages:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         message: 'Internal server error',
+        success: false,
+        error: error.message,
+      });
+    }
+  }
+
+  @Get('searchPackage')
+  async searchPackage(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query('searchText') searchText: string,
+  ) {
+    try {
+      const packages = await this.packageService.searchPackes(
+        req['agency'].sub,
+        searchText,
+      );
+      if (packages) {
+        res.status(HttpStatus.OK).json({
+          success: true,
+          packages: packages,
+        });
+      }
+    } catch (error) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         error: error.message,
       });

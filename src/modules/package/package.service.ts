@@ -88,9 +88,8 @@ export class PackageService {
     id: string,
     page: number,
     limit: number,
-  ): Promise<{ totalPages: number; currentPage: number; packages: Package[] }> {
+  ): Promise<{ totalItems: number; currentPage: number; packages: Package[] }> {
     try {
-      console.log(limit);
       const skip = (page - 1) * limit;
       const [packages, totalPackages] = await Promise.all([
         this.PackageModel.find({ agencyId: id })
@@ -104,7 +103,7 @@ export class PackageService {
       }
       return {
         packages,
-        totalPages: Math.ceil(totalPackages / limit),
+        totalItems: totalPackages,
         currentPage: page,
       };
     } catch (error) {
@@ -115,7 +114,21 @@ export class PackageService {
       throw new InternalServerErrorException();
     }
   }
-
+  async searchPackes(agencyId: string, searchText: string) {
+    try {
+      const query = {
+        agencyId: agencyId,
+        $or: [
+          { name: { $regex: searchText, $options: 'i' } },
+          { country: { $regex: searchText, $options: 'i' } },
+        ],
+      };
+      return await this.PackageModel.find(query).exec();
+    } catch (error) {
+      console.log('error occured while search packages', error);
+      throw new InternalServerErrorException();
+    }
+  }
   async changeStatus(id: string, action: boolean): Promise<boolean> {
     const result = await this.PackageModel.updateOne(
       { _id: id },
