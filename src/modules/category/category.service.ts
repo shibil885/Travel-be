@@ -12,9 +12,13 @@ export class CategoryService {
     @InjectModel(Category.name) private CategoryModel: Model<Category>,
   ) {}
 
-  async findAll(res: Response) {
+  async findAll(res: Response, currentPage: number, limit: number) {
     try {
-      const categories = await this.CategoryModel.find();
+      const skip = (currentPage - 1) * limit;
+      const [categories, totalCategories] = await Promise.all([
+        this.CategoryModel.find().skip(skip).limit(limit),
+        this.CategoryModel.countDocuments(),
+      ]);
       if (!categories) {
         return res
           .status(HttpStatus.OK)
@@ -24,6 +28,8 @@ export class CategoryService {
         message: 'List of categories',
         success: true,
         categories: categories,
+        totalCategories,
+        currentPage,
       });
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -107,7 +113,7 @@ export class CategoryService {
     }
   }
 
-  async changeStatus(id: string, res: Response, action: string) {
+  async changeStatus(id: string, res: Response, action: boolean) {
     try {
       const category = await this.CategoryModel.findById(id);
       if (!category) {
@@ -115,13 +121,14 @@ export class CategoryService {
           .status(HttpStatus.NOT_FOUND)
           .json({ message: 'Category not found', success: false });
       }
-      if (action === 'true' || action === 'false') {
-        const isActive = action === 'true';
+      if (action === true || action === false) {
+        const isActive = action === true;
         category.isActive = isActive;
         await category.save();
         return res.status(HttpStatus.OK).json({
           success: true,
-          message: `Category status successfully updated to ${isActive ? 'active' : 'inactive'}`,
+          message: `Status successfully updated to ${isActive ? 'active' : 'inactive'}`,
+          warning: isActive ? false : true,
         });
       }
       return res.status(HttpStatus.BAD_REQUEST).json({
