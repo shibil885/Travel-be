@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   HttpStatus,
   NotAcceptableException,
   Post,
@@ -33,12 +34,11 @@ export class AuthController {
         message: 'Refresh token not found',
       });
     }
-
     const tokens = await this.authService.refreshToken(refreshToken);
     if (!tokens) {
       return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
-        message: 'Invalid or expired refresh token',
+        message: 'Unauthorized',
       });
     }
 
@@ -89,6 +89,12 @@ export class AuthController {
           warning: true,
           user: error.getResponse(),
         });
+      } else if (error instanceof ForbiddenException) {
+        return res.status(HttpStatus.FORBIDDEN).json({
+          message: error.message,
+          success: false,
+          user: null,
+        });
       }
       return res.status(500).json({ message: 'Internal Server Error' });
     }
@@ -121,6 +127,12 @@ export class AuthController {
           success: false,
           warning: true,
           agency: error,
+        });
+      } else if (error instanceof ForbiddenException) {
+        return res.status(HttpStatus.FORBIDDEN).json({
+          message: error.message,
+          success: false,
+          user: null,
         });
       }
       return res.status(500).json({ message: 'Internal Server Error' });

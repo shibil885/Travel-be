@@ -41,6 +41,28 @@ export class NotificationService {
     }
   }
 
+  // async newCategoryCreation(id: string, categoryName: string) {
+  //   try {
+  //     const admin = await this.AdminModel.find();
+  //     const adminId = admin[0].id;
+  //     const newNotification = new this.NotificationModel({
+  //       from_id: adminId,
+  //       from_model: 'Admin',
+  //       to_id: id,
+  //       to_model: 'Agency',
+  //       title: 'New Category Created',
+  //       description: `Admin has created a new category: ${categoryName}, now available for all agencies`,
+  //       type: 'info',
+  //       priority: 2,
+  //     });
+  //     await newNotification.save();
+  //     return true;
+  //   } catch (error) {
+  //     console.log('error occured while save notification to data base', error);
+  //     return false;
+  //   }
+  // }
+
   async findAll(): Promise<Notification[]> {
     try {
       return await this.NotificationModel.find({ is_deleted: false }).exec();

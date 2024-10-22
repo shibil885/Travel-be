@@ -15,10 +15,9 @@ import { AdminModule } from './modules/admin/admin.module';
 import { PackageModule } from './modules/package/package.module';
 import { CategoryModule } from './modules/category/category.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
-
-import { AgencyMiddleware } from './middlewares/agency.middleware';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { NotificationModule } from './modules/notification/notification.module';
+import { CheckActiveMiddleware } from './middlewares/isActive.middleware';
 
 @Module({
   imports: [
@@ -40,13 +39,6 @@ import { NotificationModule } from './modules/notification/notification.module';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(AgencyMiddleware)
-      .forRoutes(
-        { path: '/agency/isConfirmed', method: RequestMethod.GET },
-        { path: 'package/*', method: RequestMethod.ALL },
-      );
-
-    consumer
       .apply(AuthMiddleware)
       .exclude(
         { path: 'auth/(.*)', method: RequestMethod.ALL },
@@ -56,6 +48,18 @@ export class AppModule implements NestModule {
         { path: '/user/signup', method: RequestMethod.POST },
         { path: '/agency/signup', method: RequestMethod.POST },
         { path: 'otp/(.*)', method: RequestMethod.ALL },
+      )
+      .forRoutes('*');
+    consumer
+      .apply(CheckActiveMiddleware)
+      .exclude(
+        { path: 'auth/(.*)', method: RequestMethod.ALL },
+        { path: 'admin/(.*)', method: RequestMethod.ALL },
+        { path: '/user/isExistingMail', method: RequestMethod.POST },
+        { path: '/agency/isExistingMail', method: RequestMethod.POST },
+        { path: '/agency/isExistingName', method: RequestMethod.POST },
+        { path: '/user/signup', method: RequestMethod.POST },
+        { path: '/agency/signup', method: RequestMethod.POST },
       )
       .forRoutes('*');
   }

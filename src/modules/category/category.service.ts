@@ -5,11 +5,13 @@ import { Model } from 'mongoose';
 import { Response } from 'express';
 import { CreateCategoryDto } from 'src/common/dtos/createCategory.dto';
 import { EditCategoryDto } from 'src/common/dtos/editCategory.dto';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectModel(Category.name) private CategoryModel: Model<Category>,
+    private notificationService: NotificationService,
   ) {}
 
   async findAll(res: Response, currentPage: number, limit: number) {
@@ -42,24 +44,22 @@ export class CategoryService {
 
   async addCategory(res: Response, categoryData: CreateCategoryDto) {
     try {
-      const lowerCaseName = categoryData.name.toLowerCase();
-
+      const lowerCaseName = categoryData.name.toLowerCase().trim();
       const isExisting = await this.CategoryModel.findOne({
         name: lowerCaseName,
-      }).lean();
+      });
       if (isExisting) {
         return res
           .status(HttpStatus.CONFLICT)
           .json({ success: false, message: 'Category name already exists' });
       }
-
       const newCategory = new this.CategoryModel({
         name: lowerCaseName,
         description: categoryData.description,
       });
-
       await newCategory.save();
-
+      // const onNotificationSaving =
+      //   this.notificationService.newCategoryCreation();
       return res.status(HttpStatus.CREATED).json({
         success: true,
         message: 'New category created',
@@ -67,7 +67,6 @@ export class CategoryService {
       });
     } catch (error) {
       console.error('Error creating category:', error);
-
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Internal Server Error',
@@ -78,7 +77,7 @@ export class CategoryService {
 
   async editCategory(id: string, res: Response, categoryData: EditCategoryDto) {
     try {
-      const lowerCaseName = categoryData.name.toLowerCase();
+      const lowerCaseName = categoryData.name.toLowerCase().trim();
       const category = await this.CategoryModel.findById(id);
       if (!category) {
         return res

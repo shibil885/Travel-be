@@ -94,7 +94,7 @@ export class UserService {
 
   async findOne(email: string) {
     try {
-      const user = await this.userModel.findOne({ email });
+      const user = await this.userModel.findOne({ email, isActive: true });
       if (!user) return null;
       return user;
     } catch (error) {
@@ -116,5 +116,9 @@ export class UserService {
       }
       throw new InternalServerErrorException();
     }
+  }
+  findUserById(id: string) {
+    console.log('------------------>', id);
+    return this.userModel.findById(id);
   }
 }

@@ -114,7 +114,10 @@ export class AgencyService {
 
   async findOne(email: string) {
     try {
-      const agency = await this.AgencyModel.findOne({ email: email });
+      const agency = await this.AgencyModel.findOne({
+        email: email,
+        isActive: true,
+      });
       if (!agency) return null;
       return agency;
     } catch (error) {
@@ -136,5 +139,9 @@ export class AgencyService {
     return res.status(200).json({
       message: 'Logout successful',
     });
+  }
+
+  findAgencyById(id: string) {
+    return this.AgencyModel.findById(id);
   }
 }

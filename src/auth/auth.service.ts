@@ -46,7 +46,6 @@ export class AuthService {
     try {
       const decodedData: JwtPayload = this.jwtService.verify(token);
       let entity;
-
       switch (decodedData.role) {
         case 'user':
           entity = await this.userservice.findOne(decodedData.email);
@@ -64,8 +63,8 @@ export class AuthService {
         ? { valid: true, role: decodedData.role }
         : { valid: false, role: decodedData.role };
     } catch (error) {
-      console.error('Error occurred while validating token:', error);
-      return { valid: false, role: '' }; // No need to decode the invalid token again
+      console.error('Error occurred while validating token:', error.message);
+      return { valid: false, role: '' };
     }
   }
 
@@ -73,6 +72,8 @@ export class AuthService {
     const user = await this.userservice.findOne(userData.email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
+    } else if (!user.isActive) {
+      throw new ForbiddenException('You were temporarily blocked');
     }
     const isMatched = await bcrypt.compare(userData.password, user.password);
     if (!isMatched) {
@@ -103,6 +104,8 @@ export class AuthService {
     const agency = await this.agencyService.findOne(agencyData.email);
     if (!agency) {
       throw new UnauthorizedException('Invalid email or password');
+    } else if (!agency.isActive) {
+      throw new ForbiddenException('You were temporarily blocked');
     }
     const isMatched = await bcrypt.compare(
       agencyData.password,
@@ -121,7 +124,6 @@ export class AuthService {
       ]);
       throw new NotAcceptableException(agency);
     }
-
     const payload = {
       sub: agency._id,
       email: agency.email,
@@ -136,7 +138,6 @@ export class AuthService {
       message: '',
     };
   }
-
   async adminSignIn(adminData: AdminDto) {
     const admin = await this.adminService.findOne(
       adminData.email,
@@ -159,7 +160,6 @@ export class AuthService {
       message: true,
     };
   }
-
   async refreshToken(refreshToken: string) {
     try {
       const decodedData: JwtPayload = this.jwtService.verify(refreshToken);
@@ -181,7 +181,7 @@ export class AuthService {
       }
 
       if (!entity) {
-        throw new ForbiddenException('Entity not found or inactive');
+        throw new UnauthorizedException('Entity not found or inactive');
       }
 
       const payload = {
@@ -189,16 +189,14 @@ export class AuthService {
         email: entity.email,
         role: decodedData.role,
       };
-
       const tokens = await this.generateTokens(payload);
-
       return {
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
       };
     } catch (error) {
       console.log('Error while refreshing token:', error);
-      throw new ForbiddenException('Invalid or expired refresh token');
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 }
