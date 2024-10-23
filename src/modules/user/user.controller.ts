@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Patch,
   Post,
+  Query,
   Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -16,13 +17,19 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Get('getPackages')
-  async getPackages(@Res() res: Response) {
+  async getPackages(
+    @Res() res: Response,
+    @Query('currentPage') currentPge: number,
+    @Query('limit') limit: number,
+  ) {
     try {
-      const packages = await this.userService.findPackages();
+      const packages = await this.userService.findPackages(currentPge, limit);
       return res.status(HttpStatus.OK).json({
         message: 'List of Packages',
         success: true,
-        packages,
+        packages: packages.packages,
+        packagesCount: packages.packagesCount,
+        currentPage: packages.currentPage,
       });
     } catch (error) {
       if (error instanceof NotFoundError) {

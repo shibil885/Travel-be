@@ -114,7 +114,7 @@ export class PackageService {
       throw new InternalServerErrorException();
     }
   }
-  async searchPackes(agencyId: string, searchText: string) {
+  async searchPackges(agencyId: string, searchText: string) {
     try {
       const query = {
         agencyId: agencyId,

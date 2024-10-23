@@ -102,13 +102,33 @@ export class UserService {
       throw new InternalServerErrorException('Internal Server Error');
     }
   }
-  async findPackages(): Promise<Package[]> {
+  async findPackages(
+    currentPage: number,
+    limit: number,
+  ): Promise<{
+    packages: Package[];
+    packagesCount: number;
+    currentPage: number;
+  }> {
     try {
-      const packages = await this.PackageModel.find().exec();
+      const skip = Math.ceil(currentPage - 1) * limit;
+      const [packages, packagesCount] = await Promise.all([
+        this.PackageModel.find({ isActive: true })
+          .skip(skip)
+          .limit(limit)
+          .populate('agencyId')
+          .populate('category')
+          .exec(),
+        this.PackageModel.countDocuments({ isActive: true }),
+      ]);
       if (!packages || packages.length === 0) {
         throw new NotFoundException();
       }
-      return packages;
+      return {
+        packages,
+        packagesCount,
+        currentPage,
+      };
     } catch (error) {
       console.log('error while fetching data from db', error);
       if (error instanceof NotFoundException) {
@@ -118,7 +138,6 @@ export class UserService {
     }
   }
   findUserById(id: string) {
-    console.log('------------------>', id);
     return this.userModel.findById(id);
   }
 }

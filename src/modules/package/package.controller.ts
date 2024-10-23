@@ -68,7 +68,7 @@ export class PackageController {
     @Query('searchText') searchText: string,
   ) {
     try {
-      const packages = await this.packageService.searchPackes(
+      const packages = await this.packageService.searchPackges(
         req['agency'].sub,
         searchText,
       );
