@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Param,
   Patch,
   Post,
   Query,
@@ -44,6 +45,25 @@ export class UserController {
         success: false,
         error: error.message,
       });
+    }
+  }
+
+  @Get('package/:id')
+  async getSinglePackage(@Res() res: Response, @Param('id') id: string) {
+    try {
+      const fetchedPackage = await this.userService.getSinglePackage(id);
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, package: fetchedPackage });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ message: error.message, success: false });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ message: error.message, success: false });
     }
   }
 

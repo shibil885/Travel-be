@@ -102,6 +102,22 @@ export class UserService {
       throw new InternalServerErrorException('Internal Server Error');
     }
   }
+
+  async getSinglePackage(id: string) {
+    try {
+      const singlePackage = await this.PackageModel.findOne({
+        _id: id,
+      }).populate(['agencyId', 'category']);
+      if (!singlePackage) {
+        throw new NotFoundException();
+      }
+      return singlePackage;
+    } catch (error) {
+      console.log('error occured while fetch single Packag', error);
+      throw new InternalServerErrorException();
+    }
+  }
+
   async findPackages(
     currentPage: number,
     limit: number,
@@ -137,6 +153,7 @@ export class UserService {
       throw new InternalServerErrorException();
     }
   }
+
   findUserById(id: string) {
     return this.userModel.findById(id);
   }
