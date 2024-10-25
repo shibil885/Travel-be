@@ -18,6 +18,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { NotificationModule } from './modules/notification/notification.module';
 import { CheckActiveMiddleware } from './middlewares/isActive.middleware';
+import { CouponModule } from './modules/coupon/coupon.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CheckActiveMiddleware } from './middlewares/isActive.middleware';
     CategoryModule,
     CloudinaryModule,
     NotificationModule,
+    CouponModule,
   ],
   controllers: [],
   providers: [],
