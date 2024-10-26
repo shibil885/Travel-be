@@ -60,4 +60,9 @@ export class CouponService {
     );
     return updatedCoupon.modifiedCount > 0 ? true : false;
   }
+
+  async getAllCoupon() {
+    const coupons = await this.CouponModel.find();
+    return coupons.length > 0 ? coupons : coupons.length == 0 ? [] : null;
+  }
 }

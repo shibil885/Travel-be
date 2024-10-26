@@ -2,6 +2,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  Get,
   HttpStatus,
   InternalServerErrorException,
   NotFoundException,
@@ -71,6 +72,31 @@ export class CouponController {
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ success: false, message: error.getResponse() });
+    }
+  }
+
+  @Get('getAllCoupons')
+  async getAllCoupons(@Res() res: Response) {
+    try {
+      const result = await this.couponService.getAllCoupon();
+      if (result.length > 0) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'List of Coupons', coupons: result });
+      } else if (result.length == 0) {
+        throw new NotFoundException();
+      }
+      throw new InternalServerErrorException();
+    } catch (error) {
+      console.log('error occured', error);
+      if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: 'Cant find Coupons', coupons: [] });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.getResponse(), coupons: [] });
     }
   }
 }
