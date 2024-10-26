@@ -22,7 +22,7 @@ export class Coupon extends Document {
   expiry_date: Date;
 
   @Prop({ type: Boolean, default: true })
-  is_Active: boolean;
+  isActive: boolean;
 
   @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
   used: Types.ObjectId[];
