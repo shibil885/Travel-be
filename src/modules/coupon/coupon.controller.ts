@@ -15,6 +15,7 @@ import {
 import { CouponService } from './coupon.service';
 import { Response } from 'express';
 import { CreateCouponDto } from 'src/common/dtos/createCoupon.gto';
+import { EditCouponDto } from 'src/common/dtos/editCoupon.dto';
 
 @Controller('coupon')
 export class CouponController {
@@ -45,8 +46,35 @@ export class CouponController {
     }
   }
 
-  @Put('editCoupon')
-  async editCoupon() {}
+  @Put('editCoupon/:id')
+  async editCoupon(
+    @Res() res: Response,
+    @Param('id') id: string,
+    @Body() body: EditCouponDto,
+  ) {
+    try {
+      const response = await this.couponService.editCoupon(id, body);
+      if (response)
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'Coupon successefully updated' });
+      throw new InternalServerErrorException();
+    } catch (error) {
+      console.log('error occured while edit coupon');
+      if (error instanceof ConflictException) {
+        return res
+          .status(HttpStatus.CONFLICT)
+          .json({ success: false, message: error.getResponse() });
+      } else if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: error.getResponse() });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.getResponse() });
+    }
+  }
 
   @Patch('changeStatus/:id')
   async changeStatus(

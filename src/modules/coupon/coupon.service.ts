@@ -44,8 +44,25 @@ export class CouponService {
   }
 
   async editCoupon(id: string, editCouponData: EditCouponDto) {
-    console.log(id);
-    console.log(editCouponData);
+    const lowerCasedCode = editCouponData.code;
+    const [coupons, isExisting] = await this.CouponModel.aggregate([
+      {
+        $facet: {
+          coupons: [{ $match: { _id: id } }],
+          isExisting: [{ $match: { name: lowerCasedCode, _id: { $ne: id } } }],
+        },
+      },
+    ]);
+    if (coupons.length == 0) {
+      throw new NotFoundException('Category not found');
+    } else if (isExisting) {
+      throw new ConflictException('Coupon code already exist');
+    }
+    const editedCouponResponse = await this.CouponModel.updateOne(
+      { _id: id },
+      editCouponData,
+    );
+    return editedCouponResponse.modifiedCount > 0 ? true : null;
   }
 
   async changeStatus(id: string, status: boolean) {
@@ -62,7 +79,7 @@ export class CouponService {
   }
 
   async getAllCoupon() {
-    const coupons = await this.CouponModel.find();
+    const coupons = await this.CouponModel.find({});
     return coupons.length > 0 ? coupons : coupons.length == 0 ? [] : null;
   }
 }
