@@ -13,6 +13,6 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(cookiParser());
   await app.listen(3000);
-  console.log('server connected  http://localhost:3000');
+  console.log('server connected');
 }
 bootstrap();

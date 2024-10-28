@@ -27,22 +27,24 @@ export class CouponController {
   ) {
     try {
       const createdCoupon = await this.couponService.createCoupon(couponData);
+      console.log(createdCoupon);
       if (createdCoupon) {
-        res.status(HttpStatus.CREATED).json({
+        return res.status(HttpStatus.CREATED).json({
           success: true,
-          message: 'Successfully created new category',
+          message: 'Successfully created new coupon',
         });
-        throw new InternalServerErrorException();
       }
+      throw new InternalServerErrorException();
     } catch (error) {
+      console.log('error occured while create new coupon', error);
       if (error instanceof ConflictException) {
         return res
           .status(HttpStatus.CONFLICT)
-          .json({ success: false, message: error.getResponse() });
+          .json({ success: false, message: error.message });
       }
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.getResponse() });
+        .json({ success: false, message: error.message });
     }
   }
 
@@ -64,15 +66,15 @@ export class CouponController {
       if (error instanceof ConflictException) {
         return res
           .status(HttpStatus.CONFLICT)
-          .json({ success: false, message: error.getResponse() });
+          .json({ success: false, message: error.message });
       } else if (error instanceof NotFoundException) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ success: false, message: error.getResponse() });
+          .json({ success: false, message: error.message });
       }
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.getResponse() });
+        .json({ success: false, message: error.message });
     }
   }
 
@@ -95,11 +97,11 @@ export class CouponController {
       if (error instanceof NotFoundException) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ success: false, message: error.getResponse() });
+          .json({ success: false, message: error.message });
       }
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.getResponse() });
+        .json({ success: false, message: error.message });
     }
   }
 
@@ -124,7 +126,7 @@ export class CouponController {
       }
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.getResponse(), coupons: [] });
+        .json({ success: false, message: error.message, coupons: [] });
     }
   }
 }
