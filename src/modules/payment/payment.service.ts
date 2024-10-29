@@ -19,8 +19,6 @@ export class PaymentService {
       receipt: `receipt_${Math.random()}`,
     };
     try {
-      console.log('options ---------->', options);
-      console.log('razorpay ---------->', this.razorpay);
       const order = await this.razorpay.orders.create(options);
       console.log(order);
       return order;
