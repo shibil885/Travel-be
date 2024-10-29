@@ -19,12 +19,19 @@ import { AuthMiddleware } from './middlewares/auth.middleware';
 import { NotificationModule } from './modules/notification/notification.module';
 import { CheckActiveMiddleware } from './middlewares/isActive.middleware';
 import { CouponModule } from './modules/coupon/coupon.module';
+import { RazorpayModule } from 'nestjs-razorpay';
+import { PaymentModule } from './modules/payment/payment.module';
+import { CookieMiddleware } from './middlewares/cookie.middleware';
 
 @Module({
   imports: [
     UserModule,
     MongooseModule.forRoot('mongodb://127.0.0.1/travel'),
     ConfigModule.forRoot({ isGlobal: true }),
+    RazorpayModule.forRoot({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_SECRET,
+    }),
     OtpModule,
     AuthModule,
     AgencyModule,
@@ -34,6 +41,8 @@ import { CouponModule } from './modules/coupon/coupon.module';
     CloudinaryModule,
     NotificationModule,
     CouponModule,
+    RazorpayModule,
+    PaymentModule,
   ],
   controllers: [],
   providers: [],
@@ -41,6 +50,8 @@ import { CouponModule } from './modules/coupon/coupon.module';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
+      .apply(CookieMiddleware)
+      .forRoutes('*')
       .apply(AuthMiddleware)
       .exclude(
         { path: 'auth/(.*)', method: RequestMethod.ALL },
