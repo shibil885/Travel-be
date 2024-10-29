@@ -11,10 +11,14 @@ import {
   DiscountType,
 } from 'src/common/dtos/createCoupon.gto';
 import { EditCouponDto } from 'src/common/dtos/editCoupon.dto';
+import { Package } from '../package/schema/package.schema';
 
 @Injectable()
 export class CouponService {
-  constructor(@InjectModel(Coupon.name) private CouponModel: Model<Coupon>) {}
+  constructor(
+    @InjectModel(Coupon.name) private CouponModel: Model<Coupon>,
+    @InjectModel(Package.name) private PackageModel: Model<Package>,
+  ) {}
 
   // async createCoupon(couponData: CreateCouponDto) {
   //   const lowerCasedCode = couponData.code.toLocaleLowerCase();
@@ -46,14 +50,10 @@ export class CouponService {
   // }
   async createCoupon(couponData: CreateCouponDto) {
     const lowerCasedCode = couponData.code.toLowerCase();
-
-    // Check if the coupon already exists
     const isExist = await this.CouponModel.findOne({ code: lowerCasedCode });
     if (isExist) {
       throw new ConflictException('Coupon code already exists');
     }
-
-    // Build the coupon object conditionally based on discount_type
     const couponFields: any = {
       code: lowerCasedCode,
       description: couponData.description,
@@ -61,16 +61,12 @@ export class CouponService {
       expiry_date: couponData.expiry_date,
       discount_type: couponData.discount_type,
     };
-
-    // Add fields based on discount type
     if (couponData.discount_type === DiscountType.PERCENTAGE) {
       couponFields.percentage = couponData.percentage;
       couponFields.maxAmt = couponData.maxAmt;
     } else if (couponData.discount_type === DiscountType.FIXED) {
       couponFields.discount_value = couponData.discount_value;
     }
-
-    // Save the coupon
     const createdCoupon = await new this.CouponModel(couponFields).save();
     return createdCoupon;
   }
@@ -112,8 +108,27 @@ export class CouponService {
 
   async getAllCoupon() {
     const coupons = await this.CouponModel.find({});
-    console.log('couponse ---->', coupons);
-    console.log('length --->', coupons.length);
     return coupons.length > 0 ? coupons : coupons.length == 0 ? [] : null;
+  }
+
+  async getAllCouponsForUser(packageId: string, userId: string) {
+    if (!packageId || !userId) {
+      throw new NotFoundException(
+        !packageId ? 'Cant find package id' : 'Cant find userId',
+      );
+    }
+    const { price } = await this.PackageModel.findOne(
+      {
+        _id: packageId,
+        isActive: true,
+      },
+      { price: 1, _id: 0 },
+    );
+    const couponsForUser = await this.CouponModel.find({
+      minAmt: { $lte: price },
+      used: { $ne: userId },
+      isActive: true,
+    });
+    return couponsForUser;
   }
 }

@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Put,
+  Req,
   Res,
 } from '@nestjs/common';
 import { CouponService } from './coupon.service';
@@ -127,6 +128,36 @@ export class CouponController {
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ success: false, message: error.message, coupons: [] });
+    }
+  }
+  @Get('getCouponsForUser/:packageId')
+  async getCouponsForUser(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('packageId') packageId: string,
+  ) {
+    try {
+      const userId = req['user'].sub;
+      const coupons = await this.couponService.getAllCouponsForUser(
+        packageId,
+        userId,
+      );
+      console.log('coupons ---->', coupons);
+      if (coupons.length == 0) {
+        return res.status(HttpStatus.OK).json({ success: true, coupons: [] });
+      }
+      return res.status(HttpStatus.OK).json({ success: true, coupons });
+    } catch (error) {
+      console.log('Error occured while fetch coupons for user', error);
+      if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: error.message });
+      } else if (error instanceof InternalServerErrorException) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json({ success: false, message: error.message });
+      }
     }
   }
 }
