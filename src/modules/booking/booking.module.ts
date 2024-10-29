@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { PaymentController } from './payment.controller';
-import { PaymentService } from './payment.service';
+import { BookingController } from './booking.controller';
+import { BookingService } from './booking.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Package, PackageSchema } from '../package/schema/package.schema';
 import { Coupon, CouponSchema } from '../coupon/schema/coupon.schema';
-import { BookingService } from '../booking/booking.service';
-import { Booking, BookingSchema } from '../booking/schema/booking.schema';
+import { Booking, BookingSchema } from './schema/booking.schema';
 
 @Module({
   imports: [
@@ -15,7 +14,7 @@ import { Booking, BookingSchema } from '../booking/schema/booking.schema';
       { name: Coupon.name, schema: CouponSchema },
     ]),
   ],
-  controllers: [PaymentController],
-  providers: [PaymentService, BookingService],
+  controllers: [BookingController],
+  providers: [BookingService],
 })
-export class PaymentModule {}
+export class BookingModule {}

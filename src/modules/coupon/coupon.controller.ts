@@ -142,7 +142,6 @@ export class CouponController {
         packageId,
         userId,
       );
-      console.log('coupons ---->', coupons);
       if (coupons.length == 0) {
         return res.status(HttpStatus.OK).json({ success: true, coupons: [] });
       }
