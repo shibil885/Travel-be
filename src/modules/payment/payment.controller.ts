@@ -41,6 +41,7 @@ export class PaymentController {
       razorpay_payment_id,
       razorpay_signature,
       packageId,
+      agencyId,
       couponId,
       bookingData,
     } = paymentData;
@@ -61,6 +62,7 @@ export class PaymentController {
       const result = await this.bookingService.saveBooking(
         req['user'].sub,
         packageId,
+        agencyId,
         couponId,
         bookingData,
       );

@@ -21,13 +21,18 @@ export class BookingService {
   async saveBooking(
     userId: string,
     packageId: string,
+    agencyId: string,
     couponId: string,
     bookingData: any,
   ) {
     console.log('booking detail --->', bookingData);
-    if (!bookingData || !packageId) {
+    if (!bookingData || !packageId || !agencyId) {
       throw new NotFoundException(
-        !bookingData ? 'Billing details not found' : 'Package ID not provided',
+        !bookingData
+          ? 'Billing details not found'
+          : !packageId
+            ? 'Package ID not provided'
+            : 'Agency ID not found',
       );
     }
 
@@ -64,11 +69,12 @@ export class BookingService {
     const newBooking = new this.BookingModel({
       package_id: packageId,
       user_id: userId,
+      agency_id: agencyId,
       payment: 'online',
       start_date: startDate,
       end_date: endDate,
       travel_status: 'pending',
-      confirmation: 'pending',
+      confirmation: false,
       coupon_id: couponId || null,
       discounted_price: discountPrice,
       total_price: amount,
@@ -89,5 +95,43 @@ export class BookingService {
       console.error('Error saving booking:', error);
       throw new InternalServerErrorException('Failed to save booking');
     }
+  }
+  async getAllBookedPackages(userId: string) {
+    return await this.BookingModel.find({
+      user_id: userId,
+      travel_status: { $ne: 'completed' },
+    }).populate(['user_id', 'package_id', 'agency_id', 'package_id.category']);
+  }
+  async getSingleBookedPackage(bookingId: string) {
+    if (!bookingId) throw new NotFoundException('Cant find booking data');
+    return await this.BookingModel.findOne({
+      _id: bookingId,
+      travel_status: { $ne: 'completed' },
+    }).populate(['package_id', 'user_id', 'agency_id']);
+  }
+
+  async getAllBookingsForAgency(agencyId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const packages = await this.BookingModel.find({ agency_id: agencyId })
+      .skip(skip)
+      .limit(limit)
+      .populate(['agency_id', 'user_id', 'package_id    ']);
+    if (packages.length == 0) throw new NotFoundException('Cant find packages');
+    return {
+      packages,
+      totalItems: packages.length,
+      currentPage: page,
+    };
+  }
+
+  async confirmBooking(bookingId: string, status: boolean) {
+    if (!bookingId || status)
+      throw new NotFoundException(
+        !bookingId ? 'Cant find bookingId' : 'Cant find status',
+      );
+    return await this.BookingModel.updateOne(
+      { _id: bookingId },
+      { confirmation: !status },
+    );
   }
 }

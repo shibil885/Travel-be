@@ -1,13 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Booking extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, type: mongoose.Types.ObjectId, ref: 'User' })
   user_id: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: mongoose.Types.ObjectId, ref: 'Package' })
   package_id: string;
+
+  @Prop({ required: true, type: mongoose.Types.ObjectId, ref: 'Agency' })
+  agency_id: string;
 
   @Prop({ required: true })
   payment: string;
@@ -22,9 +25,9 @@ export class Booking extends Document {
   travel_status: string;
 
   @Prop({ required: true })
-  confirmation: string;
+  confirmation: boolean;
 
-  @Prop()
+  @Prop({ type: mongoose.Types.ObjectId, ref: 'Coupon' })
   coupon_id: string;
 
   @Prop({ required: true })
