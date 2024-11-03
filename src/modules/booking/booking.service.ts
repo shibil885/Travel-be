@@ -134,4 +134,11 @@ export class BookingService {
       { confirmation: !status },
     );
   }
+
+  async cancelBooking(userRole: string, bookingId: string) {
+    const bookedPackage = await this.BookingModel.findById(bookingId);
+    if (userRole === 'agency') {
+      console.log(bookedPackage);
+    }
+  }
 }

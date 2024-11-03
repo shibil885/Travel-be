@@ -107,6 +107,7 @@ export class UserService {
     try {
       const singlePackage = await this.PackageModel.findOne({
         _id: id,
+        isActive: true,
       }).populate(['agencyId', 'category']);
       if (!singlePackage) {
         throw new NotFoundException();
