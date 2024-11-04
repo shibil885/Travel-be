@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { Response } from 'express';
+import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
 
 @Controller('booking')
 export class BookingController {
@@ -97,7 +98,7 @@ export class BookingController {
   async confirmBooking(
     @Res() res: Response,
     @Param('bookingId') bookingId: string,
-    @Body('status') status: boolean,
+    @Body('status') status: TravelConfirmationStatus,
   ) {
     try {
       const result = await this.bookingService.confirmBooking(
@@ -120,6 +121,30 @@ export class BookingController {
       return res
         .status(HttpStatus.OK)
         .json({ success: false, message: error.message });
+    }
+  }
+
+  @Patch('cancelBooking/:bookingId')
+  async cancelBooking(
+    @Res() res: Response,
+    @Param('bookingId') bookingId: string,
+    @Body('user') user: string,
+  ) {
+    try {
+      const result = await this.bookingService.cancelBooking(user, bookingId);
+      return result
+        ? res
+            .status(HttpStatus.OK)
+            .json({ success: true, message: 'Booking canceled' })
+        : res
+            .status(HttpStatus.BAD_REQUEST)
+            .json({ success: false, message: 'Unable to cancel booking' });
+    } catch (error) {
+      console.log('------------------------->', error);
+      return res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || 'An error occurred',
+      });
     }
   }
 }

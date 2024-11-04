@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -9,6 +10,12 @@ import { Model } from 'mongoose';
 import { Coupon } from '../coupon/schema/coupon.schema';
 import { Booking } from './schema/booking.schema';
 import { addDays } from 'date-fns';
+import { WalletService } from '../wallet/wallet.service';
+import { TravelStatus } from 'src/common/enum/travelStatus.enum';
+import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
+import { Transaction } from '../wallet/schema/wallet.schema';
+import { TransactionType } from 'src/common/enum/transactionType.enum';
+import { ErrorMessages } from 'src/common/enum/error.enum';
 
 @Injectable()
 export class BookingService {
@@ -16,6 +23,7 @@ export class BookingService {
     @InjectModel(Booking.name) private BookingModel: Model<Booking>,
     @InjectModel(Package.name) private PackageModel: Model<Package>,
     @InjectModel(Coupon.name) private CouponModel: Model<Coupon>,
+    private _WalletService: WalletService,
   ) {}
 
   async saveBooking(
@@ -73,8 +81,8 @@ export class BookingService {
       payment: 'online',
       start_date: startDate,
       end_date: endDate,
-      travel_status: 'pending',
-      confirmation: false,
+      travel_status: TravelStatus.PENDING,
+      confirmation: TravelConfirmationStatus.PENDING,
       coupon_id: couponId || null,
       discounted_price: discountPrice,
       total_price: amount,
@@ -96,12 +104,14 @@ export class BookingService {
       throw new InternalServerErrorException('Failed to save booking');
     }
   }
+
   async getAllBookedPackages(userId: string) {
     return await this.BookingModel.find({
       user_id: userId,
       travel_status: { $ne: 'completed' },
     }).populate(['user_id', 'package_id', 'agency_id', 'package_id.category']);
   }
+
   async getSingleBookedPackage(bookingId: string) {
     if (!bookingId) throw new NotFoundException('Cant find booking data');
     return await this.BookingModel.findOne({
@@ -124,21 +134,110 @@ export class BookingService {
     };
   }
 
-  async confirmBooking(bookingId: string, status: boolean) {
-    if (!bookingId || status)
+  async confirmBooking(bookingId: string, status: TravelConfirmationStatus) {
+    console.log('body----------->>', status);
+    if (!bookingId || !status)
       throw new NotFoundException(
         !bookingId ? 'Cant find bookingId' : 'Cant find status',
       );
     return await this.BookingModel.updateOne(
       { _id: bookingId },
-      { confirmation: !status },
+      { $set: { confirmation: status } },
     );
   }
 
-  async cancelBooking(userRole: string, bookingId: string) {
-    const bookedPackage = await this.BookingModel.findById(bookingId);
-    if (userRole === 'agency') {
-      console.log(bookedPackage);
+  async cancelBooking(userRole: string, bookingId: string): Promise<boolean> {
+    try {
+      const bookedPackage = await this.BookingModel.findById(bookingId).exec();
+      if (!bookedPackage) {
+        throw new NotFoundException(ErrorMessages.BOOKING_NOT_FOUND);
+      }
+
+      const userWallet = await this._WalletService.getOrCreateUserWallet(
+        bookedPackage.user_id,
+      );
+      if (!userWallet) {
+        throw new BadRequestException(ErrorMessages.WALLET_NOT_FOUND);
+      }
+
+      const newTransaction: Transaction = {
+        amount: Number(bookedPackage.total_price),
+        description: 'Booking canceled',
+        type: TransactionType.CREDIT,
+      };
+
+      if (userRole === 'agency') {
+        await Promise.all([
+          this.BookingModel.updateOne(
+            { _id: bookingId },
+            {
+              $set: {
+                travel_status: TravelStatus.CANCELLED,
+                confirmation: TravelConfirmationStatus.REJECTED,
+              },
+            },
+          ),
+          this._WalletService.updateBalanceAndTransaction(
+            bookedPackage.user_id,
+            userWallet.balance + Number(bookedPackage.total_price),
+            newTransaction,
+          ),
+        ]);
+        return true;
+      } else if (userRole === 'user') {
+        const refundAmount = this._calculateRefund(
+          bookedPackage.total_price,
+          bookedPackage.createdAt,
+        );
+        await Promise.all([
+          this.BookingModel.updateOne(
+            { _id: bookingId },
+            {
+              $set: {
+                travel_status: TravelStatus.CANCELLED,
+                confirmation: TravelConfirmationStatus.REJECTED,
+              },
+            },
+          ),
+          this._WalletService.updateBalanceAndTransaction(
+            bookedPackage.user_id,
+            userWallet.balance + refundAmount,
+            { ...newTransaction, amount: refundAmount },
+          ),
+        ]);
+        return true;
+      } else {
+        throw new BadRequestException(
+          'User role not authorized to cancel booking',
+        );
+      }
+    } catch (error) {
+      console.error('Error cancelling booking:', error.message);
+      if (error.message === ErrorMessages.WALLET_CREATION_FAILED) {
+        throw new BadRequestException(error.message);
+      } else if (error instanceof BadRequestException) {
+        throw new BadRequestException(error.message);
+      } else if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(
+          ErrorMessages.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+  }
+
+  private _calculateRefund(price: string, createdAt: Date): number {
+    const today = Date.now();
+    const bookedDate = createdAt.getTime();
+    const diffInHours = (today - bookedDate) / (1000 * 60 * 60);
+
+    if (diffInHours <= 24) {
+      return Number(price);
+    } else if (diffInHours >= 72 && diffInHours <= 168) {
+      return Number(price) * 0.5;
+    } else {
+      return 0;
     }
   }
 }

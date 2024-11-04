@@ -1,16 +1,19 @@
+// src/booking/schema/booking.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
+import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
+import { TravelStatus } from 'src/common/enum/travelStatus.enum';
 
 @Schema({ timestamps: true })
 export class Booking extends Document {
-  @Prop({ required: true, type: mongoose.Types.ObjectId, ref: 'User' })
-  user_id: string;
+  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  user_id: Types.ObjectId;
 
-  @Prop({ required: true, type: mongoose.Types.ObjectId, ref: 'Package' })
-  package_id: string;
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Package' })
+  package_id: Types.ObjectId;
 
-  @Prop({ required: true, type: mongoose.Types.ObjectId, ref: 'Agency' })
-  agency_id: string;
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Agency' })
+  agency_id: Types.ObjectId;
 
   @Prop({ required: true })
   payment: string;
@@ -21,14 +24,24 @@ export class Booking extends Document {
   @Prop({ required: true })
   end_date: Date;
 
-  @Prop({ required: true })
-  travel_status: string;
+  @Prop({
+    required: true,
+    type: String,
+    enum: Object.values(TravelStatus),
+    default: TravelStatus.PENDING,
+  })
+  travel_status: TravelStatus;
 
-  @Prop({ required: true })
-  confirmation: boolean;
+  @Prop({
+    required: true,
+    type: String,
+    enum: Object.values(TravelConfirmationStatus),
+    default: TravelConfirmationStatus.PENDING,
+  })
+  confirmation: TravelConfirmationStatus;
 
-  @Prop({ type: mongoose.Types.ObjectId, ref: 'Coupon' })
-  coupon_id: string;
+  @Prop({ type: Types.ObjectId, ref: 'Coupon' })
+  coupon_id: Types.ObjectId;
 
   @Prop({ required: true })
   discounted_price: string;
@@ -62,6 +75,8 @@ export class Booking extends Document {
     email: string;
     phone: string;
   };
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);

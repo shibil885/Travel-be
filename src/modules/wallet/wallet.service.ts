@@ -1,37 +1,41 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Transaction, Wallet } from './schema/wallet.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
+import { ErrorMessages } from 'src/common/enum/error.enum';
 
 @Injectable()
 export class WalletService {
   constructor(@InjectModel(Wallet.name) private _WalletModel: Model<Wallet>) {}
 
-  async createWallet(userId: string) {
-    const newWalletOfUser = await new this._WalletModel({
-      userId: userId,
-    }).save();
-    return newWalletOfUser ? true : false;
-  }
-
-  async getUserWallet(userId: string) {
-    const userWallet = await this._WalletModel.findOne({ userId: userId });
-    console.log('userWallet -->', userWallet);
-    return userWallet ? userWallet : null;
+  async getOrCreateUserWallet(userId: Types.ObjectId) {
+    try {
+      let userWallet = await this._WalletModel.findOne({ userId }).exec();
+      if (!userWallet) {
+        userWallet = await this._WalletModel.create({ userId });
+      }
+      return userWallet;
+    } catch (error) {
+      console.error('Error in getOrCreateUserWallet:', error.message);
+      throw new Error(ErrorMessages.WALLET_CREATION_FAILED);
+    }
   }
 
   async updateBalanceAndTransaction(
-    userId: string,
-    newBalance: string,
+    userId: Types.ObjectId,
+    newBalance: number,
     newTransaction: Transaction,
   ) {
-    const walletUpdationResult = await this._WalletModel.updateOne(
-      { userId: userId },
-      {
-        $set: { balance: newBalance },
-        $push: { history: newTransaction },
-      },
-    );
-    return walletUpdationResult.modifiedCount > 0 ? true : false;
+    if (newTransaction.amount > 0) {
+      const walletUpdationResult = await this._WalletModel.updateOne(
+        { userId: userId },
+        {
+          $set: { balance: newBalance },
+          $push: { history: newTransaction },
+        },
+      );
+      return walletUpdationResult.modifiedCount > 0 ? true : false;
+    }
+    return true;
   }
 }
