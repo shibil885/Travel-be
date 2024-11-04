@@ -23,6 +23,7 @@ import { RazorpayModule } from 'nestjs-razorpay';
 import { PaymentModule } from './modules/payment/payment.module';
 import { CookieMiddleware } from './middlewares/cookie.middleware';
 import { BookingModule } from './modules/booking/booking.module';
+import { WalletModule } from './modules/wallet/wallet.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { BookingModule } from './modules/booking/booking.module';
     RazorpayModule,
     PaymentModule,
     BookingModule,
+    WalletModule,
   ],
   controllers: [],
   providers: [],
