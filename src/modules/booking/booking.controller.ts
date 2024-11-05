@@ -25,7 +25,6 @@ export class BookingController {
       const bookedPackages = await this.bookingService.getAllBookedPackages(
         req['user'].sub,
       );
-      console.log('-------------------->', bookedPackages);
       return res
         .status(HttpStatus.OK)
         .json({ success: true, booked: bookedPackages });
@@ -73,7 +72,6 @@ export class BookingController {
         limit,
       );
       if (result) {
-        console.log('result ---->', result.packages);
         return res.status(HttpStatus.OK).json({
           success: true,
           booking: result.packages,
