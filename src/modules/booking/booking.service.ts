@@ -20,9 +20,9 @@ import { ErrorMessages } from 'src/common/enum/error.enum';
 @Injectable()
 export class BookingService {
   constructor(
-    @InjectModel(Booking.name) private BookingModel: Model<Booking>,
-    @InjectModel(Package.name) private PackageModel: Model<Package>,
-    @InjectModel(Coupon.name) private CouponModel: Model<Coupon>,
+    @InjectModel(Booking.name) private _BookingModel: Model<Booking>,
+    @InjectModel(Package.name) private _PackageModel: Model<Package>,
+    @InjectModel(Coupon.name) private _CouponModel: Model<Coupon>,
     private _WalletService: WalletService,
   ) {}
 
@@ -33,7 +33,6 @@ export class BookingService {
     couponId: string,
     bookingData: any,
   ) {
-    console.log('booking detail --->', bookingData);
     if (!bookingData || !packageId || !agencyId) {
       throw new NotFoundException(
         !bookingData
@@ -46,7 +45,7 @@ export class BookingService {
 
     let amount: number;
     let discountPrice: number = 0;
-    const selectedPackage = await this.PackageModel.findById(packageId, {
+    const selectedPackage = await this._PackageModel.findById(packageId, {
       price: 1,
       days: 1,
     });
@@ -54,7 +53,7 @@ export class BookingService {
 
     amount = Number(selectedPackage.price);
     if (couponId) {
-      const selectedCoupon = await this.CouponModel.findById(couponId);
+      const selectedCoupon = await this._CouponModel.findById(couponId);
       if (!selectedCoupon) throw new NotFoundException('Coupon not found');
 
       if (selectedCoupon.discount_type === 'fixed') {
@@ -74,7 +73,7 @@ export class BookingService {
     const startDate = new Date(bookingData.travelDates);
     const endDate = addDays(startDate, Number(selectedPackage.days));
 
-    const newBooking = new this.BookingModel({
+    const newBooking = new this._BookingModel({
       package_id: packageId,
       user_id: userId,
       agency_id: agencyId,
@@ -96,9 +95,23 @@ export class BookingService {
     });
 
     try {
-      const savedBooking = await newBooking.save();
-      console.log('New booking saved:', savedBooking);
-      return savedBooking;
+      await Promise.all([
+        newBooking.save(),
+        this._CouponModel.updateOne(
+          { _id: couponId },
+          {
+            $push: { used: userId },
+          },
+        ),
+      ])
+        .then(() => {
+          return true;
+        })
+        .catch(() => {
+          throw new InternalServerErrorException(
+            ErrorMessages.DATABASE_OPERATION_FAILED,
+          );
+        });
     } catch (error) {
       console.error('Error saving booking:', error);
       throw new InternalServerErrorException('Failed to save booking');
@@ -106,23 +119,28 @@ export class BookingService {
   }
 
   async getAllBookedPackages(userId: string) {
-    return await this.BookingModel.find({
-      user_id: userId,
-      travel_status: { $ne: 'completed' },
-    }).populate(['user_id', 'package_id', 'agency_id', 'package_id.category']);
+    return await this._BookingModel
+      .find({
+        user_id: userId,
+        travel_status: { $ne: 'completed' },
+      })
+      .populate(['user_id', 'package_id', 'agency_id', 'package_id.category']);
   }
 
   async getSingleBookedPackage(bookingId: string) {
     if (!bookingId) throw new NotFoundException('Cant find booking data');
-    return await this.BookingModel.findOne({
-      _id: bookingId,
-      travel_status: { $ne: 'completed' },
-    }).populate(['package_id', 'user_id', 'agency_id']);
+    return await this._BookingModel
+      .findOne({
+        _id: bookingId,
+        travel_status: { $ne: 'completed' },
+      })
+      .populate(['package_id', 'user_id', 'agency_id']);
   }
 
   async getAllBookingsForAgency(agencyId: string, page: number, limit: number) {
     const skip = (page - 1) * limit;
-    const packages = await this.BookingModel.find({ agency_id: agencyId })
+    const packages = await this._BookingModel
+      .find({ agency_id: agencyId })
       .skip(skip)
       .limit(limit)
       .populate(['agency_id', 'user_id', 'package_id    ']);
@@ -135,12 +153,11 @@ export class BookingService {
   }
 
   async confirmBooking(bookingId: string, status: TravelConfirmationStatus) {
-    console.log('body----------->>', status);
     if (!bookingId || !status)
       throw new NotFoundException(
         !bookingId ? 'Cant find bookingId' : 'Cant find status',
       );
-    return await this.BookingModel.updateOne(
+    return await this._BookingModel.updateOne(
       { _id: bookingId },
       { $set: { confirmation: status } },
     );
@@ -148,7 +165,7 @@ export class BookingService {
 
   async cancelBooking(userRole: string, bookingId: string): Promise<boolean> {
     try {
-      const bookedPackage = await this.BookingModel.findById(bookingId).exec();
+      const bookedPackage = await this._BookingModel.findById(bookingId).exec();
       if (!bookedPackage) {
         throw new NotFoundException(ErrorMessages.BOOKING_NOT_FOUND);
       }
@@ -168,7 +185,7 @@ export class BookingService {
 
       if (userRole === 'agency') {
         await Promise.all([
-          this.BookingModel.updateOne(
+          this._BookingModel.updateOne(
             { _id: bookingId },
             {
               $set: {
@@ -190,7 +207,7 @@ export class BookingService {
           bookedPackage.createdAt,
         );
         await Promise.all([
-          this.BookingModel.updateOne(
+          this._BookingModel.updateOne(
             { _id: bookingId },
             {
               $set: {
@@ -204,8 +221,15 @@ export class BookingService {
             userWallet.balance + refundAmount,
             { ...newTransaction, amount: refundAmount },
           ),
-        ]);
-        return true;
+        ])
+          .then(() => {
+            return true;
+          })
+          .catch(() => {
+            throw new InternalServerErrorException(
+              'Booking cancellation failed',
+            );
+          });
       } else {
         throw new BadRequestException(
           'User role not authorized to cancel booking',
@@ -221,7 +245,7 @@ export class BookingService {
         throw new NotFoundException(error.message);
       } else {
         throw new InternalServerErrorException(
-          ErrorMessages.INTERNAL_SERVER_ERROR,
+          error.message || ErrorMessages.INTERNAL_SERVER_ERROR,
         );
       }
     }
