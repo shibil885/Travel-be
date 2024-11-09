@@ -106,9 +106,17 @@ export class CouponService {
     return updatedCoupon.modifiedCount > 0 ? true : false;
   }
 
-  async getAllCoupon() {
-    const coupons = await this.CouponModel.find({});
-    return coupons.length > 0 ? coupons : coupons.length == 0 ? [] : null;
+  async getAllCoupon(page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [coupons, couponsCount] = await Promise.all([
+      this.CouponModel.find({}).skip(skip).limit(limit),
+      this.CouponModel.countDocuments(),
+    ]);
+    return {
+      coupons,
+      couponsCount,
+      page,
+    };
   }
 
   async getAllCouponsForUser(packageId: string, userId: string) {

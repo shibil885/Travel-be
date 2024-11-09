@@ -23,11 +23,15 @@ export class PaymentController {
     @Req() req: Request,
     @Body() body: { packageId: string; couponId: string },
   ) {
-    return this.paymentService.createOrder(
+    const result = await this.paymentService.createOrder(
       req['user'].sub,
       body.packageId,
       body.couponId,
     );
+    return {
+      success: true,
+      ...result,
+    };
   }
 
   @Post('verify')

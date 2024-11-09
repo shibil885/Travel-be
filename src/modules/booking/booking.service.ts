@@ -95,23 +95,20 @@ export class BookingService {
     });
 
     try {
-      await Promise.all([
-        newBooking.save(),
-        this._CouponModel.updateOne(
-          { _id: couponId },
-          {
-            $push: { used: userId },
-          },
-        ),
-      ])
-        .then(() => {
-          return true;
-        })
-        .catch(() => {
-          throw new InternalServerErrorException(
-            ErrorMessages.DATABASE_OPERATION_FAILED,
-          );
-        });
+      if (couponId) {
+        await Promise.all([
+          newBooking.save(),
+          this._CouponModel.updateOne(
+            { _id: couponId },
+            {
+              $push: { used: userId },
+            },
+          ),
+        ]);
+        return true;
+      }
+      await newBooking.save();
+      return true;
     } catch (error) {
       console.error('Error saving booking:', error);
       throw new InternalServerErrorException('Failed to save booking');
@@ -144,7 +141,8 @@ export class BookingService {
       .skip(skip)
       .limit(limit)
       .populate(['agency_id', 'user_id', 'package_id    ']);
-    if (packages.length == 0) throw new NotFoundException('Cant find packages');
+    if (packages.length == 0)
+      throw new NotFoundException(ErrorMessages.BOOKING_NOT_FOUND);
     return {
       packages,
       totalItems: packages.length,
@@ -221,15 +219,8 @@ export class BookingService {
             userWallet.balance + refundAmount,
             { ...newTransaction, amount: refundAmount },
           ),
-        ])
-          .then(() => {
-            return true;
-          })
-          .catch(() => {
-            throw new InternalServerErrorException(
-              'Booking cancellation failed',
-            );
-          });
+        ]);
+        return true;
       } else {
         throw new BadRequestException(
           'User role not authorized to cancel booking',

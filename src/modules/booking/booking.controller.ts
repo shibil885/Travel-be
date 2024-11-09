@@ -14,6 +14,7 @@ import {
 import { BookingService } from './booking.service';
 import { Response } from 'express';
 import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
+import { ErrorMessages } from 'src/common/enum/error.enum';
 
 @Controller('booking')
 export class BookingController {
@@ -58,6 +59,7 @@ export class BookingController {
         .json({ success: false, message: error.message });
     }
   }
+
   @Get('getAllBookingsForAgency')
   async getAllBookingsForAgency(
     @Req() req: Request,
@@ -71,7 +73,7 @@ export class BookingController {
         page,
         limit,
       );
-      if (result) {
+      if (result.packages.length > 0) {
         return res.status(HttpStatus.OK).json({
           success: true,
           booking: result.packages,
@@ -79,16 +81,17 @@ export class BookingController {
           currentPage: result.currentPage,
         });
       }
+      throw new NotFoundException(ErrorMessages.BOOKING_NOT_FOUND);
     } catch (error) {
       console.log('Error occured while fetching bookings for agency', error);
       if (error instanceof NotFoundException) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ success: true, booking: [] });
+          .json({ info: true, message: error.message, booking: [] });
       }
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: true, booking: [] });
+        .json({ success: false, message: error.message, booking: [] });
     }
   }
 

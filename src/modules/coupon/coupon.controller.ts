@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
   Res,
 } from '@nestjs/common';
@@ -107,14 +108,22 @@ export class CouponController {
   }
 
   @Get('getAllCoupons')
-  async getAllCoupons(@Res() res: Response) {
+  async getAllCoupons(
+    @Res() res: Response,
+    @Query('currentPage') page: number,
+    @Query('limit') limit: number,
+  ) {
     try {
-      const result = await this.couponService.getAllCoupon();
-      if (result.length > 0) {
-        return res
-          .status(HttpStatus.OK)
-          .json({ success: true, message: 'List of Coupons', coupons: result });
-      } else if (result.length == 0) {
+      const result = await this.couponService.getAllCoupon(page, Number(limit));
+      if (result.coupons.length > 0) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          message: 'List of Coupons',
+          coupons: result.coupons,
+          totalItems: result.couponsCount,
+          currentPage: result.page,
+        });
+      } else if (result.coupons.length == 0) {
         throw new NotFoundException();
       }
       throw new InternalServerErrorException();
