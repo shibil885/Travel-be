@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Package } from '../package/schema/package.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Coupon } from '../coupon/schema/coupon.schema';
 import { Booking } from './schema/booking.schema';
 import { addDays } from 'date-fns';
@@ -74,9 +74,9 @@ export class BookingService {
     const endDate = addDays(startDate, Number(selectedPackage.days));
 
     const newBooking = new this._BookingModel({
-      package_id: packageId,
-      user_id: userId,
-      agency_id: agencyId,
+      package_id: new Types.ObjectId(packageId),
+      user_id: new Types.ObjectId(userId),
+      agency_id: new Types.ObjectId(agencyId),
       payment: 'online',
       start_date: startDate,
       end_date: endDate,
@@ -115,13 +115,79 @@ export class BookingService {
     }
   }
 
-  async getAllBookedPackages(userId: string) {
-    return await this._BookingModel
-      .find({
-        user_id: userId,
-        travel_status: { $ne: 'completed' },
-      })
-      .populate(['user_id', 'package_id', 'agency_id', 'package_id.category']);
+  async getAllBookedPackages(userId: string, page: number, limit: number) {
+    try {
+      const skip = (page - 1) * limit;
+      const [bookedPackages, bookedPackageCount] = await Promise.all([
+        this._BookingModel
+          .aggregate([
+            {
+              $match: {
+                user_id: new Types.ObjectId(userId),
+                $or: [
+                  { travel_status: TravelStatus.PENDING },
+                  { travel_status: TravelStatus.STARTED },
+                ],
+              },
+            },
+            {
+              $lookup: {
+                from: 'packages',
+                localField: 'package_id',
+                foreignField: '_id',
+                as: 'package',
+              },
+            },
+            { $unwind: '$package' },
+            {
+              $lookup: {
+                from: 'agencies',
+                localField: 'package.agencyId',
+                foreignField: '_id',
+                as: 'agency',
+              },
+            },
+            { $unwind: '$agency' },
+            {
+              $lookup: {
+                from: 'categories',
+                localField: 'package.category',
+                foreignField: '_id',
+                as: 'category',
+              },
+            },
+            { $unwind: '$category' },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'user_id',
+                foreignField: '_id',
+                as: 'user',
+              },
+            },
+            {
+              $unwind: '$user',
+            },
+          ])
+          .skip(skip)
+          .limit(limit),
+        this._BookingModel.countDocuments({
+          user_id: new Types.ObjectId(userId),
+          $or: [
+            { travel_status: TravelStatus.PENDING },
+            { travel_status: TravelStatus.STARTED },
+          ],
+        }),
+      ]);
+      return {
+        bookedPackageCount,
+        bookedPackages,
+        page,
+      };
+    } catch (error) {
+      console.log('Error occured while fetch booking', error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async getSingleBookedPackage(bookingId: string) {
@@ -140,7 +206,7 @@ export class BookingService {
       .find({ agency_id: agencyId })
       .skip(skip)
       .limit(limit)
-      .populate(['agency_id', 'user_id', 'package_id    ']);
+      .populate(['agency_id', 'user_id', 'package_id']);
     if (packages.length == 0)
       throw new NotFoundException(ErrorMessages.BOOKING_NOT_FOUND);
     return {

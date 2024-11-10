@@ -21,14 +21,32 @@ export class BookingController {
   constructor(private bookingService: BookingService) {}
 
   @Get('getAllBooked')
-  async getAllBooked(@Req() req: Request, @Res() res: Response) {
+  async getAllBooked(
+    @Req() req: Request,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Res() res: Response,
+  ) {
     try {
-      const bookedPackages = await this.bookingService.getAllBookedPackages(
+      const response = await this.bookingService.getAllBookedPackages(
         req['user'].sub,
+        Number(page),
+        Number(limit),
       );
-      return res
-        .status(HttpStatus.OK)
-        .json({ success: true, booked: bookedPackages });
+      if (response.bookedPackages.length > 0) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          booked: response.bookedPackages,
+          totalItems: response.bookedPackageCount,
+          currentPage: response.page,
+        });
+      }
+      return res.status(HttpStatus.OK).json({
+        info: true,
+        booked: [],
+        totalItems: response.bookedPackageCount,
+        currentPage: response.page,
+      });
     } catch (error) {
       console.log('Error occure while fetch bookrd data from db', error);
       return res

@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Package } from './schema/package.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
@@ -37,7 +37,7 @@ export class PackageService {
       const imageUrls = await Promise.all(imageUploadPromises);
       const newPackageData = {
         name: parsedPackageInfo.name,
-        category: parsedPackageInfo.category,
+        category: new Types.ObjectId(parsedPackageInfo.category),
         country: parsedPackageInfo.country,
         description: parsedPackageInfo.description,
         departure: parsedTravelInfo.departure,
@@ -92,8 +92,18 @@ export class PackageService {
     try {
       const skip = (page - 1) * limit;
       const [packages, totalPackages] = await Promise.all([
-        this.PackageModel.find({ agencyId: id })
-          .populate('category')
+        this.PackageModel.aggregate([
+          { $match: { agencyId: new Types.ObjectId(id) } },
+          {
+            $lookup: {
+              from: 'categories',
+              localField: 'category',
+              foreignField: '_id',
+              as: 'category',
+            },
+          },
+          { $unwind: '$category' },
+        ])
           .skip(skip)
           .limit(limit),
         this.PackageModel.countDocuments(),

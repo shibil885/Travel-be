@@ -1,4 +1,3 @@
-// src/booking/schema/booking.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';

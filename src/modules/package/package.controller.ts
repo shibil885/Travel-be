@@ -34,7 +34,7 @@ export class PackageController {
         await this.packageService.getAllPackages(
           req['agency'].sub,
           page,
-          limit,
+          Number(limit),
         );
       return res.status(HttpStatus.OK).json({
         message: 'List of packages',
