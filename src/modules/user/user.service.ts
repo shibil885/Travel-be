@@ -15,6 +15,7 @@ import * as bcrypt from 'bcrypt';
 import { Agency } from '../agency/schema/agency.schema';
 import { Package } from '../package/schema/package.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { UpdateUserDto } from 'src/common/dtos/updateUser.dto';
 
 @Injectable()
 export class UserService {
@@ -107,7 +108,10 @@ export class UserService {
     }
   }
 
-  async upoloadUserProfile(userId: string, profileImage: Express.Multer.File) {
+  async upoloadUserProfileImage(
+    userId: string,
+    profileImage: Express.Multer.File,
+  ) {
     try {
       const imageUrl = await this._cloudinaryService
         .uploadFile(profileImage)
@@ -178,6 +182,24 @@ export class UserService {
         throw new NotFoundException('No Packages Found');
       }
       throw new InternalServerErrorException();
+    }
+  }
+
+  async updateUserProfile(userId: string, userData: UpdateUserDto) {
+    try {
+      const result = await this.userModel.updateOne(
+        { _id: userId },
+        {
+          $set: {
+            username: userData.username,
+            email: userData.email,
+            phone: userData.phone,
+          },
+        },
+      );
+      return result.modifiedCount > 0 ? true : null;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
     }
   }
 

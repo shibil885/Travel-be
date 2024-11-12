@@ -17,6 +17,7 @@ import { UserService } from './user.service';
 import { Request, Response } from 'express';
 import { NotFoundError } from 'rxjs';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { UpdateUserDto } from 'src/common/dtos/updateUser.dto';
 
 @Controller('user')
 export class UserController {
@@ -108,7 +109,7 @@ export class UserController {
     @Res() res: Response,
     @UploadedFile() image: Express.Multer.File,
   ) {
-    const response = await this.userService.upoloadUserProfile(
+    const response = await this.userService.upoloadUserProfileImage(
       req['user']['sub'],
       image,
     );
@@ -138,5 +139,27 @@ export class UserController {
     return res.status(200).json({
       message: 'Logout successful',
     });
+  }
+  @Patch('update-userProfile')
+  async updateUserProfile(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() userData: UpdateUserDto,
+  ) {
+    try {
+      const response = await this.userService.updateUserProfile(
+        req.user['sub'],
+        userData,
+      );
+      if (response) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'Profile updated successfully!' });
+      }
+    } catch (error) {
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message });
+    }
   }
 }
