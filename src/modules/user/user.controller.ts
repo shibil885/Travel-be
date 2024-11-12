@@ -3,14 +3,16 @@ import {
   Controller,
   Get,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
   Query,
+  Req,
   Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { NotFoundError } from 'rxjs';
 
 @Controller('user')
@@ -71,10 +73,31 @@ export class UserController {
   createUser(@Res() res: Response, @Body() userData) {
     return this.userService.createUser(res, userData);
   }
+
   @Post('isExistingMail')
   findEmail(@Res() res: Response, @Body() body) {
     return this.userService.findEmail(res, body.email);
   }
+
+  @Get('details')
+  async getUserDetail(@Req() req: Request, @Res() res: Response) {
+    try {
+      const result = await this.userService.findOne(req['user']['email']);
+      if (result)
+        return res.status(HttpStatus.OK).json({ success: true, user: result });
+      else throw new NotFoundException('User not found');
+    } catch (error) {
+      if (error instanceof NotFoundException)
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, user: null, message: error.message });
+      else
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json({ success: false, user: null, message: error.message });
+    }
+  }
+
   @Patch('logout')
   userLogout(@Res() res: Response) {
     console.log('Backend: Logout endpoint hit');
