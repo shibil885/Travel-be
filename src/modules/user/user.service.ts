@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateUserDto } from 'src/common/dtos/user.dto';
 import { Response } from 'express';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
@@ -14,6 +14,7 @@ import { Otp } from '../otp/schema/otp.schema';
 import * as bcrypt from 'bcrypt';
 import { Agency } from '../agency/schema/agency.schema';
 import { Package } from '../package/schema/package.schema';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class UserService {
@@ -22,6 +23,7 @@ export class UserService {
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
     @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
     @InjectModel(Package.name) private PackageModel: Model<Package>,
+    private _cloudinaryService: CloudinaryService,
   ) {}
 
   async findEmail(res: Response, email: string) {
@@ -60,6 +62,8 @@ export class UserService {
         username: userData.userName,
         password: hashedPassword,
         phone: userData.phone,
+        profilePicture: '',
+        preferences: [],
       });
 
       const otp = Math.floor(1000 + Math.random() * 9000);
@@ -100,6 +104,28 @@ export class UserService {
     } catch (error) {
       console.error('Error occurred while fetching user:', error);
       throw new InternalServerErrorException('Internal Server Error');
+    }
+  }
+
+  async upoloadUserProfile(userId: string, profileImage: Express.Multer.File) {
+    try {
+      const imageUrl = await this._cloudinaryService
+        .uploadFile(profileImage)
+        .then((res) => {
+          return res.url;
+        })
+        .catch((error) => {
+          new InternalServerErrorException(error.message);
+        });
+      const updateResult = await this.userModel.updateOne(
+        {
+          _id: new Types.ObjectId(userId),
+        },
+        { $set: { profilePicture: imageUrl } },
+      );
+      return updateResult.modifiedCount > 0 ? true : null;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
     }
   }
 

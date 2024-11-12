@@ -10,10 +10,13 @@ import {
   Query,
   Req,
   Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Request, Response } from 'express';
 import { NotFoundError } from 'rxjs';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('user')
 export class UserController {
@@ -96,6 +99,27 @@ export class UserController {
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ success: false, user: null, message: error.message });
     }
+  }
+
+  @Patch('profileImage-update')
+  @UseInterceptors(FileInterceptor('profileImg'))
+  async uploadProfileImage(
+    @Req() req: Request,
+    @Res() res: Response,
+    @UploadedFile() image: Express.Multer.File,
+  ) {
+    const response = await this.userService.upoloadUserProfile(
+      req['user']['sub'],
+      image,
+    );
+    if (response) {
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: 'Profile image uploaded' });
+    }
+    return res
+      .status(HttpStatus.OK)
+      .json({ success: true, message: 'Profile image uploaded' });
   }
 
   @Patch('logout')

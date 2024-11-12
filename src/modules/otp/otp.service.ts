@@ -42,7 +42,6 @@ export class OtpService {
       );
       const userData = await this.userModel.findOne({ email: otpdata.email });
       const payload = { sub: userData._id, email: otpdata.email, role: 'user' };
-      console.log('payload =>', payload);
       const tokens = await this.authService.generateTokens(payload);
 
       return {
