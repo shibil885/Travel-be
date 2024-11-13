@@ -10,9 +10,13 @@ export class WalletService {
 
   async getOrCreateUserWallet(userId: Types.ObjectId) {
     try {
-      let userWallet = await this._WalletModel.findOne({ userId }).exec();
+      let userWallet = await this._WalletModel
+        .findOne({ userId: new Types.ObjectId(userId) })
+        .exec();
       if (!userWallet) {
-        userWallet = await this._WalletModel.create({ userId });
+        userWallet = await this._WalletModel.create({
+          userId: new Types.ObjectId(userId),
+        });
       }
       return userWallet;
     } catch (error) {
@@ -28,12 +32,13 @@ export class WalletService {
   ) {
     if (newTransaction.amount > 0) {
       const walletUpdationResult = await this._WalletModel.updateOne(
-        { userId: userId },
+        { userId: new Types.ObjectId(userId) },
         {
           $set: { balance: newBalance },
           $push: { history: newTransaction },
         },
       );
+      console.log('walletUpdationResult --->', walletUpdationResult);
       return walletUpdationResult.modifiedCount > 0 ? true : false;
     }
     return true;

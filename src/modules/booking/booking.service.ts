@@ -230,6 +230,7 @@ export class BookingService {
   async cancelBooking(userRole: string, bookingId: string): Promise<boolean> {
     try {
       const bookedPackage = await this._BookingModel.findById(bookingId).exec();
+      console.log('booked ---->', bookedPackage);
       if (!bookedPackage) {
         throw new NotFoundException(ErrorMessages.BOOKING_NOT_FOUND);
       }
@@ -270,6 +271,7 @@ export class BookingService {
           bookedPackage.total_price,
           bookedPackage.createdAt,
         );
+        console.log('refund amount', refundAmount);
         await Promise.all([
           this._BookingModel.updateOne(
             { _id: bookingId },
@@ -312,7 +314,7 @@ export class BookingService {
     const today = Date.now();
     const bookedDate = createdAt.getTime();
     const diffInHours = (today - bookedDate) / (1000 * 60 * 60);
-
+    console.log('houres --->', diffInHours);
     if (diffInHours <= 24) {
       return Number(price);
     } else if (diffInHours >= 72 && diffInHours <= 168) {

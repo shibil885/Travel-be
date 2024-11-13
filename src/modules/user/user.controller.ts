@@ -140,6 +140,7 @@ export class UserController {
       message: 'Logout successful',
     });
   }
+
   @Patch('update-userProfile')
   async updateUserProfile(
     @Req() req: Request,

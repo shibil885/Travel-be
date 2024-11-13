@@ -151,6 +151,7 @@ export class BookingController {
   ) {
     try {
       const result = await this.bookingService.cancelBooking(user, bookingId);
+      console.log('canceled', true);
       return result
         ? res
             .status(HttpStatus.OK)
