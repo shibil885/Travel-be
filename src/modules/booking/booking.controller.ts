@@ -91,10 +91,10 @@ export class BookingController {
         page,
         limit,
       );
-      if (result.packages.length > 0) {
+      if (result.bookings.length > 0) {
         return res.status(HttpStatus.OK).json({
           success: true,
-          booking: result.packages,
+          booking: result.bookings,
           totalItems: result.totalItems,
           currentPage: result.currentPage,
         });

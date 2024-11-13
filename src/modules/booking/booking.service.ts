@@ -201,17 +201,25 @@ export class BookingService {
   }
 
   async getAllBookingsForAgency(agencyId: string, page: number, limit: number) {
+    console.log('limit', limit);
+    console.log('page', page);
     const skip = (page - 1) * limit;
-    const packages = await this._BookingModel
-      .find({ agency_id: agencyId })
-      .skip(skip)
-      .limit(limit)
-      .populate(['agency_id', 'user_id', 'package_id']);
-    if (packages.length == 0)
+    const [bookings, bookingCount] = await Promise.all([
+      this._BookingModel
+        .find({ agency_id: new Types.ObjectId(agencyId) })
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .populate(['agency_id', 'user_id', 'package_id']),
+      this._BookingModel.countDocuments({
+        agency_id: new Types.ObjectId(agencyId),
+      }),
+    ]);
+    if (bookings.length == 0)
       throw new NotFoundException(ErrorMessages.BOOKING_NOT_FOUND);
     return {
-      packages,
-      totalItems: packages.length,
+      bookings,
+      totalItems: bookingCount,
       currentPage: page,
     };
   }
