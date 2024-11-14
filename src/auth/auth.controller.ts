@@ -34,20 +34,20 @@ export class AuthController {
         message: 'Refresh token not found',
       });
     }
-    const tokens = await this.authService.refreshToken(refreshToken);
-    if (!tokens) {
+    const response = await this.authService.refreshToken(refreshToken);
+    if (!response) {
       return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
         message: 'Unauthorized',
       });
     }
 
-    res.cookie('access_token', tokens.access_token, {
+    res.cookie('access_token', response.access_token, {
       httpOnly: true,
       sameSite: 'strict',
       secure: true,
     });
-    res.cookie('refresh_token', tokens.refresh_token, {
+    res.cookie('refresh_token', response.refresh_token, {
       httpOnly: true,
       sameSite: 'strict',
       secure: true,
@@ -56,7 +56,8 @@ export class AuthController {
     return res.status(HttpStatus.OK).json({
       success: true,
       message: 'Access token refreshed successfully',
-      accessToken: tokens.access_token,
+      role: response.role,
+      isRefreshed: true,
     });
   }
 

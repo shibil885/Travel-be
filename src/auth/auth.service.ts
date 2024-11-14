@@ -17,6 +17,7 @@ import { AgencyService } from 'src/modules/agency/agency.service';
 import { AdminDto } from 'src/common/dtos/admin.dto';
 import { AdminService } from 'src/modules/admin/admin.service';
 import { JwtPayload } from 'jsonwebtoken';
+import { Role } from 'src/common/enum/role.enum';
 @Injectable()
 export class AuthService {
   constructor(
@@ -40,6 +41,7 @@ export class AuthService {
       refreshToken,
     };
   }
+
   async validateToken(
     token: string,
   ): Promise<{ valid: boolean; role: string }> {
@@ -47,13 +49,13 @@ export class AuthService {
       const decodedData: JwtPayload = this.jwtService.verify(token);
       let entity;
       switch (decodedData.role) {
-        case 'user':
+        case Role.USER:
           entity = await this.userservice.findOne(decodedData.email);
           break;
-        case 'agency':
+        case Role.AGENCY:
           entity = await this.agencyService.findOne(decodedData.email);
           break;
-        case 'admin':
+        case Role.ADMIN:
           entity = await this.adminService.findAdmin(decodedData.email);
           break;
         default:
@@ -65,6 +67,47 @@ export class AuthService {
     } catch (error) {
       console.error('Error occurred while validating token:', error.message);
       return { valid: false, role: '' };
+    }
+  }
+
+  async refreshToken(refreshToken: string) {
+    try {
+      const decodedData: JwtPayload = this.jwtService.verify(refreshToken);
+      let entity;
+
+      switch (decodedData.role) {
+        case Role.USER:
+          entity = await this.userservice.findOne(decodedData.email);
+          break;
+        case Role.AGENCY:
+          entity = await this.agencyService.findOne(decodedData.email);
+          break;
+        case Role.ADMIN:
+          entity = await this.adminService.findAdmin(decodedData.email);
+          break;
+        default:
+          console.log('Unknown role in token');
+          throw new ForbiddenException('Unknown role');
+      }
+
+      if (!entity) {
+        throw new UnauthorizedException('Entity not found or inactive');
+      }
+
+      const payload = {
+        sub: entity._id,
+        email: entity.email,
+        role: decodedData.role,
+      };
+      const tokens = await this.generateTokens(payload);
+      return {
+        access_token: tokens.accessToken,
+        refresh_token: tokens.refreshToken,
+        role: payload.role,
+      };
+    } catch (error) {
+      console.log('Error while refreshing token:', error);
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 
@@ -159,44 +202,5 @@ export class AuthService {
       success: true,
       message: true,
     };
-  }
-  async refreshToken(refreshToken: string) {
-    try {
-      const decodedData: JwtPayload = this.jwtService.verify(refreshToken);
-      let entity;
-
-      switch (decodedData.role) {
-        case 'user':
-          entity = await this.userservice.findOne(decodedData.email);
-          break;
-        case 'agency':
-          entity = await this.agencyService.findOne(decodedData.email);
-          break;
-        case 'admin':
-          entity = await this.adminService.findAdmin(decodedData.email);
-          break;
-        default:
-          console.log('Unknown role in token');
-          throw new ForbiddenException('Unknown role');
-      }
-
-      if (!entity) {
-        throw new UnauthorizedException('Entity not found or inactive');
-      }
-
-      const payload = {
-        sub: entity._id,
-        email: entity.email,
-        role: decodedData.role,
-      };
-      const tokens = await this.generateTokens(payload);
-      return {
-        access_token: tokens.accessToken,
-        refresh_token: tokens.refreshToken,
-      };
-    } catch (error) {
-      console.log('Error while refreshing token:', error);
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
   }
 }
