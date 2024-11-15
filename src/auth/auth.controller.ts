@@ -14,31 +14,59 @@ import { LoginUserDto } from 'src/common/dtos/loginUser.dto';
 import { AuthService } from './auth.service';
 import { LoginAgencyDto } from 'src/common/dtos/loginAgency.dto';
 import { AdminDto } from 'src/common/dtos/admin.dto';
+import { ErrorMessages } from 'src/common/enum/error.enum';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('validate-token')
-  validateToken(@Req() req: Request) {
+  async validateToken(@Req() req: Request, @Res() res: Response) {
     const tokenToValidate = req.cookies['access_token'];
-    return this.authService.validateToken(tokenToValidate);
+    if (!tokenToValidate) {
+      return res.status(HttpStatus.OK).json({
+        success: false,
+        message: ErrorMessages.TOKEN_EXPIRED,
+        valid: false,
+        role: '',
+      });
+    }
+    const response = await this.authService.validateToken(tokenToValidate);
+    if (response.valid) {
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: 'Token validated',
+        role: response.role,
+        valid: response.valid,
+      });
+    } else {
+      return res.status(HttpStatus.UNAUTHORIZED).json({
+        success: false,
+        message: ErrorMessages.TOKEN_EXPIRED,
+        valid: false,
+        role: response.role,
+      });
+    }
   }
 
   @Post('refresh')
   async refreshAccessToken(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies['refresh_token'];
     if (!refreshToken) {
-      return res.status(HttpStatus.UNAUTHORIZED).json({
+      return res.status(HttpStatus.OK).json({
         success: false,
-        message: 'Refresh token not found',
+        message: ErrorMessages.TOKEN_EXPIRED,
+        role: '',
+        isRefreshed: false,
       });
     }
     const response = await this.authService.refreshToken(refreshToken);
     if (!response) {
       return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
-        message: 'Unauthorized',
+        message: ErrorMessages.TOKEN_EXPIRED,
+        isRefreshed: false,
+        role: response.role,
       });
     }
 

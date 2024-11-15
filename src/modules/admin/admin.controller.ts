@@ -104,13 +104,13 @@ export class AdminController {
   }
   @Patch('logout')
   async agencyLogout(@Req() req: Request, @Res() res: Response) {
-    res.clearCookie('accessToken', {
+    res.clearCookie('access_token', {
       path: '/',
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
     });
-    res.clearCookie('refreshToken', {
+    res.clearCookie('refresh_token', {
       path: '/',
       httpOnly: true,
       secure: true,
