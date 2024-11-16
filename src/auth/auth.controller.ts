@@ -40,7 +40,7 @@ export class AuthController {
         valid: response.valid,
       });
     } else {
-      return res.status(HttpStatus.UNAUTHORIZED).json({
+      return res.status(HttpStatus.OK).json({
         success: false,
         message: ErrorMessages.TOKEN_EXPIRED,
         valid: false,

@@ -32,4 +32,11 @@ export enum ErrorMessages {
   BAD_REQUEST = 'Invalid request',
   NOT_FOUND = 'Requested resource not found',
   INTERNAL_SERVER_ERROR = 'Internal server error',
+
+  //password Errors
+  PASSWORD_NOT_MATCH = "Password don't match",
+  CONFIRM_PASSWOR_NOT_MATCH = "Confirm Password don't match",
+
+  //
+  SOMETHING_WENT_WRONG = 'Somthing went wrong',
 }

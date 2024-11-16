@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   HttpStatus,
   Injectable,
   InternalServerErrorException,
@@ -16,6 +17,8 @@ import { Agency } from '../agency/schema/agency.schema';
 import { Package } from '../package/schema/package.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UpdateUserDto } from 'src/common/dtos/updateUser.dto';
+import { ChangePasswordDto } from 'src/common/dtos/changePassword.dto';
+import { ErrorMessages } from 'src/common/enum/error.enum';
 
 @Injectable()
 export class UserService {
@@ -26,7 +29,6 @@ export class UserService {
     @InjectModel(Package.name) private PackageModel: Model<Package>,
     private _cloudinaryService: CloudinaryService,
   ) {}
-
   async findEmail(res: Response, email: string) {
     try {
       const isExisting = await this.userModel.findOne({
@@ -201,6 +203,34 @@ export class UserService {
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
+  }
+
+  async changePassword(userId: string, passwordData: ChangePasswordDto) {
+    const saltRound: number = 10;
+    const { password } = await this.userModel.findById(
+      new Types.ObjectId(userId),
+      { password: 1 },
+    );
+    const isValid = await bcrypt.compare(
+      passwordData.currentpassword,
+      password,
+    );
+    if (!isValid) throw new NotFoundException(ErrorMessages.PASSWORD_NOT_MATCH);
+    else if (passwordData.newpassword !== passwordData.confirmpassword)
+      throw new ConflictException(ErrorMessages.CONFIRM_PASSWOR_NOT_MATCH);
+    const hashedPassword = await bcrypt.hash(
+      passwordData.newpassword,
+      saltRound,
+    );
+    if (!hashedPassword) throw new InternalServerErrorException();
+
+    const passwordUpdateData = await this.userModel.updateOne(
+      { _id: userId },
+      {
+        $set: { password: hashedPassword },
+      },
+    );
+    return passwordUpdateData.modifiedCount > 0 ? true : null;
   }
 
   findUserById(id: string) {
