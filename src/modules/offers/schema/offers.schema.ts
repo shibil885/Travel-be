@@ -13,7 +13,10 @@ export class Offer extends Document {
   @Prop({ type: String, enum: OfferType, required: true })
   discount_type: OfferType; // Type of discount: percentage or fixed amount
 
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number })
+  percentage: number; // Value of the discount (percentage or fixed)
+
+  @Prop({ type: Number })
   discount_value: number; // Value of the discount (percentage or fixed)
 
   @Prop({ type: Date, required: true })
