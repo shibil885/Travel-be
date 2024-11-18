@@ -1,7 +1,10 @@
 import {
   Controller,
+  Get,
   HttpStatus,
   NotAcceptableException,
+  NotFoundException,
+  Param,
   Query,
   Req,
   Res,
@@ -13,6 +16,7 @@ import { Request, Response } from 'express';
 export class OffersController {
   constructor(private readonly _offerService: OffersService) {}
 
+  @Get()
   async getAllOffers(
     @Req() req: Request,
     @Res() res: Response,
@@ -43,6 +47,36 @@ export class OffersController {
       if (error instanceof NotAcceptableException) {
         return res
           .status(HttpStatus.NOT_ACCEPTABLE)
+          .json({ success: false, message: error.message });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message });
+    }
+  }
+
+  @Get('applicable/:id')
+  async getApplicablePackages(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('id') offerId: string,
+  ) {
+    try {
+      const response = await this._offerService.getApplicablePackages(offerId);
+      if (response) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          message: 'List of  applicable packages',
+          packages: response,
+        });
+      }
+      return res
+        .status(HttpStatus.OK)
+        .json({ info: true, message: 'Add offers to packages' });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
           .json({ success: false, message: error.message });
       }
       return res

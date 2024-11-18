@@ -1,5 +1,9 @@
-import { Injectable, NotAcceptableException } from '@nestjs/common';
-import { Model } from 'mongoose';
+import {
+  Injectable,
+  NotAcceptableException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Model, Types } from 'mongoose';
 import { Offer } from './schema/offers.schema';
 import { InjectModel } from '@nestjs/mongoose';
 
@@ -24,5 +28,14 @@ export class OffersService {
       offerCount,
       page,
     };
+  }
+
+  async getApplicablePackages(offerId: string) {
+    if (!offerId) throw new NotFoundException('Offer id is not provided');
+    const applicablePackages = await this._OfferModel.aggregate([
+      { $match: { _id: new Types.ObjectId(offerId) } },
+      // { $lookup: { from: 'Packges', localField: applicable_packages } },
+    ]);
+    return applicablePackages;
   }
 }
