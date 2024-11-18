@@ -1,4 +1,53 @@
-import { Controller } from '@nestjs/common';
+import {
+  Controller,
+  HttpStatus,
+  NotAcceptableException,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
+import { OffersService } from './offers.service';
+import { Request, Response } from 'express';
 
 @Controller('offers')
-export class OffersController {}
+export class OffersController {
+  constructor(private readonly _offerService: OffersService) {}
+
+  async getAllOffers(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
+    try {
+      const response = await this._offerService.getAllOffers(
+        req['agency']['sub'],
+        page,
+        limit,
+      );
+      if (response.offers.length > 0) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          message: '',
+          offers: response.offers,
+          totalItems: response.offerCount,
+        });
+      }
+      return res.status(HttpStatus.OK).json({
+        info: true,
+        message: 'No offers available. Please add',
+        offers: [],
+        totalItem: 0,
+      });
+    } catch (error) {
+      if (error instanceof NotAcceptableException) {
+        return res
+          .status(HttpStatus.NOT_ACCEPTABLE)
+          .json({ success: false, message: error.message });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message });
+    }
+  }
+}

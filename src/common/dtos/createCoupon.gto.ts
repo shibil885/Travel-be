@@ -6,7 +6,11 @@ import {
   IsEnum,
   IsOptional,
 } from 'class-validator';
-import { DiscountType } from './editCoupon.dto';
+
+export enum DiscountType {
+  PERCENTAGE = 'percentage',
+  FIXED = 'fixed',
+}
 
 export class CreateCouponDto {
   @IsNotEmpty()
