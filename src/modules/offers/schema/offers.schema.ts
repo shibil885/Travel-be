@@ -1,5 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { DiscountType } from 'src/common/enum/discountType.enum';
 import { OfferType } from 'src/common/enum/offerType.enum';
 
 @Schema({ timestamps: true })
@@ -10,7 +11,7 @@ export class Offer extends Document {
   @Prop({ type: String, required: true })
   description: string; // Details about the offer
 
-  @Prop({ type: String, enum: OfferType, required: true })
+  @Prop({ type: String, enum: DiscountType, required: true })
   discount_type: OfferType; // Type of discount: percentage or fixed amount
 
   @Prop({ type: Number })
@@ -25,11 +26,8 @@ export class Offer extends Document {
   @Prop({ type: Boolean, default: true })
   isActive: boolean; // Status of the offer
 
-  @Prop({ type: [Types.ObjectId], ref: 'Package', required: true })
+  @Prop({ type: [Types.ObjectId], ref: 'Package', default: [] })
   applicable_packages: Types.ObjectId[]; // List of packages this offer applies to
-
-  @Prop({ type: Number, default: 0 })
-  min_people: number; // Minimum number of people required to avail of the offer
 
   @Prop({ type: Types.ObjectId, ref: 'Agency', required: true })
   agencyId: Types.ObjectId;

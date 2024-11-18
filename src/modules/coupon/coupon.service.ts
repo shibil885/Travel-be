@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Coupon } from './schema/coupon.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   CreateCouponDto,
   DiscountType,
@@ -71,26 +71,61 @@ export class CouponService {
     return createdCoupon;
   }
 
-  async editCoupon(id: string, editCouponData: EditCouponDto) {
+  // async editCoupon(id: string, editCouponData: EditCouponDto) {
+  //   const lowerCasedCode = editCouponData.code.toLocaleLowerCase();
+  //   const [coupons, isExisting] = await this.CouponModel.aggregate([
+  //     {
+  //       $facet: {
+  //         coupons: [{ $match: { _id: id } }],
+  //         isExisting: [{ $match: { name: lowerCasedCode, _id: { $ne: id } } }],
+  //       },
+  //     },
+  //   ]);
+  //   console.log('cou -->', coupons);
+  //   console.log('isexi -->', isExisting);
+  //   if (coupons.length == 0) {
+  //     throw new NotFoundException('Coupon not found');
+  //   } else if (isExisting) {
+  //     throw new ConflictException('Coupon code already exist');
+  //   }
+  //   const editedCouponResponse = await this.CouponModel.updateOne(
+  //     { _id: id },
+  //     editCouponData,
+  //   );
+  //   return editedCouponResponse.modifiedCount > 0 ? true : null;
+  // }
+  async editCoupon(
+    id: string,
+    editCouponData: EditCouponDto,
+  ): Promise<boolean> {
     const lowerCasedCode = editCouponData.code.toLocaleLowerCase();
-    const [coupons, isExisting] = await this.CouponModel.aggregate([
+    const [fetchResult] = await this.CouponModel.aggregate([
       {
         $facet: {
-          coupons: [{ $match: { _id: id } }],
-          isExisting: [{ $match: { name: lowerCasedCode, _id: { $ne: id } } }],
+          coupons: [{ $match: { _id: new Types.ObjectId(id) } }],
+          isExisting: [
+            {
+              $match: {
+                code: lowerCasedCode,
+                _id: { $ne: new Types.ObjectId(id) },
+              },
+            },
+          ],
         },
       },
     ]);
-    if (coupons.length == 0) {
-      throw new NotFoundException('Category not found');
-    } else if (isExisting) {
-      throw new ConflictException('Coupon code already exist');
+    const { coupons, isExisting } = fetchResult;
+    if (!coupons || coupons.length === 0) {
+      throw new NotFoundException('Coupon not found');
     }
-    const editedCouponResponse = await this.CouponModel.updateOne(
+    if (isExisting && isExisting.length > 0) {
+      throw new ConflictException('Coupon code already exists');
+    }
+    const updateResult = await this.CouponModel.updateOne(
       { _id: id },
-      editCouponData,
+      { $set: editCouponData },
     );
-    return editedCouponResponse.modifiedCount > 0 ? true : null;
+    return updateResult.modifiedCount > 0;
   }
 
   async changeStatus(id: string, status: boolean) {

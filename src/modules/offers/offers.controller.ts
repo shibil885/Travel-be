@@ -1,16 +1,22 @@
 import {
+  Body,
+  ConflictException,
   Controller,
   Get,
   HttpStatus,
   NotAcceptableException,
   NotFoundException,
   Param,
+  Patch,
+  Post,
   Query,
   Req,
   Res,
 } from '@nestjs/common';
 import { OffersService } from './offers.service';
 import { Request, Response } from 'express';
+import { AddOfferDto } from 'src/common/dtos/addOffer.dto';
+import { EditOfferDto } from 'src/common/dtos/editOffer.dto';
 
 @Controller('offers')
 export class OffersController {
@@ -77,6 +83,68 @@ export class OffersController {
       if (error instanceof NotFoundException) {
         return res
           .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: error.message });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message });
+    }
+  }
+
+  @Post('addOffer')
+  async addOffer(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() offerData: AddOfferDto,
+  ) {
+    try {
+      const response = await this._offerService.addOffer(
+        req['agency']['sub'],
+        offerData,
+      );
+      if (response) {
+        return res
+          .status(HttpStatus.CREATED)
+          .json({ success: true, message: 'New Offer Added' });
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: error.message });
+      } else if (error instanceof ConflictException) {
+        return res
+          .status(HttpStatus.CONFLICT)
+          .json({ success: false, message: error.message });
+      } else {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json({ success: false, message: error.message });
+      }
+    }
+  }
+
+  @Patch('edit/:id')
+  async editOffer(
+    @Res() res: Response,
+    @Body() offerData: EditOfferDto,
+    @Param('id') offerId: string,
+  ) {
+    try {
+      const response = await this._offerService.editOffer(offerId, offerData);
+      if (response) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'Offer updated' });
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: error.message });
+      } else if (error instanceof ConflictException) {
+        return res
+          .status(HttpStatus.CONFLICT)
           .json({ success: false, message: error.message });
       }
       return res

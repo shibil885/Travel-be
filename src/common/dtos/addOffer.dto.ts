@@ -7,6 +7,7 @@ import {
   IsOptional,
 } from 'class-validator';
 import { OfferType } from 'src/common/enum/offerType.enum';
+import { DiscountType } from '../enum/discountType.enum';
 
 export class AddOfferDto {
   @IsString()
@@ -19,7 +20,7 @@ export class AddOfferDto {
 
   @IsEnum(OfferType)
   @IsNotEmpty()
-  discount_type: OfferType;
+  discount_type: DiscountType;
 
   @IsNumber()
   @IsOptional()
