@@ -54,6 +54,13 @@ export class Package {
   images: string[];
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Agency', required: true })
   agencyId: Types.ObjectId;
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Offer',
+    required: true,
+    default: null,
+  })
+  offerId: Types.ObjectId;
 
   @Prop({ default: true })
   isActive: boolean;

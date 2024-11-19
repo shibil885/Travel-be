@@ -11,11 +11,13 @@ import { AddOfferDto } from 'src/common/dtos/addOffer.dto';
 import { DiscountType } from 'src/common/enum/discountType.enum';
 import { IOffer } from 'src/common/interfaces/offer.interface';
 import { EditOfferDto } from 'src/common/dtos/editOffer.dto';
+import { Package } from '../package/schema/package.schema';
 
 @Injectable()
 export class OffersService {
   constructor(
     @InjectModel(Offer.name) private readonly _OfferModel: Model<Offer>,
+    @InjectModel(Package.name) private readonly _PackageModel: Model<Package>,
   ) {}
 
   async addOffer(agencyId: string, offerData: AddOfferDto) {
@@ -24,7 +26,6 @@ export class OffersService {
     }
     const lowerCaseTitle = offerData.title.toLocaleLowerCase();
     const isExistingOffer = await this._OfferModel.findOne({
-      agencyId: agencyId,
       title: lowerCaseTitle,
     });
     if (isExistingOffer) {
@@ -92,8 +93,13 @@ export class OffersService {
     }
     const skip = (page - 1) * limit;
     const [offers, offerCount] = await Promise.all([
-      this._OfferModel.find({ agencyId: agencyId }).skip(skip).limit(limit),
-      this._OfferModel.countDocuments({ agencyId: agencyId }),
+      this._OfferModel
+        .find({ agencyId: new Types.ObjectId(agencyId) })
+        .skip(skip)
+        .limit(limit),
+      this._OfferModel.countDocuments({
+        agencyId: new Types.ObjectId(agencyId),
+      }),
     ]);
     return {
       offers,
@@ -102,12 +108,53 @@ export class OffersService {
     };
   }
 
+  async getOneOffer(offerId: string) {
+    if (!offerId) throw new NotFoundException('Offer id is not provided');
+    const offer = await this._OfferModel.findOne({
+      _id: new Types.ObjectId(offerId),
+    });
+    return offer;
+  }
+
   async getApplicablePackages(offerId: string) {
     if (!offerId) throw new NotFoundException('Offer id is not provided');
     const applicablePackages = await this._OfferModel.aggregate([
       { $match: { _id: new Types.ObjectId(offerId) } },
-      // { $lookup: { from: 'Packges', localField: applicable_packages } },
+      { $unwind: '$applicable_packages' },
+      // { $lookup: { from: 'Packges', localField:  } },
     ]);
+    console.log('offerdata', applicablePackages);
     return applicablePackages;
+  }
+
+  async getPackagesForApplyOffer(agencyId: string, offerId: string) {
+    if (!offerId) throw new NotFoundException('Offer id not provided');
+    const packages = await this._PackageModel.find({
+      agencyId: new Types.ObjectId(agencyId),
+      offerId: { $ne: new Types.ObjectId(offerId) },
+    });
+    return packages;
+  }
+
+  async applyOffer(offerId: string, packageId: string) {
+    if (!offerId) throw new NotFoundException('Offer id not provided');
+    const result = await this._OfferModel.updateOne(
+      {
+        _id: new Types.ObjectId(offerId),
+      },
+      { $push: { applicable_packages: new Types.ObjectId(packageId) } },
+    );
+    return result.modifiedCount > 0 ? true : false;
+  }
+
+  async removeOffer(offerId: string, packageId: string) {
+    if (!offerId) throw new NotFoundException('Offer id not provided');
+    const result = await this._OfferModel.updateOne(
+      {
+        _id: new Types.ObjectId(offerId),
+      },
+      { $pull: { applicable_packages: new Types.ObjectId(packageId) } },
+    );
+    return result.modifiedCount > 0 ? true : false;
   }
 }
