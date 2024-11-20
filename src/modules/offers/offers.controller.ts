@@ -253,11 +253,11 @@ export class OffersController {
       if (response) {
         return res
           .status(HttpStatus.OK)
-          .json({ success: true, message: 'Offer rmoved to the package' });
+          .json({ success: true, message: 'Package removed from the offer' });
       }
       return res
         .status(HttpStatus.OK)
-        .json({ success: true, message: 'Offer not romved' });
+        .json({ success: true, message: 'Offer cant remove ' });
     } catch (error) {
       if (error instanceof NotFoundException) {
         return res
