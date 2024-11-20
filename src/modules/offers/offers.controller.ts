@@ -66,7 +66,6 @@ export class OffersController {
   async getOneOffer(@Res() res: Response, @Param('offerId') offerId: string) {
     try {
       const offer = await this._offerService.getOneOffer(offerId);
-      console.log(offer);
       if (offer) {
         return res
           .status(HttpStatus.OK)
@@ -101,7 +100,7 @@ export class OffersController {
         return res.status(HttpStatus.OK).json({
           success: true,
           message: 'List of  applicable packages',
-          offer: response,
+          packages: response[0].packages,
         });
       }
       return res
@@ -200,7 +199,7 @@ export class OffersController {
       }
       return res.status(HttpStatus.OK).json({
         info: true,
-        messsage: 'Add packages for apply offers',
+        message: 'Add packages for apply offers',
         packages: [],
       });
     } catch (error) {

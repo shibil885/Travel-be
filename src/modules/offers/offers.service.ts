@@ -118,12 +118,39 @@ export class OffersService {
 
   async getApplicablePackages(offerId: string) {
     if (!offerId) throw new NotFoundException('Offer id is not provided');
+    const offerExists = await this._OfferModel.exists({
+      _id: new Types.ObjectId(offerId),
+    });
+    if (!offerExists) throw new NotFoundException('Offer not found');
     const applicablePackages = await this._OfferModel.aggregate([
       { $match: { _id: new Types.ObjectId(offerId) } },
-      { $unwind: '$applicable_packages' },
-      // { $lookup: { from: 'Packges', localField:  } },
+      {
+        $unwind: {
+          path: '$applicable_packages',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'packages',
+          localField: 'applicable_packages',
+          foreignField: '_id',
+          as: 'packages',
+        },
+      },
+      // { $unwind: { path: '$packages', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 0,
+          packages: {
+            name: 1,
+            price: 1,
+            images: 1,
+            _id: 1,
+          },
+        },
+      },
     ]);
-    console.log('offerdata', applicablePackages);
     return applicablePackages;
   }
 
@@ -138,23 +165,43 @@ export class OffersService {
 
   async applyOffer(offerId: string, packageId: string) {
     if (!offerId) throw new NotFoundException('Offer id not provided');
-    const result = await this._OfferModel.updateOne(
-      {
-        _id: new Types.ObjectId(offerId),
-      },
-      { $push: { applicable_packages: new Types.ObjectId(packageId) } },
-    );
-    return result.modifiedCount > 0 ? true : false;
+    const [resultOfOffer, resultOfPackage] = await Promise.all([
+      this._OfferModel.updateOne(
+        {
+          _id: new Types.ObjectId(offerId),
+        },
+        { $push: { applicable_packages: new Types.ObjectId(packageId) } },
+      ),
+      this._PackageModel.updateOne(
+        { _id: new Types.ObjectId(packageId) },
+        {
+          $set: { offerId: new Types.ObjectId(offerId) },
+        },
+      ),
+    ]);
+    return resultOfOffer.modifiedCount > 0 && resultOfPackage.modifiedCount > 0
+      ? true
+      : false;
   }
 
   async removeOffer(offerId: string, packageId: string) {
     if (!offerId) throw new NotFoundException('Offer id not provided');
-    const result = await this._OfferModel.updateOne(
-      {
-        _id: new Types.ObjectId(offerId),
-      },
-      { $pull: { applicable_packages: new Types.ObjectId(packageId) } },
-    );
-    return result.modifiedCount > 0 ? true : false;
+    const [resultOfOffer, resultOfPackage] = await Promise.all([
+      this._OfferModel.updateOne(
+        {
+          _id: new Types.ObjectId(offerId),
+        },
+        { $pull: { applicable_packages: new Types.ObjectId(packageId) } },
+      ),
+      this._PackageModel.updateOne(
+        { _id: new Types.ObjectId(packageId) },
+        {
+          $set: { offerId: null },
+        },
+      ),
+    ]);
+    return resultOfOffer.modifiedCount > 0 && resultOfPackage.modifiedCount > 0
+      ? true
+      : false;
   }
 }

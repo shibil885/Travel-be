@@ -1,6 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { DiscountType } from 'src/common/enum/discountType.enum';
 import { OfferType } from 'src/common/enum/offerType.enum';
 
 @Schema({ timestamps: true })
@@ -11,7 +10,7 @@ export class Offer extends Document {
   @Prop({ type: String, required: true })
   description: string;
 
-  @Prop({ type: String, enum: DiscountType, required: true })
+  @Prop({ type: String, enum: OfferType, required: true })
   discount_type: OfferType;
 
   @Prop({ type: Number })
