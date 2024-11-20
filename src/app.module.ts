@@ -25,6 +25,7 @@ import { CookieMiddleware } from './middlewares/cookie.middleware';
 import { BookingModule } from './modules/booking/booking.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { OffersModule } from './modules/offers/offers.module';
+import { PostsModule } from './modules/posts/posts.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { OffersModule } from './modules/offers/offers.module';
     BookingModule,
     WalletModule,
     OffersModule,
+    PostsModule,
   ],
   controllers: [],
   providers: [],
