@@ -18,6 +18,21 @@ export class PostsService {
     private readonly _cloudinaryService: CloudinaryService,
   ) {}
 
+  async getUserPosts(userId: string) {
+    return await this._PostModel.aggregate([
+      { $match: { userId: new Types.ObjectId(userId) } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: '$user' },
+    ]);
+  }
+
   async uploadPost(
     userId: string,
     uploadPostData: UploadPostDto,
@@ -44,7 +59,6 @@ export class PostsService {
       userId: new Types.ObjectId(userId),
       imageUrl,
       caption: uploadPostData.caption,
-      tags: uploadPostData.tags,
       visibility: uploadPostData.visibility,
       likes: [],
       comments: [],
@@ -65,8 +79,8 @@ export class PostsService {
     }
     const updateOperator =
       action === LikeType.LIKE
-        ? { $push: { likes: new Types.ObjectId(userId) } }
-        : { $pull: { likes: new Types.ObjectId(userId) } };
+        ? { $push: { likes: { userId: new Types.ObjectId(userId) } } }
+        : { $pull: { likes: { userId: new Types.ObjectId(userId) } } };
 
     const updateResult = await this._PostModel.updateOne(
       { _id: parsedPostId },
@@ -117,7 +131,45 @@ export class PostsService {
       { _id: parsedPostId },
       updateOperator,
     );
-
     return updateResult.modifiedCount > 0;
   }
+
+  async getAllPost(userId: string) {
+    const posts = await this._PostModel
+      .find({
+        userId: { $ne: userId },
+        visibility: 'public',
+      })
+      .populate('userId')
+      .populate({ path: 'comments.userId', select: 'username' });
+
+    console.log('-------->>', posts[0].comments);
+    return posts;
+  }
+  // async getAllPost(userId: string) {
+  //   const posts = await this._PostModel.aggregate([
+  //     { $match: { userId: { $ne: userId }, visibility: 'public' } },
+  //     {
+  //       $lookup: {
+  //         from: 'users',
+  //         localField: 'userId',
+  //         foreignField: '_id',
+  //         as: 'user',
+  //       },
+  //     },
+  //     { $unwind: '$user' },
+  //     {
+  //       $lookup: {
+  //         from: 'users',
+  //         localField: 'comments.userId',
+  //         foreignField: '_id',
+  //         as: 'comments.user',
+  //       },
+  //     },
+  //     { $unwind: { path: '$comments.user', preserveNullAndEmptyArrays: true } },
+  //   ]);
+
+  //   console.log('-------->>', posts);
+  //   return posts;
+  // }
 }

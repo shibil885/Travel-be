@@ -158,7 +158,7 @@ export class OffersService {
     if (!offerId) throw new NotFoundException('Offer id not provided');
     const packages = await this._PackageModel.find({
       agencyId: new Types.ObjectId(agencyId),
-      offerId: { $ne: new Types.ObjectId(offerId) },
+      offerId: null,
     });
     return packages;
   }

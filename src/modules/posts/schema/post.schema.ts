@@ -44,9 +44,6 @@ export class Post {
     createdAt: Date;
   }>;
 
-  @Prop({ type: [String], default: [] })
-  tags: string[];
-
   @Prop({ type: String, enum: ['public', 'private'], default: 'public' })
   visibility: string;
 

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   HttpStatus,
   NotFoundException,
   Param,
@@ -21,6 +22,44 @@ import { LikeType } from 'src/common/enum/likeType.enum';
 @Controller('posts')
 export class PostsController {
   constructor(private readonly _postService: PostsService) {}
+
+  @Get()
+  async getAllPosts(@Req() req: Request, @Res() res: Response) {
+    try {
+      const result = await this._postService.getAllPost(req['user']['sub']);
+      if (result) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          message: 'List of posts',
+          posts: result,
+          userId: req['user']['sub'],
+        });
+      }
+    } catch (error) {
+      console.log('error occured while fetch posts', error);
+      return res.status(HttpStatus.OK).json({
+        success: false,
+        message: error.message,
+        posts: [],
+        userId: req['user']['sub'],
+      });
+    }
+  }
+
+  @Get('user')
+  async getUserPosts(@Req() req: Request, @Res() res: Response) {
+    try {
+      const response = await this._postService.getUserPosts(req['user']['sub']);
+      if (response) {
+        console.log('hh', response);
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'List of posts', posts: response });
+      }
+    } catch (error) {
+      console.log('Error occured while fetch user post', error);
+    }
+  }
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('image'))
@@ -57,6 +96,7 @@ export class PostsController {
         .json({ success: false, message: error.message });
     }
   }
+
   @Patch('like/:id')
   async addLike(
     @Req() req: Request,
@@ -132,7 +172,7 @@ export class PostsController {
       if (response) {
         return res
           .status(HttpStatus.OK)
-          .json({ success: true, message: 'Like added' });
+          .json({ success: true, message: 'Comment added' });
       }
     } catch (error) {
       if (error instanceof NotFoundException) {
