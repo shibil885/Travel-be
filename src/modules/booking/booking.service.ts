@@ -16,6 +16,8 @@ import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enu
 import { Transaction } from '../wallet/schema/wallet.schema';
 import { TransactionType } from 'src/common/enum/transactionType.enum';
 import { ErrorMessages } from 'src/common/enum/error.enum';
+import { IOffer } from 'src/common/interfaces/offer.interface';
+import { DiscountType } from 'src/common/enum/discountType.enum';
 
 @Injectable()
 export class BookingService {
@@ -43,15 +45,24 @@ export class BookingService {
       );
     }
 
-    let amount: number;
+    let amount: number = Number(process.env.SERVICE_CHARGE);
     let discountPrice: number = 0;
-    const selectedPackage = await this._PackageModel.findById(packageId, {
-      price: 1,
-      days: 1,
-    });
-    if (!selectedPackage) throw new NotFoundException('Package not found');
-
+    const selectedPackage = await this._PackageModel
+      .findById(packageId, {
+        price: 1,
+        days: 1,
+      })
+      .populate('offerId');
     amount = Number(selectedPackage.price);
+    if (!selectedPackage) throw new NotFoundException('Package not found');
+    if (selectedPackage.offerId) {
+      const offer = selectedPackage.offerId as IOffer;
+      if (offer.discount_type === DiscountType.FIXED) {
+        amount = amount - offer.discount_value;
+      } else if (offer.discount_type === DiscountType.PERCENTAGE) {
+        amount = amount * (offer.percentage / 100);
+      }
+    }
     if (couponId) {
       const selectedCoupon = await this._CouponModel.findById(couponId);
       if (!selectedCoupon) throw new NotFoundException('Coupon not found');
@@ -72,7 +83,9 @@ export class BookingService {
     console.log('Final amount:', amount, 'Discount:', discountPrice);
     const startDate = new Date(bookingData.travelDates);
     const endDate = addDays(startDate, Number(selectedPackage.days));
-
+    if (amount <= 50) {
+      amount = 50;
+    }
     const newBooking = new this._BookingModel({
       package_id: new Types.ObjectId(packageId),
       user_id: new Types.ObjectId(userId),

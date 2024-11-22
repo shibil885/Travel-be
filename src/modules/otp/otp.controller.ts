@@ -14,6 +14,7 @@ export class OtpController {
   async userOtpSubmission(@Res() res: Response, @Body() otpdata) {
     const response = await this.otpService.userOtpSubmission(otpdata);
     if (response.success) {
+      console.log('invoked');
       res.cookie('access_token', response.accessToken, {
         httpOnly: true,
         sameSite: 'strict',

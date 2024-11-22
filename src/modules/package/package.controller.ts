@@ -61,6 +61,30 @@ export class PackageController {
     }
   }
 
+  @Get('offer')
+  async getOfferPackages(@Res() res: Response) {
+    try {
+      const offerPackages = await this.packageService.getOfferPackages();
+      if (offerPackages.length) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          message: 'List of offer packages',
+          packages: offerPackages,
+        });
+      }
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: 'List of offer packages',
+        packages: [],
+      });
+    } catch (error) {
+      console.log('Error occured while fetching offer packages', error);
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message });
+    }
+  }
+
   @Get('searchPackage')
   async searchPackage(
     @Req() req: Request,

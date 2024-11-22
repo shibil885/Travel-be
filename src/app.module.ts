@@ -68,7 +68,7 @@ export class AppModule implements NestModule {
         { path: '/agency/isExistingName', method: RequestMethod.POST },
         { path: '/user/signup', method: RequestMethod.POST },
         { path: '/agency/signup', method: RequestMethod.POST },
-        { path: 'otp/(.*)', method: RequestMethod.ALL },
+        { path: '/otp/(.*)', method: RequestMethod.ALL },
       )
       .forRoutes('*');
     consumer
@@ -81,6 +81,7 @@ export class AppModule implements NestModule {
         { path: '/agency/isExistingName', method: RequestMethod.POST },
         { path: '/user/signup', method: RequestMethod.POST },
         { path: '/agency/signup', method: RequestMethod.POST },
+        { path: '/otp/(.*)', method: RequestMethod.ALL },
       )
       .forRoutes('*');
   }

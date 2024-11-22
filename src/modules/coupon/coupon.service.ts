@@ -12,6 +12,7 @@ import {
 } from 'src/common/dtos/createCoupon.gto';
 import { EditCouponDto } from 'src/common/dtos/editCoupon.dto';
 import { Package } from '../package/schema/package.schema';
+import { IOffer } from 'src/common/interfaces/offer.interface';
 
 @Injectable()
 export class CouponService {
@@ -160,15 +161,23 @@ export class CouponService {
         !packageId ? 'Cant find package id' : 'Cant find userId',
       );
     }
-    const { price } = await this.PackageModel.findOne(
-      {
-        _id: packageId,
-        isActive: true,
-      },
-      { price: 1, _id: 0 },
-    );
+    const selectedPackage = await this.PackageModel.findOne({
+      _id: packageId,
+      isActive: true,
+    }).populate('offerId');
+    if (!selectedPackage) throw new NotFoundException('Package not found');
+    let amount =
+      Number(selectedPackage.price) + Number(process.env.SERVICE_CHARGE);
+    if (selectedPackage.offerId) {
+      const offer = selectedPackage.offerId as IOffer;
+      if (offer.discount_type === DiscountType.FIXED) {
+        amount = amount - offer.discount_value;
+      } else if (offer.discount_type === DiscountType.PERCENTAGE) {
+        amount = amount * (offer.percentage / 100);
+      }
+    }
     const couponsForUser = await this.CouponModel.find({
-      minAmt: { $lte: price },
+      minAmt: { $lte: amount },
       used: { $ne: userId },
       isActive: true,
     });

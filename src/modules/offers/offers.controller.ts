@@ -179,6 +179,7 @@ export class OffersController {
         .json({ success: false, message: error.message });
     }
   }
+
   @Get('packages/:id')
   async getPackgesForApplyOffer(
     @Req() req: Request,

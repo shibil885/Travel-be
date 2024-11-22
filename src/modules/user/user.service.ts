@@ -140,7 +140,7 @@ export class UserService {
       const singlePackage = await this.PackageModel.findOne({
         _id: id,
         isActive: true,
-      }).populate(['agencyId', 'category']);
+      }).populate(['agencyId', 'category', 'offerId']);
       if (!singlePackage) {
         throw new NotFoundException();
       }

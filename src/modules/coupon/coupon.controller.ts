@@ -139,6 +139,7 @@ export class CouponController {
         .json({ success: false, message: error.message, coupons: [] });
     }
   }
+
   @Get('getCouponsForUser/:packageId')
   async getCouponsForUser(
     @Req() req: Request,

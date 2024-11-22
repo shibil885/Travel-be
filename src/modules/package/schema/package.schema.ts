@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, Types } from 'mongoose';
+import { IOffer } from 'src/common/interfaces/offer.interface';
 
 @Schema({ timestamps: true })
 export class Package {
@@ -60,7 +61,7 @@ export class Package {
     required: true,
     default: null,
   })
-  offerId: Types.ObjectId;
+  offerId: Types.ObjectId | IOffer;
 
   @Prop({ default: true })
   isActive: boolean;

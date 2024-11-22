@@ -13,8 +13,8 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 @Injectable()
 export class PackageService {
   constructor(
-    @InjectModel(Package.name) private PackageModel: Model<Package>,
-    private cloudinaryService: CloudinaryService,
+    @InjectModel(Package.name) private _PackageModel: Model<Package>,
+    private _cloudinaryService: CloudinaryService,
   ) {}
 
   async addPackage(
@@ -23,14 +23,17 @@ export class PackageService {
     images: Express.Multer.File[],
   ): Promise<Package> {
     try {
+      console.log('ooooo>', createPackageDto);
+      console.log('ll', JSON.parse(createPackageDto.packageInfo));
       const parsedPackageInfo = JSON.parse(createPackageDto.packageInfo);
       const parsedTravelInfo = JSON.parse(createPackageDto.travelInfo);
       const parsedPackageFeatures = JSON.parse(
         createPackageDto.packageFeatures,
       );
+      console.log('hhh', parsedPackageFeatures);
       const parsedTourPlans = JSON.parse(createPackageDto.tourPlans);
       const imageUploadPromises = images.map((file) =>
-        this.cloudinaryService
+        this._cloudinaryService
           .uploadFile(file)
           .then((response) => response.url),
       );
@@ -50,9 +53,10 @@ export class PackageService {
         tourPlans: parsedTourPlans,
         images: imageUrls,
         agencyId: agencyId,
+        offerId: null,
       };
 
-      const newPackage = new this.PackageModel(newPackageData);
+      const newPackage = new this._PackageModel(newPackageData);
       return await newPackage.save();
     } catch (error) {
       console.error('Error adding package:', error);
@@ -68,7 +72,7 @@ export class PackageService {
 
   async saveChanges(changedData, packageId) {
     try {
-      const existingPackage = await this.PackageModel.findOne({
+      const existingPackage = await this._PackageModel.findOne({
         _id: packageId,
       });
       if (!existingPackage) {
@@ -92,21 +96,22 @@ export class PackageService {
     try {
       const skip = (page - 1) * limit;
       const [packages, totalPackages] = await Promise.all([
-        this.PackageModel.aggregate([
-          { $match: { agencyId: new Types.ObjectId(id) } },
-          {
-            $lookup: {
-              from: 'categories',
-              localField: 'category',
-              foreignField: '_id',
-              as: 'category',
+        this._PackageModel
+          .aggregate([
+            { $match: { agencyId: new Types.ObjectId(id) } },
+            {
+              $lookup: {
+                from: 'categories',
+                localField: 'category',
+                foreignField: '_id',
+                as: 'category',
+              },
             },
-          },
-          { $unwind: '$category' },
-        ])
+            { $unwind: '$category' },
+          ])
           .skip(skip)
           .limit(limit),
-        this.PackageModel.countDocuments(),
+        this._PackageModel.countDocuments(),
       ]);
       if (!packages || packages.length == 0) {
         throw new NotFoundException();
@@ -124,6 +129,14 @@ export class PackageService {
       throw new InternalServerErrorException();
     }
   }
+
+  async getOfferPackages() {
+    const offerPackages = await this._PackageModel
+      .find({ offerId: { $ne: null } })
+      .populate('offerId');
+    return offerPackages;
+  }
+
   async searchPackges(agencyId: string, searchText: string) {
     try {
       const query = {
@@ -133,14 +146,14 @@ export class PackageService {
           { country: { $regex: searchText, $options: 'i' } },
         ],
       };
-      return await this.PackageModel.find(query).exec();
+      return await this._PackageModel.find(query).exec();
     } catch (error) {
       console.log('error occured while search packages', error);
       throw new InternalServerErrorException();
     }
   }
   async changeStatus(id: string, action: boolean): Promise<boolean> {
-    const result = await this.PackageModel.updateOne(
+    const result = await this._PackageModel.updateOne(
       { _id: id },
       { $set: { isActive: action } },
     );

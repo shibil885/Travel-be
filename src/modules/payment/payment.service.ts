@@ -5,6 +5,8 @@ import { Package } from '../package/schema/package.schema';
 import { Model } from 'mongoose';
 import { Coupon } from '../coupon/schema/coupon.schema';
 import * as crypto from 'crypto';
+import { IOffer } from 'src/common/interfaces/offer.interface';
+import { DiscountType } from 'src/common/enum/discountType.enum';
 @Injectable()
 export class PaymentService {
   private razorpay: Razorpay;
@@ -27,35 +29,48 @@ export class PaymentService {
   ) {
     if (!packageId) throw new NotFoundException('Cant find packageId');
     let amount: number;
-    const { price } = await this.PackageModel.findOne(
-      {
-        _id: packageId,
-        isActive: true,
-      },
-      { price: 1 },
-    );
-    if (!price) throw new NotFoundException('Cant find package');
+    const selectedPackage = await this.PackageModel.findOne({
+      _id: packageId,
+      isActive: true,
+    }).populate('offerId');
+    if (!selectedPackage.price)
+      throw new NotFoundException('Cant find package');
+    amount = Number(selectedPackage.price) + Number(process.env.SERVICE_CHARGE);
+    if (selectedPackage.offerId) {
+      const offer = selectedPackage.offerId as IOffer;
+      if (offer.discount_type === DiscountType.FIXED) {
+        amount = amount - offer.discount_value;
+      } else if (offer.discount_type === DiscountType.PERCENTAGE) {
+        amount = amount * (offer.percentage / 100);
+      }
+    }
     if (couponId) {
       const selectedCoupon = await this.CouponModel.findOne({
         _id: couponId,
-        minAmt: { $lte: price },
+        minAmt: { $lte: amount },
         used: { $ne: userId },
         isActive: true,
       });
       if (!selectedCoupon) throw new NotFoundException('Cant find coupon');
-      if (selectedCoupon.discount_type == 'fixed') {
-        amount = Number(price) - selectedCoupon.discount_value;
-      } else if (selectedCoupon.discount_type == 'percentage') {
-        const discount = (Number(price) * selectedCoupon.percentage) / 100;
+      if (selectedCoupon.discount_type == DiscountType.FIXED) {
+        amount = amount - selectedCoupon.discount_value;
+      } else if (selectedCoupon.discount_type == DiscountType.PERCENTAGE) {
+        const discount = amount * (selectedCoupon.percentage / 100);
+        console.log('dicount', discount);
+        console.log('max', selectedCoupon.maxAmt);
         if (discount > selectedCoupon.maxAmt) {
-          amount = Number(price) - discount;
+          amount = amount - selectedCoupon.maxAmt;
         } else {
-          amount = Number(price) - discount;
+          amount = amount - discount;
         }
+        console.log('last amt', amount);
       }
     }
+    if (amount <= 50) {
+      amount = 50;
+    }
     const options = {
-      amount: amount ? amount * 100 : Number(price) * 100,
+      amount: amount ? amount * 100 : Number(selectedPackage.price) * 100,
       currency,
       receipt: `receipt_${Math.random()}`,
     };
