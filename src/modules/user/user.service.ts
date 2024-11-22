@@ -233,6 +233,18 @@ export class UserService {
     return passwordUpdateData.modifiedCount > 0 ? true : null;
   }
 
+  async userPasswordRest(userId: string, password: string) {
+    const saltRound = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRound);
+    const updateResult = await this.userModel.updateOne(
+      {
+        _id: new Types.ObjectId(userId),
+      },
+      { $set: { password: hashedPassword } },
+    );
+    return updateResult.modifiedCount > 0 ? true : false;
+  }
+
   findUserById(id: string) {
     return this.userModel.findById(id);
   }

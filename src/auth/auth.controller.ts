@@ -4,6 +4,8 @@ import {
   ForbiddenException,
   HttpStatus,
   NotAcceptableException,
+  NotFoundException,
+  Patch,
   Post,
   Req,
   Res,
@@ -15,10 +17,11 @@ import { AuthService } from './auth.service';
 import { LoginAgencyDto } from 'src/common/dtos/loginAgency.dto';
 import { AdminDto } from 'src/common/dtos/admin.dto';
 import { ErrorMessages } from 'src/common/enum/error.enum';
+import { Role } from 'src/common/enum/role.enum';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private _authService: AuthService) {}
 
   @Post('validate-token')
   async validateToken(@Req() req: Request, @Res() res: Response) {
@@ -31,7 +34,7 @@ export class AuthController {
         role: '',
       });
     }
-    const response = await this.authService.validateToken(tokenToValidate);
+    const response = await this._authService.validateToken(tokenToValidate);
     if (response.valid) {
       return res.status(HttpStatus.OK).json({
         success: true,
@@ -60,7 +63,7 @@ export class AuthController {
         isRefreshed: false,
       });
     }
-    const response = await this.authService.refreshToken(refreshToken);
+    const response = await this._authService.refreshToken(refreshToken);
     if (!response) {
       return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
@@ -92,7 +95,7 @@ export class AuthController {
   @Post('user')
   async signIn(@Res() res: Response, @Body() userData: LoginUserDto) {
     try {
-      const response = await this.authService.signIn(userData);
+      const response = await this._authService.signIn(userData);
       res.cookie('access_token', response.token, {
         httpOnly: true,
         sameSite: 'strict',
@@ -132,7 +135,7 @@ export class AuthController {
   @Post('agency')
   async agencySignIn(@Res() res: Response, @Body() agencyData: LoginAgencyDto) {
     try {
-      const response = await this.authService.agencySignIn(agencyData);
+      const response = await this._authService.agencySignIn(agencyData);
       res.cookie('access_token', response.token, {
         httpOnly: true,
         sameSite: 'strict',
@@ -171,7 +174,7 @@ export class AuthController {
   @Post('admin')
   async adminSignIn(@Res() res: Response, @Body() adminData: AdminDto) {
     try {
-      const response = await this.authService.adminSignIn(adminData);
+      const response = await this._authService.adminSignIn(adminData);
       res.cookie('access_token', response.token, {
         httpOnly: true,
         sameSite: 'strict',
@@ -192,6 +195,64 @@ export class AuthController {
           .status(HttpStatus.UNAUTHORIZED)
           .json({ message: 'Invalid email or password' });
       }
+    }
+  }
+  @Patch('resetLink')
+  async generateresetLink(
+    @Res() res: Response,
+    @Body() body: { email: string; role: Role },
+  ) {
+    try {
+      console.log('body', body);
+      const response = await this._authService.generateLink(
+        body.email,
+        body.role,
+      );
+      if (response) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'We send mail to your account' });
+      }
+    } catch (error) {
+      console.log('Error occured while generate link', error);
+      if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: error.message });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message });
+    }
+  }
+
+  @Patch('resetPassword')
+  async resetPassword(
+    @Res() res: Response,
+    @Body() body: { password: string; role: Role; userId: string },
+  ) {
+    try {
+      console.log(body);
+      const response = await this._authService.resetPassword(
+        body.userId,
+        body.password,
+        body.role,
+      );
+      if (response) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'Password changed' });
+      }
+    } catch (error) {
+      console.log('Error occured while user change password', error);
+      if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: error.message });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message });
     }
   }
 }

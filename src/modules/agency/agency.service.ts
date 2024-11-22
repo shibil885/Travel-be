@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Agency } from './schema/agency.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Response } from 'express';
 import * as bcrypt from 'bcrypt';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
@@ -139,6 +139,17 @@ export class AgencyService {
     return res.status(200).json({
       message: 'Logout successful',
     });
+  }
+  async agencyPasswordRest(agencyId: string, password: string) {
+    const saltRound = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRound);
+    const updateResult = await this.AgencyModel.updateOne(
+      {
+        _id: new Types.ObjectId(agencyId),
+      },
+      { $set: { password: hashedPassword } },
+    );
+    return updateResult.modifiedCount > 0 ? true : false;
   }
 
   findAgencyById(id: string) {

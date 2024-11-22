@@ -1,7 +1,9 @@
 import {
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotAcceptableException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { LoginUserDto } from 'src/common/dtos/loginUser.dto';
@@ -21,19 +23,19 @@ import { Role } from 'src/common/enum/role.enum';
 @Injectable()
 export class AuthService {
   constructor(
-    private userservice: UserService,
-    private jwtService: JwtService,
-    private agencyService: AgencyService,
-    private adminService: AdminService,
+    private _userservice: UserService,
+    private _jwtService: JwtService,
+    private _agencyService: AgencyService,
+    private _adminService: AdminService,
     @InjectModel(Otp.name) private OtpModel: Model<Otp>,
   ) {}
 
   async generateTokens(payload: any) {
-    const accessToken = this.jwtService.sign(payload, {
+    const accessToken = this._jwtService.sign(payload, {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     });
 
-    const refreshToken = this.jwtService.sign(payload, {
+    const refreshToken = this._jwtService.sign(payload, {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     });
     return {
@@ -46,17 +48,17 @@ export class AuthService {
     token: string,
   ): Promise<{ valid: boolean; role: string }> {
     try {
-      const decodedData: JwtPayload = this.jwtService.verify(token);
+      const decodedData: JwtPayload = this._jwtService.verify(token);
       let entity;
       switch (decodedData.role) {
         case Role.USER:
-          entity = await this.userservice.findOne(decodedData.email);
+          entity = await this._userservice.findOne(decodedData.email);
           break;
         case Role.AGENCY:
-          entity = await this.agencyService.findOne(decodedData.email);
+          entity = await this._agencyService.findOne(decodedData.email);
           break;
         case Role.ADMIN:
-          entity = await this.adminService.findAdmin(decodedData.email);
+          entity = await this._adminService.findAdmin(decodedData.email);
           break;
         default:
           return { valid: false, role: decodedData.role };
@@ -72,18 +74,18 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
-      const decodedData: JwtPayload = this.jwtService.verify(refreshToken);
+      const decodedData: JwtPayload = this._jwtService.verify(refreshToken);
       let entity;
 
       switch (decodedData.role) {
         case Role.USER:
-          entity = await this.userservice.findOne(decodedData.email);
+          entity = await this._userservice.findOne(decodedData.email);
           break;
         case Role.AGENCY:
-          entity = await this.agencyService.findOne(decodedData.email);
+          entity = await this._agencyService.findOne(decodedData.email);
           break;
         case Role.ADMIN:
-          entity = await this.adminService.findAdmin(decodedData.email);
+          entity = await this._adminService.findAdmin(decodedData.email);
           break;
         default:
           console.log('Unknown role in token');
@@ -112,7 +114,7 @@ export class AuthService {
   }
 
   async signIn(userData: LoginUserDto) {
-    const user = await this.userservice.findOne(userData.email);
+    const user = await this._userservice.findOne(userData.email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     } else if (!user.isActive) {
@@ -144,7 +146,7 @@ export class AuthService {
   }
 
   async agencySignIn(agencyData: LoginAgencyDto) {
-    const agency = await this.agencyService.findOne(agencyData.email);
+    const agency = await this._agencyService.findOne(agencyData.email);
     if (!agency) {
       throw new UnauthorizedException('Invalid email or password');
     } else if (!agency.isActive) {
@@ -182,7 +184,7 @@ export class AuthService {
     };
   }
   async adminSignIn(adminData: AdminDto) {
-    const admin = await this.adminService.findOne(
+    const admin = await this._adminService.findOne(
       adminData.email,
       adminData.password,
     );
@@ -202,5 +204,41 @@ export class AuthService {
       success: true,
       message: true,
     };
+  }
+
+  async generateLink(email: string, role: Role) {
+    if (!email || !role)
+      throw new NotFoundException(
+        !email ? 'User email not provided' : 'User role not provided',
+      );
+    const isExistingUser = await this._userservice.findOne(email);
+    if (!isExistingUser) throw new NotFoundException('User not exist');
+    const url = `${process.env.FRONTEND_URL}/resetPassword/${isExistingUser._id}`;
+    const mailsended = await mailsenderFunc(
+      isExistingUser.email,
+      'Password Reset Request for Your Account',
+      'generatLink',
+      { username: isExistingUser.username, url: url },
+    );
+    if (mailsended) {
+      return true;
+    }
+    throw new InternalServerErrorException();
+  }
+
+  resetPassword(userId: string, password: string, role: Role) {
+    if (!userId || !password || !role)
+      throw new NotFoundException(
+        !userId
+          ? 'UserId not provided. try again'
+          : !password
+            ? 'password not provided'
+            : 'Role is not provided',
+      );
+    if (role === Role.USER) {
+      return this._userservice.userPasswordRest(userId, password);
+    } else if (role == Role.AGENCY) {
+      return this._agencyService.agencyPasswordRest(userId, password);
+    }
   }
 }

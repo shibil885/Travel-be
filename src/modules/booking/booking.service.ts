@@ -80,7 +80,6 @@ export class BookingService {
       }
     }
 
-    console.log('Final amount:', amount, 'Discount:', discountPrice);
     const startDate = new Date(bookingData.travelDates);
     const endDate = addDays(startDate, Number(selectedPackage.days));
     if (amount <= 50) {

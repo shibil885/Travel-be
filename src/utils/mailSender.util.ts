@@ -14,10 +14,9 @@ const transporter = nodemailer.createTransport({
 export async function mailsenderFunc(
   to: string,
   subject: string,
-  messageType: 'otp' | 'agencyRegistration',
+  messageType: 'otp' | 'agencyRegistration' | 'generatLink',
   data: any,
 ) {
-  console.log('data ----------->', data);
   let htmlContent: string;
   if (messageType === 'otp') {
     htmlContent = `
@@ -50,6 +49,55 @@ export async function mailsenderFunc(
           <p>If you have any questions, feel free to reach out.</p>
           <p>Thanks,<br>Your System Team</p>
         </div>`;
+  } else if (messageType === 'generatLink') {
+    htmlContent = `<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Reset</title>
+</head>
+
+<body style="background-color: #f3f4f6; margin: 0; padding: 0; font-family: Arial, sans-serif;">
+  <div style="max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
+    <!-- Header -->
+    <div style="background: #3d52a0; color: #ffffff; text-align: center; padding: 20px;">
+      <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Password Reset Request</h1>
+    </div>
+
+    <!-- Body -->
+    <div style="padding: 20px;">
+      <h2 style="font-size: 20px; color: #3d52a0; margin-bottom: 10px;">Hi ${data.username},</h2>
+      <p style="color: #4b5563; line-height: 1.6; margin-bottom: 20px;">
+        We received a request to reset your password. Click the button below to set a new password:
+      </p>
+
+      <!-- Button -->
+      <div style="text-align: center; margin: 20px 0;">
+        <a href=${data.url}
+          style="display: inline-block; padding: 12px 25px; font-size: 16px; color: #ffffff; background: #3d52a0; border-radius: 4px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          Reset Password
+        </a>
+      </div>
+
+      <p style="color: #4b5563; line-height: 1.6; margin-top: 20px;">
+        If you did not request a password reset, please ignore this email or contact support if you have any concerns.
+      </p>
+      <p style="color: #4b5563; line-height: 1.6; margin-top: 10px;">This link will expire in 24 hours for your security.</p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #f9fafb; color: #6b7280; text-align: center; padding: 20px;">
+      <p style="margin: 0; font-size: 14px;">&copy; 2024 [Your Company Name]. All rights reserved.</p>
+      <p style="margin: 10px 0 0;"><a href="[SUPPORT_LINK]" style="color: #3d52a0; text-decoration: none;">Contact Support</a></p>
+    </div>
+  </div>
+</body>
+
+</html>
+
+    `;
   }
 
   const info = await transporter.sendMail({
@@ -59,4 +107,7 @@ export async function mailsenderFunc(
     html: htmlContent,
   });
   console.log('Message sent: %s', info.messageId);
+  if (info) {
+    return true;
+  }
 }
