@@ -58,7 +58,6 @@ export class Package {
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Offer',
-    required: true,
     default: null,
   })
   offerId: Types.ObjectId | IOffer;

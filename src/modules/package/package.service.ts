@@ -53,7 +53,6 @@ export class PackageService {
         tourPlans: parsedTourPlans,
         images: imageUrls,
         agencyId: agencyId,
-        offerId: null,
       };
 
       const newPackage = new this._PackageModel(newPackageData);

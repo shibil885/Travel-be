@@ -65,7 +65,7 @@ export class UserService {
         username: userData.userName,
         password: hashedPassword,
         phone: userData.phone,
-        profilePicture: '',
+        profilePicture: process.env.DEFAULT_PROFILE,
         preferences: [],
       });
 
