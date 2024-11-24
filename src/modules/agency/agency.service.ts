@@ -16,13 +16,13 @@ import { Otp } from '../otp/schema/otp.schema';
 @Injectable()
 export class AgencyService {
   constructor(
-    @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
-    @InjectModel(Otp.name) private OtpModel: Model<Otp>,
+    @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
+    @InjectModel(Otp.name) private _OtpModel: Model<Otp>,
   ) {}
 
   async findEmail(res: Response, email: string) {
     try {
-      const isExisting = await this.AgencyModel.findOne({
+      const isExisting = await this._AgencyModel.findOne({
         email: email,
       });
       if (isExisting) {
@@ -38,7 +38,7 @@ export class AgencyService {
 
   async findName(res: Response, name: string) {
     try {
-      const isExisting = await this.AgencyModel.findOne({
+      const isExisting = await this._AgencyModel.findOne({
         name: name,
       });
       if (isExisting) {
@@ -54,7 +54,7 @@ export class AgencyService {
 
   async isConfirmed(req, res: Response) {
     try {
-      const isConfirmed = await this.AgencyModel.findOne({
+      const isConfirmed = await this._AgencyModel.findOne({
         email: req.agency.email,
         isConfirmed: true,
       });
@@ -74,7 +74,7 @@ export class AgencyService {
       const { password, email, place, phone, agencyName } = agencyData;
       const saltRound = 10;
       const hashedPassword = await bcrypt.hash(password, saltRound);
-      const createdAgency = new this.AgencyModel({
+      const createdAgency = new this._AgencyModel({
         name: agencyName,
         email: email,
         password: hashedPassword,
@@ -89,11 +89,11 @@ export class AgencyService {
 
       await Promise.all([
         mailsenderFunc(email, subject, 'otp', { otp }),
-        new this.OtpModel({ email: email, otp: otp }).save(),
+        new this._OtpModel({ email: email, otp: otp }).save(),
         createdAgency.save(),
       ])
         .then(async () => {
-          const agency = await this.AgencyModel.findOne({
+          const agency = await this._AgencyModel.findOne({
             email: agencyData.email,
           });
           return res.status(HttpStatus.CREATED).json({
@@ -114,7 +114,7 @@ export class AgencyService {
 
   async findOne(email: string) {
     try {
-      const agency = await this.AgencyModel.findOne({
+      const agency = await this._AgencyModel.findOne({
         email: email,
         isActive: true,
       });
@@ -143,7 +143,7 @@ export class AgencyService {
   async agencyPasswordRest(agencyId: string, password: string) {
     const saltRound = 10;
     const hashedPassword = await bcrypt.hash(password, saltRound);
-    const updateResult = await this.AgencyModel.updateOne(
+    const updateResult = await this._AgencyModel.updateOne(
       {
         _id: new Types.ObjectId(agencyId),
       },
@@ -153,6 +153,6 @@ export class AgencyService {
   }
 
   findAgencyById(id: string) {
-    return this.AgencyModel.findById(id);
+    return this._AgencyModel.findById(id);
   }
 }

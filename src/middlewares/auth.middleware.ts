@@ -6,8 +6,8 @@ import { AuthService } from 'src/auth/auth.service';
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
   constructor(
-    private jwtService: JwtService,
-    private authService: AuthService,
+    private _jwtService: JwtService,
+    private _authService: AuthService,
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
@@ -16,7 +16,8 @@ export class AuthMiddleware implements NestMiddleware {
 
     if (!accessToken) return res.status(401).json({ message: 'Unauthorized' });
     try {
-      const decodedAccessToken = await this.jwtService.verifyAsync(accessToken);
+      const decodedAccessToken =
+        await this._jwtService.verifyAsync(accessToken);
       req[decodedAccessToken.role] = decodedAccessToken;
       return next();
     } catch (error) {
@@ -27,8 +28,8 @@ export class AuthMiddleware implements NestMiddleware {
 
       try {
         const decodedRefreshToken =
-          await this.jwtService.verifyAsync(refreshToken);
-        const newTokens = await this.authService.refreshToken(refreshToken);
+          await this._jwtService.verifyAsync(refreshToken);
+        const newTokens = await this._authService.refreshToken(refreshToken);
         res.cookie('access_token', newTokens.access_token, {
           httpOnly: true,
           sameSite: 'strict',

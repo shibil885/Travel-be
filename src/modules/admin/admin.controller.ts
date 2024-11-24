@@ -15,7 +15,7 @@ import { Request, Response } from 'express';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
 @Controller('admin')
 export class AdminController {
-  constructor(private adminService: AdminService) {}
+  constructor(private _adminService: AdminService) {}
 
   @Get('agencies')
   async getAllAgencies(
@@ -25,7 +25,7 @@ export class AdminController {
   ) {
     try {
       const { agencies, totalAgencies, currentPage } =
-        await this.adminService.findAllAgencies(page, limit);
+        await this._adminService.findAllAgencies(page, limit);
 
       if (!agencies.length) {
         return res.status(HttpStatus.OK).json({
@@ -56,7 +56,7 @@ export class AdminController {
   ) {
     try {
       const { users, totalUsers, totalPages, currentPage } =
-        await this.adminService.findAllUsers(page, limit);
+        await this._adminService.findAllUsers(page, limit);
 
       if (!users.length) {
         return res.status(HttpStatus.OK).json({
@@ -83,24 +83,24 @@ export class AdminController {
   @Patch('changeAgencyStatus/:id')
   changeAgencyStatus(@Param() param, @Res() res: Response, @Body() action) {
     console.log('param', param);
-    return this.adminService.changeAgencyStatus(param.id, res, action.status);
+    return this._adminService.changeAgencyStatus(param.id, res, action.status);
   }
 
   @Patch('changeUserStatus/:id')
   changeUserStatus(@Param() param, @Res() res: Response, @Body() action) {
-    return this.adminService.changeUserStatus(param.id, res, action.status);
+    return this._adminService.changeUserStatus(param.id, res, action.status);
   }
   @Patch('confirmation/:id')
   confirmation(@Param() param, @Res() res: Response, @Body() action) {
-    return this.adminService.confirmation(param.id, res, action.status);
+    return this._adminService.confirmation(param.id, res, action.status);
   }
   @Post('filter')
   async getFilteredData(@Query() filterData: FilterDataDto, @Body() user) {
-    return this.adminService.getFilteredData(filterData, user.user);
+    return this._adminService.getFilteredData(filterData, user.user);
   }
   @Post('searchUsers')
   async searchUsers(@Query() searchText, @Body() user) {
-    return this.adminService.searchUsers(searchText.searchText, user.user);
+    return this._adminService.searchUsers(searchText.searchText, user.user);
   }
   @Patch('logout')
   async agencyLogout(@Req() req: Request, @Res() res: Response) {

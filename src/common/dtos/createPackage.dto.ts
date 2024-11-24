@@ -1,42 +1,91 @@
-import { IsArray, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsArray,
+  IsNotEmpty,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
-export class CreatePackageDto {
+class PackageInfoDto {
   @IsNotEmpty()
+  @IsString()
   name: string;
 
   @IsNotEmpty()
+  @IsString()
   category: string;
 
   @IsNotEmpty()
+  @IsString()
   country: string;
 
   @IsNotEmpty()
+  @IsString()
   description: string;
+}
 
+class TravelInfoDto {
   @IsNotEmpty()
+  @IsString()
   departure: string;
 
   @IsNotEmpty()
+  @IsString()
   finalDestination: string;
 
   @IsNotEmpty()
-  price: string;
+  @IsNumber()
+  price: number;
 
   @IsNotEmpty()
-  people: string;
+  @IsNumber()
+  people: number;
 
+  @IsNotEmpty()
+  @IsNumber()
+  days: number;
+}
+
+class PackageFeaturesDto {
   @IsArray()
+  @IsString({ each: true })
   included: string[];
 
   @IsArray()
+  @IsString({ each: true })
   notIncluded: string[];
+}
+
+class TourPlanDto {
+  @IsNotEmpty()
+  @IsString()
+  day: string;
 
   @IsNotEmpty()
-  days: string;
+  @IsString()
+  description: string;
+}
 
+export class CreatePackageDto {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => PackageInfoDto)
+  packageInfo: PackageInfoDto;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TravelInfoDto)
+  travelInfo: TravelInfoDto;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => PackageFeaturesDto)
+  packageFeatures: PackageFeaturesDto;
+
+  @IsNotEmpty()
   @IsArray()
-  TourPlans: {
-    day: number;
-    description: string;
-  }[];
+  @ValidateNested({ each: true })
+  @Type(() => TourPlanDto)
+  tourPlans: TourPlanDto[];
 }

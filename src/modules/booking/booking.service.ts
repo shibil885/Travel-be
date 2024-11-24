@@ -18,6 +18,7 @@ import { TransactionType } from 'src/common/enum/transactionType.enum';
 import { ErrorMessages } from 'src/common/enum/error.enum';
 import { IOffer } from 'src/common/interfaces/offer.interface';
 import { DiscountType } from 'src/common/enum/discountType.enum';
+import { BookingDataDto } from 'src/common/dtos/boookingData.gto';
 
 @Injectable()
 export class BookingService {
@@ -33,7 +34,7 @@ export class BookingService {
     packageId: string,
     agencyId: string,
     couponId: string,
-    bookingData: any,
+    bookingData: BookingDataDto,
   ) {
     if (!bookingData || !packageId || !agencyId) {
       throw new NotFoundException(

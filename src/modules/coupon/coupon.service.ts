@@ -13,6 +13,7 @@ import {
 import { EditCouponDto } from 'src/common/dtos/editCoupon.dto';
 import { Package } from '../package/schema/package.schema';
 import { IOffer } from 'src/common/interfaces/offer.interface';
+import { CouponFields } from 'src/common/interfaces/couponFields.interface';
 
 @Injectable()
 export class CouponService {
@@ -55,7 +56,7 @@ export class CouponService {
     if (isExist) {
       throw new ConflictException('Coupon code already exists');
     }
-    const couponFields: any = {
+    const couponFields: CouponFields = {
       code: lowerCasedCode,
       description: couponData.description,
       minAmt: couponData.minAmt,

@@ -27,6 +27,7 @@ export class PostsController {
   async getAllPosts(@Req() req: Request, @Res() res: Response) {
     try {
       const result = await this._postService.getAllPost(req['user']['sub']);
+      console.log('-->', result);
       if (result) {
         return res.status(HttpStatus.OK).json({
           success: true,

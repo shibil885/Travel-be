@@ -6,8 +6,8 @@ import { UserService } from 'src/modules/user/user.service';
 @Injectable()
 export class CheckActiveMiddleware implements NestMiddleware {
   constructor(
-    private agencyService: AgencyService,
-    private userService: UserService,
+    private _agencyService: AgencyService,
+    private _userService: UserService,
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
@@ -28,11 +28,11 @@ export class CheckActiveMiddleware implements NestMiddleware {
 
     try {
       if (role === 'agency') {
-        accountData = await this.agencyService.findAgencyById(
+        accountData = await this._agencyService.findAgencyById(
           req['agency'].sub,
         );
       } else if (role === 'user') {
-        accountData = await this.userService.findUserById(req['user']['sub']);
+        accountData = await this._userService.findUserById(req['user']['sub']);
       } else if (role === 'admin') {
         next();
         return;

@@ -13,7 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { InjectModel } from '@nestjs/mongoose';
 import { Otp } from 'src/modules/otp/schema/otp.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { LoginAgencyDto } from 'src/common/dtos/loginAgency.dto';
 import { AgencyService } from 'src/modules/agency/agency.service';
 import { AdminDto } from 'src/common/dtos/admin.dto';
@@ -27,10 +27,14 @@ export class AuthService {
     private _jwtService: JwtService,
     private _agencyService: AgencyService,
     private _adminService: AdminService,
-    @InjectModel(Otp.name) private OtpModel: Model<Otp>,
+    @InjectModel(Otp.name) private _OtpModel: Model<Otp>,
   ) {}
 
-  async generateTokens(payload: any) {
+  async generateTokens(payload: {
+    sub: Types.ObjectId;
+    email: string;
+    role: string;
+  }) {
     const accessToken = this._jwtService.sign(payload, {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     });
@@ -130,7 +134,7 @@ export class AuthService {
 
       await Promise.all([
         mailsenderFunc(userData.email, subject, 'otp', { otp }),
-        new this.OtpModel({ email: userData.email, otp }).save(),
+        new this._OtpModel({ email: userData.email, otp }).save(),
       ]);
       throw new NotAcceptableException(user);
     }
@@ -165,7 +169,7 @@ export class AuthService {
 
       await Promise.all([
         mailsenderFunc(agencyData.email, subject, 'otp', { otp }),
-        new this.OtpModel({ email: agencyData.email, otp }).save(),
+        new this._OtpModel({ email: agencyData.email, otp }).save(),
       ]);
       throw new NotAcceptableException(agency);
     }

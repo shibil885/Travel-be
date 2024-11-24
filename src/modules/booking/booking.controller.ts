@@ -18,7 +18,7 @@ import { ErrorMessages } from 'src/common/enum/error.enum';
 
 @Controller('booking')
 export class BookingController {
-  constructor(private bookingService: BookingService) {}
+  constructor(private _bookingService: BookingService) {}
 
   @Get('getAllBooked')
   async getAllBooked(
@@ -28,7 +28,7 @@ export class BookingController {
     @Res() res: Response,
   ) {
     try {
-      const response = await this.bookingService.getAllBookedPackages(
+      const response = await this._bookingService.getAllBookedPackages(
         req['user'].sub,
         Number(page),
         Number(limit),
@@ -58,7 +58,7 @@ export class BookingController {
   @Get('getSingleBookedPackage/:id')
   async getSingleBookedPackage(@Res() res: Response, @Param('id') id: string) {
     try {
-      const result = await this.bookingService.getSingleBookedPackage(id);
+      const result = await this._bookingService.getSingleBookedPackage(id);
       if (!result) {
         throw new InternalServerErrorException();
       }
@@ -86,7 +86,7 @@ export class BookingController {
     @Query('limit') limit: number,
   ) {
     try {
-      const result = await this.bookingService.getAllBookingsForAgency(
+      const result = await this._bookingService.getAllBookingsForAgency(
         req['agency'].sub,
         page,
         limit,
@@ -120,7 +120,7 @@ export class BookingController {
     @Body('status') status: TravelConfirmationStatus,
   ) {
     try {
-      const result = await this.bookingService.confirmBooking(
+      const result = await this._bookingService.confirmBooking(
         bookingId,
         status,
       );
@@ -150,7 +150,7 @@ export class BookingController {
     @Body('user') user: string,
   ) {
     try {
-      const result = await this.bookingService.cancelBooking(user, bookingId);
+      const result = await this._bookingService.cancelBooking(user, bookingId);
       console.log('canceled', true);
       return result
         ? res

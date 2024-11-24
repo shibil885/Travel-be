@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private readonly requiredRole: string) {}
+  constructor(private readonly _requiredRole: string) {}
 
   canActivate(
     context: ExecutionContext,
@@ -11,6 +11,6 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
     console.log('from role guard', user);
-    return user?.role === this.requiredRole;
+    return user?.role === this._requiredRole;
   }
 }

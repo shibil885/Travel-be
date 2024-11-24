@@ -16,7 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('agency')
 export class AgencyController {
-  constructor(private agencyService: AgencyService) {}
+  constructor(private _agencyService: AgencyService) {}
 
   @Post('signup')
   @UseInterceptors(FileInterceptor('document'))
@@ -25,7 +25,7 @@ export class AgencyController {
     @Body() agencyData: FormData,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.agencyService.signup(res, agencyData, file);
+    return this._agencyService.signup(res, agencyData, file);
   }
 
   @Patch('logout')
@@ -51,14 +51,14 @@ export class AgencyController {
 
   @Post('isExistingMail')
   findEmail(@Res() res: Response, @Body() body) {
-    return this.agencyService.findEmail(res, body.email);
+    return this._agencyService.findEmail(res, body.email);
   }
   @Post('isExistingName')
   findName(@Res() res: Response, @Body() body) {
-    return this.agencyService.findName(res, body.name);
+    return this._agencyService.findName(res, body.name);
   }
   @Get('isConfirmed')
   isConfirmed(@Req() req: Request, @Res() res: Response) {
-    return this.agencyService.isConfirmed(req, res);
+    return this._agencyService.isConfirmed(req, res);
   }
 }

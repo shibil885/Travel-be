@@ -14,17 +14,17 @@ import { FilterDataDto } from 'src/common/dtos/filterData.dto';
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectModel(Admin.name) private AdminModel: Model<Admin>,
-    @InjectModel(Agency.name) private AgencyModel: Model<Agency>,
-    @InjectModel(User.name) private UserModel: Model<User>,
+    @InjectModel(Admin.name) private _AdminModel: Model<Admin>,
+    @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
+    @InjectModel(User.name) private _UserModel: Model<User>,
   ) {}
 
   async findAllAgencies(page: number, pageSize: number) {
     const skip = (page - 1) * pageSize;
 
     const [agencies, totalAgencies] = await Promise.all([
-      this.AgencyModel.find({ isVerified: true }).skip(skip).limit(pageSize),
-      this.AgencyModel.countDocuments({ isVerified: true }),
+      this._AgencyModel.find({ isVerified: true }).skip(skip).limit(pageSize),
+      this._AgencyModel.countDocuments({ isVerified: true }),
     ]);
 
     return {
@@ -38,8 +38,8 @@ export class AdminService {
     const skip = (page - 1) * pageSize;
 
     const [users, totalUsers] = await Promise.all([
-      this.UserModel.find({ isVerified: true }).skip(skip).limit(pageSize),
-      this.UserModel.countDocuments({ isVerified: true }),
+      this._UserModel.find({ isVerified: true }).skip(skip).limit(pageSize),
+      this._UserModel.countDocuments({ isVerified: true }),
     ]);
 
     return {
@@ -51,7 +51,7 @@ export class AdminService {
   }
 
   async findOne(email: string, password: string) {
-    const admin = await this.AdminModel.findOne({
+    const admin = await this._AdminModel.findOne({
       email: email,
       password: password,
     });
@@ -60,7 +60,7 @@ export class AdminService {
 
   async findAdmin(email: string) {
     try {
-      const admin = await this.AdminModel.findOne({ email: email });
+      const admin = await this._AdminModel.findOne({ email: email });
       if (!admin) return null;
       return admin;
     } catch (error) {
@@ -70,7 +70,7 @@ export class AdminService {
   }
   async changeAgencyStatus(id: string, res: Response, action: string) {
     try {
-      const agency = await this.AgencyModel.findById(id);
+      const agency = await this._AgencyModel.findById(id);
       if (!agency) {
         return res
           .status(HttpStatus.NOT_FOUND)
@@ -99,7 +99,7 @@ export class AdminService {
 
   async changeUserStatus(id: string, res: Response, action: string) {
     try {
-      const user = await this.UserModel.findById(id);
+      const user = await this._UserModel.findById(id);
       if (!user) {
         return res
           .status(HttpStatus.NOT_FOUND)
@@ -127,8 +127,7 @@ export class AdminService {
   }
   async confirmation(id: string, res: Response, action: string) {
     try {
-      console.log('ffffffffffff', action);
-      const agency = await this.AgencyModel.findById(id);
+      const agency = await this._AgencyModel.findById(id);
       if (!agency) {
         return res
           .status(HttpStatus.NOT_FOUND)
@@ -156,7 +155,7 @@ export class AdminService {
   }
   async getFilteredData(filterData: FilterDataDto, user: string) {
     const { isActive, isVerified, isConfirmed } = filterData;
-    const query: any = {};
+    let query: { isActive: boolean; isVerified: boolean; isConfirmed: boolean };
 
     if (isActive !== undefined) {
       query.isActive = isActive;
@@ -172,9 +171,9 @@ export class AdminService {
     let filteredData;
     try {
       if (user === 'agency') {
-        filteredData = await this.AgencyModel.find(query).exec();
+        filteredData = await this._AgencyModel.find(query).exec();
       } else if (user === 'user') {
-        filteredData = await this.UserModel.find(query).exec();
+        filteredData = await this._UserModel.find(query).exec();
       } else {
         throw new Error('Invalid user type provided.');
       }
@@ -189,17 +188,24 @@ export class AdminService {
   async searchUsers(searchText: string, user: string) {
     try {
       let searchResult;
-      const query: any = {
-        $or: [
-          { name: { $regex: searchText, $options: 'i' } },
-          { email: { $regex: searchText, $options: 'i' } },
-        ],
-      };
-
       if (user === 'agency') {
-        searchResult = await this.AgencyModel.find(query).exec();
+        searchResult = await this._AgencyModel
+          .find({
+            $or: [
+              { name: { $regex: searchText, $options: 'i' } },
+              { email: { $regex: searchText, $options: 'i' } },
+            ],
+          })
+          .exec();
       } else if (user === 'user') {
-        searchResult = await this.UserModel.find(query).exec();
+        searchResult = await this._UserModel
+          .find({
+            $or: [
+              { username: { $regex: searchText, $options: 'i' } },
+              { email: { $regex: searchText, $options: 'i' } },
+            ],
+          })
+          .exec();
       } else {
         throw new Error('Invalid user type');
       }

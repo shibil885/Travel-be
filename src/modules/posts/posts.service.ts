@@ -142,8 +142,6 @@ export class PostsService {
       })
       .populate('userId')
       .populate({ path: 'comments.userId', select: 'username' });
-
-    console.log('-------->>', posts[0].comments);
     return posts;
   }
   // async getAllPost(userId: string) {
