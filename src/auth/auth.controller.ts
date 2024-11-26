@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   HttpStatus,
   NotAcceptableException,
   NotFoundException,
   Patch,
   Post,
+  Query,
   Req,
   Res,
   UnauthorizedException,
@@ -197,13 +199,13 @@ export class AuthController {
       }
     }
   }
+
   @Patch('resetLink')
   async generateresetLink(
     @Res() res: Response,
     @Body() body: { email: string; role: Role },
   ) {
     try {
-      console.log('body', body);
       const response = await this._authService.generateLink(
         body.email,
         body.role,
@@ -226,15 +228,43 @@ export class AuthController {
     }
   }
 
+  @Get('validateLink')
+  async validateLink(@Res() res: Response, @Query('token') token: string) {
+    try {
+      const isValid = await this._authService.validatePasswordResetLink(token);
+      if (isValid) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'Link is valid' });
+      } else {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: false, message: 'Invalid or expired link' });
+      }
+    } catch (error) {
+      console.error('Error occurred while validating link:', error);
+
+      if (error instanceof NotFoundException) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: error.message });
+      }
+
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: 'Internal server error' });
+    }
+  }
+
   @Patch('resetPassword')
   async resetPassword(
     @Res() res: Response,
-    @Body() body: { password: string; role: Role; userId: string },
+    @Body() body: { password: string; role: Role; token: string },
   ) {
     try {
-      console.log(body);
+      console.log('---->', body);
       const response = await this._authService.resetPassword(
-        body.userId,
+        body.token,
         body.password,
         body.role,
       );

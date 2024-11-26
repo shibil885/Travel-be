@@ -68,7 +68,7 @@ export async function mailsenderFunc(
 
     <!-- Body -->
     <div style="padding: 20px;">
-      <h2 style="font-size: 20px; color: #3d52a0; margin-bottom: 10px;">Hi ${data.username},</h2>
+      <h2 style="font-size: 20px; color: #3d52a0; margin-bottom: 10px;">Hi ${data.name},</h2>
       <p style="color: #4b5563; line-height: 1.6; margin-bottom: 20px;">
         We received a request to reset your password. Click the button below to set a new password:
       </p>

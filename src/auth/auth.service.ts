@@ -1,7 +1,6 @@
 import {
   ForbiddenException,
   Injectable,
-  InternalServerErrorException,
   NotAcceptableException,
   NotFoundException,
   UnauthorizedException,
@@ -215,34 +214,69 @@ export class AuthService {
       throw new NotFoundException(
         !email ? 'User email not provided' : 'User role not provided',
       );
-    const isExistingUser = await this._userservice.findOne(email);
+    let isExistingUser;
+    let token: string;
+
+    if (role === Role.USER) {
+      isExistingUser = await this._userservice.findOne(email);
+      token = this._jwtService.sign(
+        { id: isExistingUser._id },
+        {
+          expiresIn: process.env.RESET_TOKEN_EXPIRATION,
+        },
+      );
+      console.log('token', token);
+      return this._sendResetMail(email, token, isExistingUser.username);
+    } else if (role === Role.AGENCY) {
+      isExistingUser = await this._agencyService.findOne(email);
+      token = this._jwtService.sign(
+        { id: isExistingUser._id },
+        {
+          expiresIn: process.env.RESET_TOKEN_EXPIRATION,
+        },
+      );
+    }
     if (!isExistingUser) throw new NotFoundException('User not exist');
-    const url = `${process.env.FRONTEND_URL}/resetPassword/${isExistingUser._id}`;
+  }
+
+  private async _sendResetMail(email: string, token: string, name: string) {
+    const url = `${process.env.FRONTEND_URL}/${process.env.RESET_PASSWORD}/${token}`;
     const mailsended = await mailsenderFunc(
-      isExistingUser.email,
+      email,
       'Password Reset Request for Your Account',
       'generatLink',
-      { username: isExistingUser.username, url: url },
+      { name: name, url: url },
     );
     if (mailsended) {
       return true;
     }
-    throw new InternalServerErrorException();
   }
 
-  resetPassword(userId: string, password: string, role: Role) {
-    if (!userId || !password || !role)
+  async validatePasswordResetLink(token: string): Promise<boolean> {
+    if (!token) throw new NotFoundException('Token not provided');
+    try {
+      this._jwtService.verify(token);
+      return true;
+    } catch (err) {
+      console.error('Token verification failed:', err.message);
+      return false;
+    }
+  }
+
+  resetPassword(token: string, password: string, role: Role) {
+    if (!token || !password || !role)
       throw new NotFoundException(
-        !userId
-          ? 'UserId not provided. try again'
+        !token
+          ? 'token not provided. try again'
           : !password
             ? 'password not provided'
             : 'Role is not provided',
       );
+    const parsedId = this._jwtService.decode(token);
     if (role === Role.USER) {
-      return this._userservice.userPasswordRest(userId, password);
+      return this._userservice.userPasswordRest(parsedId, password);
     } else if (role == Role.AGENCY) {
-      return this._agencyService.agencyPasswordRest(userId, password);
+      return this._agencyService.agencyPasswordRest(parsedId, password);
     }
   }
 }

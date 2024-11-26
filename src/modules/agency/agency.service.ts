@@ -125,6 +125,7 @@ export class AgencyService {
       throw new InternalServerErrorException();
     }
   }
+
   @Patch('logout')
   userLogout(@Res() res: Response) {
     res.clearCookie('access_token', {

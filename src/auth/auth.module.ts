@@ -14,7 +14,6 @@ import { OtpModule } from 'src/modules/otp/otp.module';
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '15m' },
     }),
     MongooseModule.forFeature([{ name: Otp.name, schema: OtpSchema }]),
     AgencyModule,

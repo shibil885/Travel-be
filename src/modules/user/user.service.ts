@@ -29,6 +29,7 @@ export class UserService {
     @InjectModel(Package.name) private PackageModel: Model<Package>,
     private _cloudinaryService: CloudinaryService,
   ) {}
+
   async findEmail(res: Response, email: string) {
     try {
       const isExisting = await this.userModel.findOne({
