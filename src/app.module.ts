@@ -26,6 +26,8 @@ import { BookingModule } from './modules/booking/booking.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { OffersModule } from './modules/offers/offers.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { AdminDashboardModule } from './modules/dashboard/admin-dashboard/admin-dashboard.module';
+import { AgencyDashboardModule } from './modules/dashboard/agency-dashboard/agency-dashboard.module';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { PostsModule } from './modules/posts/posts.module';
     WalletModule,
     OffersModule,
     PostsModule,
+    AdminDashboardModule,
+    AgencyDashboardModule,
   ],
   controllers: [],
   providers: [],

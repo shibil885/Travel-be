@@ -262,7 +262,6 @@ export class AuthController {
     @Body() body: { password: string; role: Role; token: string },
   ) {
     try {
-      console.log('---->', body);
       const response = await this._authService.resetPassword(
         body.token,
         body.password,
