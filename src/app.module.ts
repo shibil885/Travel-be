@@ -28,6 +28,7 @@ import { OffersModule } from './modules/offers/offers.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { AdminDashboardModule } from './modules/dashboard/admin-dashboard/admin-dashboard.module';
 import { AgencyDashboardModule } from './modules/dashboard/agency-dashboard/agency-dashboard.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { AgencyDashboardModule } from './modules/dashboard/agency-dashboard/agen
     PostsModule,
     AdminDashboardModule,
     AgencyDashboardModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],
