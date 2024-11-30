@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   HttpStatus,
   InternalServerErrorException,
   NotFoundException,
+  Param,
   Post,
   Query,
   Req,
@@ -60,6 +62,27 @@ export class ChatController {
     }
   }
 
+  @Get('messages/:id')
+  async getMessages(@Res() res: Response, @Param('id') id: string) {
+    try {
+      console.log('id --->', id);
+      const result = await this._chatService.getAllMessages(id);
+      console.log('result --->', result);
+      if (result.length > 0) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          message: 'List of messages',
+          messages: result,
+        });
+      }
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: 'List of messages', messages: [] });
+    } catch (error) {
+      console.log('Error occured while fetch message', error);
+    }
+  }
+
   @Get('users')
   async getAgencies(@Req() req: Request, @Res() res: Response) {
     try {
@@ -93,6 +116,7 @@ export class ChatController {
     @Body() body: { userType: MessageSenderType; id: string },
   ) {
     try {
+      console.log('invoked');
       if (!body.userType || !body.id)
         throw new NotFoundException(
           !body.userType ? 'UserType is not provided' : 'id not provided',
@@ -121,6 +145,50 @@ export class ChatController {
       if (error instanceof NotFoundException) {
         return res
           .status(HttpStatus.NOT_FOUND)
+          .json({ success: false, message: error.message });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message });
+    }
+  }
+
+  @Post('addMessage/:id')
+  async addMessage(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('id') chatId: string,
+    @Body('content') content: string,
+  ) {
+    try {
+      let response;
+      if (req['user']['role'] === MessageSenderType.USER) {
+        response = await this._chatService.addMessage(
+          req['user']['sub'],
+          chatId,
+          MessageSenderType.USER,
+          content,
+        );
+      } else if (req['agency']['role'] === MessageSenderType.AGENCY) {
+        response = await this._chatService.addMessage(
+          req['agency']['sub'],
+          chatId,
+          MessageSenderType.USER,
+          content,
+        );
+      } else {
+        throw new InternalServerErrorException('Somthing went wrong');
+      }
+      if (response) {
+        return res
+          .status(HttpStatus.CREATED)
+          .json({ success: true, message: 'New message created' });
+      }
+    } catch (error) {
+      console.log('Error occured while add new message', error);
+      if (error instanceof BadRequestException) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
           .json({ success: false, message: error.message });
       }
       return res
