@@ -4,12 +4,14 @@ import { Chat } from './schema/chat.schema';
 import { Model, Types } from 'mongoose';
 import { Agency } from '../agency/schema/agency.schema';
 import { MessageSenderType } from 'src/common/enum/messageSenderType.enum';
+import { User } from '../user/schemas/user.schema';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel(Chat.name) private _ChatModel: Model<Chat>,
     @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
+    @InjectModel(User.name) private _UserModel: Model<User>,
   ) {}
 
   async getAllChats(id: string, userType: MessageSenderType) {
@@ -29,11 +31,22 @@ export class ChatService {
     return chats;
   }
 
-  async getAgencies() {
-    const agencies = await this._AgencyModel
-      .find({ isConfirmed: true, isActive: true }, { name: 1, _id: 1 })
-      .sort({ name: 1 });
-    return agencies;
+  async getUsersOrAgenciesToChat(userType: MessageSenderType): Promise<any[]> {
+    try {
+      if (userType === MessageSenderType.AGENCY) {
+        return await this._UserModel.find(
+          { isActive: true },
+          { username: 1, _id: 1, profilePicture: 1 },
+        );
+      } else {
+        return await this._AgencyModel
+          .find({ isConfirmed: true, isActive: true }, { name: 1, _id: 1 })
+          .sort({ name: 1 });
+      }
+    } catch (error) {
+      console.error('Error fetching users or agencies:', error.message);
+      throw new Error('Failed to fetch users or agencies.');
+    }
   }
 
   async initializeChat(userId: string, agencyId: string) {

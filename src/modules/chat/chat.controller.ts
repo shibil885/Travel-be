@@ -60,28 +60,29 @@ export class ChatController {
     }
   }
 
-  @Get('agencies')
-  async getAgemcies(@Res() res: Response) {
+  @Get('users')
+  async getAgencies(@Req() req: Request, @Res() res: Response) {
     try {
-      const response = await this._chatService.getAgencies();
-      if (response.length) {
-        return res.status(HttpStatus.OK).json({
-          success: true,
-          message: 'List of agencies',
-          agencies: response,
-        });
-      } else {
-        return res.status(HttpStatus.OK).json({
-          success: true,
-          message: 'List of agencies',
-          agencies: [],
-        });
-      }
+      const userRole =
+        req[MessageSenderType.AGENCY]?.['role'] || MessageSenderType.USER;
+
+      const response =
+        await this._chatService.getUsersOrAgenciesToChat(userRole);
+
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: response.length ? 'List of agencies' : 'No agencies found',
+        users: response,
+      });
     } catch (error) {
-      console.log('Error occured while fetching agencies to add chat', error);
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
+      console.error(
+        'Error occurred while fetching agencies to add chat:',
+        error.message,
+      );
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'Internal server error occurred while fetching agencies.',
+      });
     }
   }
 
