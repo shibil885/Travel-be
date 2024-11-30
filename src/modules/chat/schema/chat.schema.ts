@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { MessageSenderType } from 'src/common/enum/messageSenderType.enum';
 
 @Schema({ timestamps: true })
 export class Message extends Document {
@@ -9,8 +10,8 @@ export class Message extends Document {
   @Prop({ type: Types.ObjectId, required: true })
   senderId: Types.ObjectId; // ID of the sender (user or agency)
 
-  @Prop({ type: String, enum: ['user', 'agency'], required: true })
-  senderType: 'user' | 'agency'; // Type of the sender
+  @Prop({ type: String, enum: MessageSenderType, required: true })
+  senderType: MessageSenderType; // Type of the sender
 
   @Prop({
     type: String,
