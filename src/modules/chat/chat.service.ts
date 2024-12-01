@@ -32,7 +32,13 @@ export class ChatService {
           { path: 'lastMessageId' },
         ]);
     } else if (userType === MessageSenderType.AGENCY) {
-      chats = await this._ChatModel.find({ agencyId: new Types.ObjectId(id) });
+      chats = await this._ChatModel
+        .find({ agencyId: new Types.ObjectId(id) })
+        .populate([
+          { path: 'userId', select: '_id username profilePicture' },
+          { path: 'agencyId', select: '_id name' },
+          { path: 'lastMessageId' },
+        ]);
     }
     return chats;
   }

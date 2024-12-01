@@ -15,6 +15,7 @@ import {
 import { ChatService } from './chat.service';
 import { Request, Response } from 'express';
 import { MessageSenderType } from 'src/common/enum/messageSenderType.enum';
+import { ErrorMessages } from 'src/common/enum/error.enum';
 
 @Controller('chat')
 export class ChatController {
@@ -65,9 +66,7 @@ export class ChatController {
   @Get('messages/:id')
   async getMessages(@Res() res: Response, @Param('id') id: string) {
     try {
-      console.log('id --->', id);
       const result = await this._chatService.getAllMessages(id);
-      console.log('result --->', result);
       if (result.length > 0) {
         return res.status(HttpStatus.OK).json({
           success: true,
@@ -162,22 +161,27 @@ export class ChatController {
   ) {
     try {
       let response;
-      if (req['user']['role'] === MessageSenderType.USER) {
+      const userRole =
+        req[MessageSenderType.USER]?.['role'] ?? MessageSenderType.AGENCY;
+      console.log('role', userRole);
+      if (userRole === MessageSenderType.USER) {
         response = await this._chatService.addMessage(
-          req['user']['sub'],
+          req[MessageSenderType.USER]['sub'],
           chatId,
           MessageSenderType.USER,
           content,
         );
-      } else if (req['agency']['role'] === MessageSenderType.AGENCY) {
+      } else if (userRole === MessageSenderType.AGENCY) {
         response = await this._chatService.addMessage(
-          req['agency']['sub'],
+          req[MessageSenderType.AGENCY]['sub'],
           chatId,
-          MessageSenderType.USER,
+          MessageSenderType.AGENCY,
           content,
         );
       } else {
-        throw new InternalServerErrorException('Somthing went wrong');
+        throw new InternalServerErrorException(
+          ErrorMessages.SOMETHING_WENT_WRONG,
+        );
       }
       if (response) {
         return res
