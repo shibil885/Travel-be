@@ -69,8 +69,9 @@ export class PaymentService {
     if (amount <= 50) {
       amount = 50;
     }
+    console.log('final amout to pay', amount);
     const options = {
-      amount: amount ? amount * 100 : Number(selectedPackage.price) * 100,
+      amount: amount ? amount * 100 : 50 * 100,
       currency,
       receipt: `receipt_${Math.random()}`,
     };
