@@ -16,11 +16,14 @@ import { ChatService } from './chat.service';
 import { Request, Response } from 'express';
 import { MessageSenderType } from 'src/common/enum/messageSenderType.enum';
 
-import { ErrorMessages } from 'src/common/enum/error.enum';
+import { ChatGateway } from './chat-gateway/chat-gateway.gateway';
 
 @Controller('chat')
 export class ChatController {
-  constructor(private _chatService: ChatService) {}
+  constructor(
+    private _chatService: ChatService,
+    private _chatGateway: ChatGateway,
+  ) {}
 
   @Get()
   async getAllChats(
@@ -116,10 +119,9 @@ export class ChatController {
     @Body() body: { userType: MessageSenderType; id: string },
   ) {
     try {
-      console.log('invoked');
       if (!body.userType || !body.id)
         throw new NotFoundException(
-          !body.userType ? 'UserType is not provided' : 'id not provided',
+          !body.userType ? 'UserType is not provided' : 'Id not provided',
         );
       let response;
       if (body.userType === MessageSenderType.USER) {
@@ -161,34 +163,26 @@ export class ChatController {
     @Body('content') content: string,
   ) {
     try {
-      let response;
       const userRole =
         req[MessageSenderType.USER]?.['role'] ?? MessageSenderType.AGENCY;
-      console.log('role', userRole);
-      if (userRole === MessageSenderType.USER) {
-        response = await this._chatService.addMessage(
-          req[MessageSenderType.USER]['sub'],
-          chatId,
-          MessageSenderType.USER,
-          content,
-        );
-      } else if (userRole === MessageSenderType.AGENCY) {
-        response = await this._chatService.addMessage(
-          req[MessageSenderType.AGENCY]['sub'],
-          chatId,
-          MessageSenderType.AGENCY,
-          content,
-        );
-      } else {
-        throw new InternalServerErrorException(
-          ErrorMessages.SOMETHING_WENT_WRONG,
-        );
-      }
-      if (response) {
-        return res
-          .status(HttpStatus.CREATED)
-          .json({ success: true, message: 'New message created' });
-      }
+      const senderId =
+        userRole === MessageSenderType.USER
+          ? req[MessageSenderType.USER]['sub']
+          : req[MessageSenderType.AGENCY]['sub'];
+
+      const message = await this._chatService.addMessage(
+        senderId,
+        chatId,
+        userRole,
+        content,
+      );
+
+      // Emit new message event
+      this._chatGateway.server.to(chatId).emit('message', message);
+
+      return res
+        .status(HttpStatus.CREATED)
+        .json({ success: true, message: 'New message created' });
     } catch (error) {
       console.log('Error occured while add new message', error);
       if (error instanceof BadRequestException) {
