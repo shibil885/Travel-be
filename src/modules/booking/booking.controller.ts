@@ -30,6 +30,10 @@ export class BookingController {
     @Res() res: Response,
   ) {
     try {
+      if (!page || !limit)
+        throw new BadRequestException(
+          !page ? 'Page not provided' : 'Limit not provided',
+        );
       const response = await this._bookingService.getAllBookedPackages(
         req['user'].sub,
         Number(page),
@@ -50,10 +54,59 @@ export class BookingController {
         currentPage: response.page,
       });
     } catch (error) {
-      console.log('Error occure while fetch bookrd data from db', error);
+      console.log('Error occured while fetching booked data from db', error);
+      if (error instanceof BadRequestException) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ success: false, message: error.message });
+      }
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ success: false, booked: [] });
+    }
+  }
+
+  @Get('travelHistory')
+  async getTravelHistory(
+    @Req() req: Request,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Res() res: Response,
+  ) {
+    try {
+      if (!page || !limit)
+        throw new BadRequestException(
+          !page ? 'Page not provided' : 'Limit not provided',
+        );
+      const response = await this._bookingService.getAllBookedPackages(
+        req['user'].sub,
+        Number(page),
+        Number(limit),
+      );
+      if (response.bookedPackages.length > 0) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          history: response.bookedPackages,
+          totalItems: response.bookedPackageCount,
+          currentPage: response.page,
+        });
+      }
+      return res.status(HttpStatus.OK).json({
+        info: true,
+        history: [],
+        totalItems: response.bookedPackageCount,
+        currentPage: response.page,
+      });
+    } catch (error) {
+      console.log('Error occured while fetching travel history', error);
+      if (error instanceof BadRequestException) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ success: false, message: error.message });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, history: [] });
     }
   }
 

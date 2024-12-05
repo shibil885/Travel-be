@@ -219,6 +219,78 @@ export class BookingService {
     }
   }
 
+  async getTravelHistory(userId: string, page: number, limit: number) {
+    try {
+      const skip = (page - 1) * limit;
+      const [bookedPackages, bookedPackageCount] = await Promise.all([
+        this._BookingModel
+          .aggregate([
+            {
+              $match: {
+                user_id: new Types.ObjectId(userId),
+                travel_status: TravelStatus.COMPLETED,
+              },
+            },
+            {
+              $lookup: {
+                from: 'packages',
+                localField: 'package_id',
+                foreignField: '_id',
+                as: 'package',
+              },
+            },
+            { $unwind: '$package' },
+            {
+              $lookup: {
+                from: 'agencies',
+                localField: 'package.agencyId',
+                foreignField: '_id',
+                as: 'agency',
+              },
+            },
+            { $unwind: '$agency' },
+            {
+              $lookup: {
+                from: 'categories',
+                localField: 'package.category',
+                foreignField: '_id',
+                as: 'category',
+              },
+            },
+            { $unwind: '$category' },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'user_id',
+                foreignField: '_id',
+                as: 'user',
+              },
+            },
+            {
+              $unwind: '$user',
+            },
+          ])
+          .skip(skip)
+          .limit(limit),
+        this._BookingModel.countDocuments({
+          user_id: new Types.ObjectId(userId),
+          $or: [
+            { travel_status: TravelStatus.PENDING },
+            { travel_status: TravelStatus.STARTED },
+          ],
+        }),
+      ]);
+      return {
+        bookedPackageCount,
+        bookedPackages,
+        page,
+      };
+    } catch (error) {
+      console.log('Error occured while fetch booking', error);
+      throw new InternalServerErrorException();
+    }
+  }
+
   async getSingleBookedPackage(bookingId: string) {
     if (!bookingId) throw new NotFoundException('Cant find booking data');
     return await this._BookingModel

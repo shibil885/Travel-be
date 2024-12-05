@@ -29,6 +29,8 @@ import { PostsModule } from './modules/posts/posts.module';
 import { AdminDashboardModule } from './modules/dashboard/admin-dashboard/admin-dashboard.module';
 import { AgencyDashboardModule } from './modules/dashboard/agency-dashboard/agency-dashboard.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { RatingReviewAgencyModule } from './modules/rating-review-agency/rating-review-agency.module';
+import { RatingReviewPackageModule } from './modules/rating-review-package/rating-review-package.module';
 
 @Module({
   imports: [
@@ -57,6 +59,8 @@ import { ChatModule } from './modules/chat/chat.module';
     AdminDashboardModule,
     AgencyDashboardModule,
     ChatModule,
+    RatingReviewAgencyModule,
+    RatingReviewPackageModule,
   ],
   controllers: [],
   providers: [],
