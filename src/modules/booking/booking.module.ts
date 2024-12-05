@@ -6,6 +6,8 @@ import { Package, PackageSchema } from '../package/schema/package.schema';
 import { Coupon, CouponSchema } from '../coupon/schema/coupon.schema';
 import { Booking, BookingSchema } from './schema/booking.schema';
 import { WalletModule } from '../wallet/wallet.module';
+import { Agency, AgencySchema } from '../agency/schema/agency.schema';
+import { AgencyModule } from '../agency/agency.module';
 
 @Module({
   imports: [
@@ -13,8 +15,10 @@ import { WalletModule } from '../wallet/wallet.module';
       { name: Booking.name, schema: BookingSchema },
       { name: Package.name, schema: PackageSchema },
       { name: Coupon.name, schema: CouponSchema },
+      { name: Agency.name, schema: AgencySchema },
     ]),
     WalletModule,
+    AgencyModule,
   ],
   controllers: [BookingController],
   providers: [BookingService],

@@ -19,6 +19,7 @@ import { ErrorMessages } from 'src/common/enum/error.enum';
 import { IOffer } from 'src/common/interfaces/offer.interface';
 import { DiscountType } from 'src/common/enum/discountType.enum';
 import { BookingDataDto } from 'src/common/dtos/boookingData.gto';
+import { Agency } from '../agency/schema/agency.schema';
 
 @Injectable()
 export class BookingService {
@@ -26,8 +27,23 @@ export class BookingService {
     @InjectModel(Booking.name) private _BookingModel: Model<Booking>,
     @InjectModel(Package.name) private _PackageModel: Model<Package>,
     @InjectModel(Coupon.name) private _CouponModel: Model<Coupon>,
+    @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
     private _WalletService: WalletService,
   ) {}
+
+  private _calculateRefund(price: string, createdAt: Date): number {
+    const today = Date.now();
+    const bookedDate = createdAt.getTime();
+    const diffInHours = (today - bookedDate) / (1000 * 60 * 60);
+    console.log('houres --->', diffInHours);
+    if (diffInHours <= 24) {
+      return Number(price);
+    } else if (diffInHours >= 72 && diffInHours <= 168) {
+      return Number(price) * 0.5;
+    } else {
+      return 0;
+    }
+  }
 
   async saveBooking(
     userId: string,
@@ -331,17 +347,159 @@ export class BookingService {
     }
   }
 
-  private _calculateRefund(price: string, createdAt: Date): number {
-    const today = Date.now();
-    const bookedDate = createdAt.getTime();
-    const diffInHours = (today - bookedDate) / (1000 * 60 * 60);
-    console.log('houres --->', diffInHours);
-    if (diffInHours <= 24) {
-      return Number(price);
-    } else if (diffInHours >= 72 && diffInHours <= 168) {
-      return Number(price) * 0.5;
-    } else {
-      return 0;
-    }
+  async getAgenciesAndBookingData(page: number, limit: number) {
+    if (!page || !limit)
+      throw new BadRequestException(
+        !page ? 'Page not provided' : 'Limit not provided',
+      );
+    const skip = (page - 1) * limit;
+    const [packagesByAgency, totalCount] = await Promise.all([
+      this._AgencyModel
+        .aggregate([
+          {
+            $lookup: {
+              from: 'bookings',
+              localField: '_id',
+              foreignField: 'agency_id',
+              as: 'bookings',
+            },
+          },
+        ])
+        .skip(skip)
+        .limit(limit),
+      this._AgencyModel.countDocuments(),
+    ]);
+    const bookingData = [];
+    packagesByAgency.forEach((agency) => {
+      const data = {
+        total: agency.bookings.length,
+        completed: 0,
+        started: 0,
+        canceled: 0,
+        pending: 0,
+      };
+      agency.bookings.forEach((booking) => {
+        if (booking.travel_status === TravelStatus.COMPLETED) {
+          data[TravelStatus.COMPLETED]++;
+        } else if (booking.travel_status === TravelStatus.PENDING) {
+          data[TravelStatus.PENDING]++;
+        } else if (booking.travel_status === TravelStatus.STARTED) {
+          data[TravelStatus.STARTED]++;
+        } else if (booking.travel_status === TravelStatus.CANCELLED) {
+          data[TravelStatus.CANCELLED]++;
+        }
+      });
+      bookingData.push({ ...data, name: agency.name, id: agency._id });
+    });
+    return { bookingData, totalCount, page };
+  }
+
+  async getCancelledBookings(agencyId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [cancelledBookings, cancelledBookingsCount] = await Promise.all([
+      this._BookingModel
+        .find({
+          agency_id: new Types.ObjectId(agencyId),
+          travel_status: TravelStatus.CANCELLED,
+        })
+        .skip(skip)
+        .limit(limit)
+        .populate([
+          { path: 'agency_id', select: 'name' },
+          { path: 'package_id' },
+          { path: 'user_id' },
+        ]),
+      this._BookingModel.countDocuments({
+        agency_id: new Types.ObjectId(agencyId),
+        travel_status: TravelStatus.CANCELLED,
+      }),
+    ]);
+
+    return {
+      cancelledBookings,
+      cancelledBookingsCount,
+      page,
+    };
+  }
+  async getCompletedBookings(agencyId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [completedBookings, completedBookingsCount] = await Promise.all([
+      this._BookingModel
+        .find({
+          agency_id: new Types.ObjectId(agencyId),
+          travel_status: TravelStatus.COMPLETED,
+        })
+        .skip(skip)
+        .limit(limit)
+        .populate([
+          { path: 'agency_id', select: 'name' },
+          { path: 'package_id' },
+          { path: 'user_id' },
+        ]),
+      this._BookingModel.countDocuments({
+        agency_id: new Types.ObjectId(agencyId),
+        travel_status: TravelStatus.COMPLETED,
+      }),
+    ]);
+
+    return {
+      completedBookings,
+      completedBookingsCount,
+      page,
+    };
+  }
+  async getPendingBookings(agencyId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [pendingBookings, pendingBookingsCount] = await Promise.all([
+      this._BookingModel
+        .find({
+          agency_id: new Types.ObjectId(agencyId),
+          travel_status: TravelStatus.PENDING,
+        })
+        .skip(skip)
+        .limit(limit)
+        .populate([
+          { path: 'agency_id', select: 'name' },
+          { path: 'package_id' },
+          { path: 'user_id' },
+        ]),
+      this._BookingModel.countDocuments({
+        agency_id: new Types.ObjectId(agencyId),
+        travel_status: TravelStatus.PENDING,
+      }),
+    ]);
+
+    return {
+      pendingBookings,
+      pendingBookingsCount,
+      page,
+    };
+  }
+  async getStartedBookings(agencyId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [startedBookings, startedBookingsCount] = await Promise.all([
+      this._BookingModel
+        .find({
+          agency_id: new Types.ObjectId(agencyId),
+          travel_status: TravelStatus.STARTED,
+        })
+        .skip(skip)
+        .limit(limit)
+        .populate([
+          { path: 'agency_id', select: 'name' },
+          { path: 'package_id' },
+          { path: 'user_id' },
+        ]),
+      this._BookingModel.countDocuments({
+        agency_id: new Types.ObjectId(agencyId),
+        travel_status: TravelStatus.STARTED,
+      }),
+    ]);
+
+    return {
+      startedBookings,
+      startedBookingsCount,
+      page,
+    };
   }
 }
