@@ -24,21 +24,127 @@ export class ChatService {
     if (!id) throw new NotFoundException('Id not provided');
     let chats;
     if (userType === MessageSenderType.USER) {
-      chats = await this._ChatModel
-        .find({ userId: new Types.ObjectId(id) })
-        .populate([
-          { path: 'userId', select: '_id username profilePicture' },
-          { path: 'agencyId', select: '_id name' },
-          { path: 'lastMessageId' },
-        ]);
+      chats = await this._ChatModel.aggregate([
+        {
+          $match: { userId: new Types.ObjectId(id) },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'userId',
+          },
+        },
+        {
+          $unwind: { path: '$userId', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'agencies',
+            localField: 'agencyId',
+            foreignField: '_id',
+            as: 'agencyId',
+          },
+        },
+        {
+          $unwind: { path: '$agencyId', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'messages',
+            localField: 'lastMessageId',
+            foreignField: '_id',
+            as: 'lastMessageId',
+          },
+        },
+        {
+          $unwind: { path: '$lastMessageId', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'messages',
+            localField: '_id',
+            foreignField: 'chatId',
+            as: 'messages',
+            pipeline: [
+              {
+                $match: {
+                  isRead: false,
+                  senderId: { $ne: new Types.ObjectId(id) },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            'userId.password': 0,
+            'agencyId.password': 0,
+          },
+        },
+      ]);
     } else if (userType === MessageSenderType.AGENCY) {
-      chats = await this._ChatModel
-        .find({ agencyId: new Types.ObjectId(id) })
-        .populate([
-          { path: 'userId', select: '_id username profilePicture' },
-          { path: 'agencyId', select: '_id name' },
-          { path: 'lastMessageId' },
-        ]);
+      chats = await this._ChatModel.aggregate([
+        {
+          $match: { agencyId: new Types.ObjectId(id) },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'userId',
+          },
+        },
+        {
+          $unwind: { path: '$userId', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'agencies',
+            localField: 'agencyId',
+            foreignField: '_id',
+            as: 'agencyId',
+          },
+        },
+        {
+          $unwind: { path: '$agencyId', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'messages',
+            localField: 'lastMessageId',
+            foreignField: '_id',
+            as: 'lastMessageId',
+          },
+        },
+        {
+          $unwind: { path: '$lastMessageId', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'messages',
+            localField: '_id',
+            foreignField: 'chatId',
+            as: 'messages',
+            pipeline: [
+              {
+                $match: {
+                  isRead: false,
+                  senderId: { $ne: new Types.ObjectId(id) },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            'userId.password': 0,
+            'agencyId.password': 0,
+          },
+        },
+      ]);
     }
     return chats;
   }
@@ -127,5 +233,16 @@ export class ChatService {
         'An error occurred while adding the message.',
       );
     }
+  }
+  async makeMessageRead(chatId: string, userType: string) {
+    const result = await this._MessageModel.updateMany(
+      {
+        chatId: new Types.ObjectId(chatId),
+        isRead: false,
+        senderType: { $ne: userType },
+      },
+      { isRead: true },
+    );
+    return result.modifiedCount > 0 ? true : false;
   }
 }

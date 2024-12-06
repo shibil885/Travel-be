@@ -7,6 +7,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -177,7 +178,6 @@ export class ChatController {
         content,
       );
 
-      // Emit new message event
       this._chatGateway.server.to(chatId).emit('message', message);
 
       return res
@@ -185,6 +185,37 @@ export class ChatController {
         .json({ success: true, message: 'New message created' });
     } catch (error) {
       console.log('Error occured while add new message', error);
+      if (error instanceof BadRequestException) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ success: false, message: error.message });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message });
+    }
+  }
+  @Patch('makeMessageRead')
+  async makeMessageRead(
+    @Res() res: Response,
+    @Body() body: { chatId: string; userType: string },
+  ) {
+    try {
+      if (!body) throw new BadRequestException('Chat id not provided');
+      const result = await this._chatService.makeMessageRead(
+        body.chatId,
+        body.userType,
+      );
+      if (result) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'status changed' });
+      }
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: 'Nothing to change' });
+    } catch (error) {
+      console.log('Error occured while change isRead', error);
       if (error instanceof BadRequestException) {
         return res
           .status(HttpStatus.BAD_REQUEST)

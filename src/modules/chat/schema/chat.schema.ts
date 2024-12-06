@@ -5,46 +5,44 @@ import { MessageSenderType } from 'src/common/enum/messageSenderType.enum';
 @Schema({ timestamps: true })
 export class Message extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Chat', required: true })
-  chatId: Types.ObjectId; // Reference to the associated chat
+  chatId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, required: true })
-  senderId: Types.ObjectId; // ID of the sender (user or agency)
+  senderId: Types.ObjectId;
 
   @Prop({ type: String, enum: MessageSenderType, required: true })
-  senderType: MessageSenderType; // Type of the sender
+  senderType: MessageSenderType;
 
   @Prop({
     type: String,
   })
-  content?: string; // Text content of the message
+  content?: string;
 
   @Prop({
     type: String,
   })
-  imageUrl?: string; // URL for an optional image
+  imageUrl?: string;
 
   @Prop({ default: false })
-  isRead: boolean; // Read/unread status of the message
+  isRead: boolean;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);
 
-// Index for optimizing message retrieval within a specific chat
 MessageSchema.index({ chatId: 1, createdAt: 1 });
 
 @Schema({ timestamps: true })
 export class Chat extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: Types.ObjectId; // Reference to the user
+  userId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Agency', required: true })
-  agencyId: Types.ObjectId; // Reference to the agency
+  agencyId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Message' })
-  lastMessageId?: Types.ObjectId; // Reference to the last message in the chat
+  lastMessageId?: Types.ObjectId;
 }
 
 export const ChatSchema = SchemaFactory.createForClass(Chat);
 
-// Index for optimizing chat queries
 ChatSchema.index({ userId: 1, agencyId: 1 });
