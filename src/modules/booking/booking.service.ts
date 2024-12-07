@@ -20,6 +20,7 @@ import { IOffer } from 'src/common/interfaces/offer.interface';
 import { DiscountType } from 'src/common/enum/discountType.enum';
 import { BookingDataDto } from 'src/common/dtos/boookingData.gto';
 import { Agency } from '../agency/schema/agency.schema';
+import { Admin } from '../admin/schema/admin.schema';
 
 @Injectable()
 export class BookingService {
@@ -28,6 +29,7 @@ export class BookingService {
     @InjectModel(Package.name) private _PackageModel: Model<Package>,
     @InjectModel(Coupon.name) private _CouponModel: Model<Coupon>,
     @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
+    @InjectModel(Admin.name) private _AdminModel: Model<Admin>,
     private _WalletService: WalletService,
   ) {}
 
@@ -122,6 +124,22 @@ export class BookingService {
         phone: bookingData.phone,
       },
     });
+    const admin = await this._AdminModel.find();
+    const userWallet = await this._WalletService.getOrCreateUserWallet(
+      admin[0]._id,
+    );
+    if (userWallet) {
+      const newTransaction: Transaction = {
+        amount: Number(process.env.SERVICE_CHARGE),
+        description: 'New Booking',
+        type: TransactionType.CREDIT,
+      };
+      await this._WalletService.updateBalanceAndTransaction(
+        admin[0]._id,
+        userWallet.balance + Number(process.env.SERVICE_CHARGE),
+        newTransaction,
+      );
+    }
 
     try {
       if (couponId) {
@@ -397,6 +415,23 @@ export class BookingService {
             { ...newTransaction, amount: refundAmount },
           ),
         ]);
+        //admin wallet
+        const admin = await this._AdminModel.find();
+        const adminWallet = await this._WalletService.getOrCreateUserWallet(
+          admin[0]._id,
+        );
+        if (adminWallet) {
+          const newTransactionForAdmin: Transaction = {
+            amount: Number(process.env.SERVICE_CHARGE),
+            description: 'Booking canceled',
+            type: TransactionType.DEBIT,
+          };
+          await this._WalletService.updateBalanceAndTransaction(
+            admin[0]._id,
+            adminWallet.balance - Number(process.env.SERVICE_CHARGE),
+            newTransactionForAdmin,
+          );
+        }
         return true;
       } else {
         throw new BadRequestException(

@@ -10,6 +10,7 @@ import { Agency } from '../agency/schema/agency.schema';
 import { Response } from 'express';
 import { User } from '../user/schemas/user.schema';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
+import { Package } from '../package/schema/package.schema';
 
 @Injectable()
 export class AdminService {
@@ -17,6 +18,7 @@ export class AdminService {
     @InjectModel(Admin.name) private _AdminModel: Model<Admin>,
     @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
     @InjectModel(User.name) private _UserModel: Model<User>,
+    @InjectModel(Package.name) private _PackageModel: Model<Package>,
   ) {}
 
   async findAllAgencies(page: number, pageSize: number) {
