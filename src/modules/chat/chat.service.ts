@@ -234,6 +234,7 @@ export class ChatService {
       );
     }
   }
+
   async makeMessageRead(chatId: string, userType: string) {
     const result = await this._MessageModel.updateMany(
       {
@@ -243,6 +244,6 @@ export class ChatService {
       },
       { isRead: true },
     );
-    return result.modifiedCount > 0 ? true : false;
+    return result.modifiedCount > 0 ? { result: true, chatId } : false;
   }
 }

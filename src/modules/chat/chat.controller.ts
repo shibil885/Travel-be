@@ -71,6 +71,7 @@ export class ChatController {
   @Get('messages/:id')
   async getMessages(@Res() res: Response, @Param('id') id: string) {
     try {
+      console.log('id', id);
       const result = await this._chatService.getAllMessages(id);
       if (result.length > 0) {
         return res.status(HttpStatus.OK).json({
@@ -178,7 +179,7 @@ export class ChatController {
         content,
       );
 
-      this._chatGateway.server.to(chatId).emit('message', message);
+      this._chatGateway.sendMessage(chatId, message);
 
       return res
         .status(HttpStatus.CREATED)
@@ -207,6 +208,7 @@ export class ChatController {
         body.userType,
       );
       if (result) {
+        this._chatGateway.markAsRead(result.chatId, body.userType);
         return res
           .status(HttpStatus.OK)
           .json({ success: true, message: 'status changed' });

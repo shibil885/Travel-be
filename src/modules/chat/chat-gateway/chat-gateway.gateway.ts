@@ -8,6 +8,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
+import { Message } from '../schema/chat.schema';
+import { Role } from 'src/common/enum/role.enum';
 
 @WebSocketGateway({
   cors: {
@@ -35,10 +37,24 @@ export class ChatGateway
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
-  @SubscribeMessage('joinChat')
-  handleJoinRoom(client: Socket, chatId: { chatId: string }) {
-    console.log('chat', chatId);
-    client.join(chatId.chatId);
-    this.logger.log(`Client ${client.id} joined chat: ${chatId.chatId}`);
+  @SubscribeMessage('joinRoom')
+  handleJoinsRooms(client: Socket, chats: string[]) {
+    for (let i = 0; i < chats.length; i++) {
+      client.join(chats[i]);
+    }
+    this.logger.log(`Client ${client.id} joined to rooms: ${chats}`);
+  }
+
+  sendMessage(chatId: string, message: Message) {
+    return this.server.to(chatId).emit('message', message);
+  }
+
+  markAsRead(chatId: string, userType: string) {
+    console.log('user type', userType);
+    if (userType === Role.AGENCY) {
+      return this.server.to(chatId).emit('agencyReadAllMessages', { chatId });
+    } else {
+      return this.server.to(chatId).emit('userReadAllMessages', { chatId });
+    }
   }
 }
