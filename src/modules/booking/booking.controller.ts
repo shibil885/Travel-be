@@ -78,7 +78,7 @@ export class BookingController {
         throw new BadRequestException(
           !page ? 'Page not provided' : 'Limit not provided',
         );
-      const response = await this._bookingService.getAllBookedPackages(
+      const response = await this._bookingService.getTravelHistory(
         req['user'].sub,
         Number(page),
         Number(limit),
