@@ -215,6 +215,14 @@ export class BookingService {
             {
               $unwind: '$user',
             },
+            {
+              $lookup: {
+                from: 'reviewforpackages',
+                localField: 'package_id',
+                foreignField: 'packageId',
+                as: 'ratingAndReview',
+              },
+            },
           ])
           .skip(skip)
           .limit(limit),
@@ -226,6 +234,8 @@ export class BookingService {
           ],
         }),
       ]);
+      console.log(bookedPackages);
+      console.log(bookedPackageCount);
       return {
         bookedPackageCount,
         bookedPackages,
@@ -286,6 +296,14 @@ export class BookingService {
             },
             {
               $unwind: '$user',
+            },
+            {
+              $lookup: {
+                from: 'reviewforpackages',
+                localField: 'package_id',
+                foreignField: 'packageId',
+                as: 'ratingAndReview',
+              },
             },
           ])
           .skip(skip)

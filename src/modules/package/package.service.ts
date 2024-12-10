@@ -107,6 +107,14 @@ export class PackageService {
               },
             },
             { $unwind: '$category' },
+            {
+              $lookup: {
+                from: 'reviewforpackages',
+                localField: '_id',
+                foreignField: 'packageId',
+                as: 'ratingAndReview',
+              },
+            },
           ])
           .skip(skip)
           .limit(limit),

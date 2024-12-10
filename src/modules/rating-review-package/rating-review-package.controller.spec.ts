@@ -9,7 +9,9 @@ describe('RatingReviewPackageController', () => {
       controllers: [RatingReviewPackageController],
     }).compile();
 
-    controller = module.get<RatingReviewPackageController>(RatingReviewPackageController);
+    controller = module.get<RatingReviewPackageController>(
+      RatingReviewPackageController,
+    );
   });
 
   it('should be defined', () => {

@@ -138,14 +138,39 @@ export class UserService {
 
   async getSinglePackage(id: string) {
     try {
-      const singlePackage = await this.PackageModel.findOne({
-        _id: id,
-        isActive: true,
-      }).populate(['agencyId', 'category', 'offerId']);
+      const singlePackage = await this.PackageModel.aggregate([
+        { $match: { isActive: true, _id: new Types.ObjectId(id) } },
+        {
+          $lookup: {
+            from: 'reviewforpackages',
+            localField: '_id',
+            foreignField: 'packageId',
+            as: 'ratingAndReview',
+          },
+        },
+        {
+          $lookup: {
+            from: 'agencies',
+            localField: 'agencyId',
+            foreignField: '_id',
+            as: 'agencyId',
+          },
+        },
+        { $unwind: '$agencyId' },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'category',
+            foreignField: '_id',
+            as: 'category',
+          },
+        },
+        { $unwind: '$category' },
+      ]);
       if (!singlePackage) {
         throw new NotFoundException();
       }
-      return singlePackage;
+      return singlePackage[0];
     } catch (error) {
       console.log('error occured while fetch single Packag', error);
       throw new InternalServerErrorException();
@@ -163,12 +188,37 @@ export class UserService {
     try {
       const skip = Math.ceil(currentPage - 1) * limit;
       const [packages, packagesCount] = await Promise.all([
-        this.PackageModel.find({ isActive: true })
+        this.PackageModel.aggregate([
+          { $match: { isActive: true } },
+          {
+            $lookup: {
+              from: 'reviewforpackages',
+              localField: '_id',
+              foreignField: 'packageId',
+              as: 'ratingAndReview',
+            },
+          },
+          {
+            $lookup: {
+              from: 'agencies',
+              localField: 'agencyId',
+              foreignField: '_id',
+              as: 'agencyId',
+            },
+          },
+          { $unwind: '$agencyId' },
+          {
+            $lookup: {
+              from: 'categories',
+              localField: 'category',
+              foreignField: '_id',
+              as: 'category',
+            },
+          },
+          { $unwind: '$category' },
+        ])
           .skip(skip)
-          .limit(limit)
-          .populate('agencyId')
-          .populate('category')
-          .exec(),
+          .limit(Number(limit)),
         this.PackageModel.countDocuments({ isActive: true }),
       ]);
       if (!packages || packages.length === 0) {

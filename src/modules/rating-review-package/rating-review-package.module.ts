@@ -5,7 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   ReviewForPackage,
   ReviewForPackageSchema,
-} from '../rating-review-agency/schema/rating-review.schema';
+} from './schema/review-rating.schema';
 
 @Module({
   imports: [

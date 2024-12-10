@@ -23,6 +23,8 @@ export class RatingReviewPackageController {
     @Body() body: { rating: number; review: string },
   ) {
     try {
+      console.log('package id', packageId);
+
       if (!packageId || !body)
         throw new BadRequestException(
           !packageId ? 'Package id not provided' : 'Feedback not provided',
