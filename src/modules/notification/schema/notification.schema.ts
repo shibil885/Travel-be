@@ -15,7 +15,7 @@ export class Notification {
   @Prop({
     type: String,
     required: true,
-    enum: ['User', 'Agency', 'Admin     '],
+    enum: ['User', 'Agency', 'Admin '],
     default: 'User',
   })
   from_model: string;
