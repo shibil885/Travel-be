@@ -39,6 +39,12 @@ export class AdminDashboardService {
             pipeline: [{ $project: { _id: 1 } }],
           },
         },
+        {
+          $addFields: {
+            ratingsCount: { $size: '$ratings' },
+          },
+        },
+        { $match: { ratingsCount: { $gt: 0 } } },
       ])
       .sort({ 'ratings.averageRating': -1 })
       .limit(5);
@@ -66,8 +72,14 @@ export class AdminDashboardService {
             pipeline: [{ $project: { _id: 1 } }],
           },
         },
+        {
+          $addFields: {
+            bookingsCount: { $size: '$bookings' },
+          },
+        },
+        { $match: { bookingsCount: { $gt: 0 } } },
       ])
-      .sort({ bookings: -1 })
+      .sort({ bookingsCount: -1 })
       .limit(5);
   }
 
@@ -137,6 +149,12 @@ export class AdminDashboardService {
             as: 'ratingAndReview',
           },
         },
+        {
+          $addFields: {
+            ratingCount: { $size: '$ratingAndReview' },
+          },
+        },
+        { $match: { ratingCount: { $gt: 0 } } },
       ])
       .sort({ 'ratingAndReview.averageRating': -1 })
       .limit(5);
@@ -182,14 +200,14 @@ export class AdminDashboardService {
       },
       {
         $addFields: {
-          bookingsCount: { $size: '$bookings' }, // Add a new field to store the length of the bookings array
+          bookingsCount: { $size: '$bookings' },
         },
       },
       {
-        $sort: { bookingsCount: -1 }, // Sort by bookingsCount in descending order
+        $sort: { bookingsCount: -1 },
       },
       {
-        $limit: 5, // Limit to top 5 packages
+        $limit: 5,
       },
     ]);
   }
