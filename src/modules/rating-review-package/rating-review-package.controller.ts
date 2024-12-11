@@ -15,16 +15,20 @@ import { Request, Response } from 'express';
 @Controller('rating-review-package')
 export class RatingReviewPackageController {
   constructor(private _reviewRatingService: RatingReviewPackageService) {}
+
   @Post(':id')
   async addReview(
     @Req() req: Request,
     @Res() res: Response,
     @Param('id') packageId: string,
-    @Body() body: { rating: number; review: string },
+    @Body()
+    body: {
+      rating: number;
+      review: string;
+    },
   ) {
     try {
-      console.log('package id', packageId);
-
+      console.log(body);
       if (!packageId || !body)
         throw new BadRequestException(
           !packageId ? 'Package id not provided' : 'Feedback not provided',

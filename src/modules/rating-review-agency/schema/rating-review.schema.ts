@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class ReviewForAgency extends Document {
@@ -9,14 +9,14 @@ export class ReviewForAgency extends Document {
   @Prop([
     {
       userId: { type: Types.ObjectId, required: true },
-      rating: { type: String, required: true },
+      rating: { type: Number, required: true },
       review: { type: String, required: true },
       created_at: { type: Date, default: Date.now },
     },
   ])
   reviews: Array<{
     userId: Types.ObjectId;
-    rating: string;
+    rating: number;
     review: string;
     created_at: Date;
   }>;

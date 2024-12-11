@@ -10,7 +10,7 @@ export class ReviewForPackage extends Document {
   @Prop([
     {
       userId: { type: Types.ObjectId, required: true, ref: 'users' },
-      rating: { type: String, required: true },
+      rating: { type: Number, required: true },
       review: { type: String, required: true },
       created_at: { type: Date, default: Date.now },
     },
