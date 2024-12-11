@@ -566,6 +566,7 @@ export class BookingService {
         travel_status: TravelStatus.COMPLETED,
       }),
     ]);
+    console.log('------>', completedBookings);
 
     return {
       completedBookings,
