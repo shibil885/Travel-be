@@ -49,7 +49,7 @@ export class AuthService {
 
   async validateToken(
     token: string,
-  ): Promise<{ valid: boolean; role: string }> {
+  ): Promise<{ valid: boolean; role: string; id: string }> {
     try {
       const decodedData: JwtPayload = this._jwtService.verify(token);
       let entity;
@@ -64,14 +64,14 @@ export class AuthService {
           entity = await this._adminService.findAdmin(decodedData.email);
           break;
         default:
-          return { valid: false, role: decodedData.role };
+          return { valid: false, role: decodedData.role, id: decodedData.sub };
       }
       return entity
-        ? { valid: true, role: decodedData.role }
-        : { valid: false, role: decodedData.role };
+        ? { valid: true, role: decodedData.role, id: decodedData.sub }
+        : { valid: false, role: decodedData.role, id: decodedData.sub };
     } catch (error) {
       console.error('Error occurred while validating token:', error.message);
-      return { valid: false, role: '' };
+      return { valid: false, role: '', id: '' };
     }
   }
 
@@ -109,6 +109,7 @@ export class AuthService {
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
         role: payload.role,
+        id: decodedData.sub,
       };
     } catch (error) {
       console.log('Error while refreshing token:', error);

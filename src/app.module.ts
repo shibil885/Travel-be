@@ -31,6 +31,7 @@ import { AgencyDashboardModule } from './modules/dashboard/agency-dashboard/agen
 import { ChatModule } from './modules/chat/chat.module';
 import { RatingReviewAgencyModule } from './modules/rating-review-agency/rating-review-agency.module';
 import { RatingReviewPackageModule } from './modules/rating-review-package/rating-review-package.module';
+import { SocketModule } from './modules/socket/socket.module';
 
 @Module({
   imports: [
@@ -61,9 +62,11 @@ import { RatingReviewPackageModule } from './modules/rating-review-package/ratin
     ChatModule,
     RatingReviewAgencyModule,
     RatingReviewPackageModule,
+    SocketModule,
   ],
   controllers: [],
   providers: [],
+  exports: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

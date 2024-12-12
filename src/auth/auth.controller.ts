@@ -43,6 +43,7 @@ export class AuthController {
         message: 'Token validated',
         role: response.role,
         valid: response.valid,
+        id: response.id,
       });
     } else {
       return res.status(HttpStatus.OK).json({
@@ -50,6 +51,7 @@ export class AuthController {
         message: ErrorMessages.TOKEN_EXPIRED,
         valid: false,
         role: response.role,
+        id: response.id,
       });
     }
   }
@@ -72,6 +74,7 @@ export class AuthController {
         message: ErrorMessages.TOKEN_EXPIRED,
         isRefreshed: false,
         role: response.role,
+        id: response.id,
       });
     }
 
@@ -91,6 +94,7 @@ export class AuthController {
       message: 'Access token refreshed successfully',
       role: response.role,
       isRefreshed: true,
+      id: response.id,
     });
   }
 

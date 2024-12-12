@@ -16,14 +16,13 @@ import {
 import { ChatService } from './chat.service';
 import { Request, Response } from 'express';
 import { MessageSenderType } from 'src/common/enum/messageSenderType.enum';
-
-import { ChatGateway } from './chat-gateway/chat-gateway.gateway';
+import { SocketGateway } from 'src/modules/socket/gateway/socket.gateway';
 
 @Controller('chat')
 export class ChatController {
   constructor(
     private _chatService: ChatService,
-    private _chatGateway: ChatGateway,
+    private _socketGateway: SocketGateway,
   ) {}
 
   @Get()
@@ -179,7 +178,7 @@ export class ChatController {
         content,
       );
 
-      this._chatGateway.sendMessage(chatId, message);
+      this._socketGateway.sendMessage(chatId, message);
 
       return res
         .status(HttpStatus.CREATED)
@@ -196,6 +195,7 @@ export class ChatController {
         .json({ success: false, message: error.message });
     }
   }
+
   @Patch('makeMessageRead')
   async makeMessageRead(
     @Res() res: Response,
@@ -208,7 +208,7 @@ export class ChatController {
         body.userType,
       );
       if (result) {
-        this._chatGateway.markAsRead(result.chatId, body.userType);
+        this._socketGateway.markAsRead(result.chatId, body.userType);
         return res
           .status(HttpStatus.OK)
           .json({ success: true, message: 'status changed' });
