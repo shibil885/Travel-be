@@ -88,4 +88,16 @@ export class SocketGateway
   handleUserLogin(client: Socket, userId: string) {
     this._connectedUsers.set(userId, client.id);
   }
+
+  bookingConfirmed(userId: string) {
+    const clientId = this._connectedUsers.get(userId);
+    console.log(clientId);
+    return this.server.to(clientId).emit('bookingConfirmed');
+  }
+
+  bookingCancelled(userId: string) {
+    const clientId = this._connectedUsers.get(userId);
+    console.log(clientId);
+    return this.server.to(clientId).emit('bookingCancelled');
+  }
 }

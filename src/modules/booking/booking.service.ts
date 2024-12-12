@@ -21,6 +21,7 @@ import { DiscountType } from 'src/common/enum/discountType.enum';
 import { BookingDataDto } from 'src/common/dtos/boookingData.gto';
 import { Agency } from '../agency/schema/agency.schema';
 import { Admin } from '../admin/schema/admin.schema';
+import { Notification } from '../notification/schema/notification.schema';
 
 @Injectable()
 export class BookingService {
@@ -30,6 +31,8 @@ export class BookingService {
     @InjectModel(Coupon.name) private _CouponModel: Model<Coupon>,
     @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
     @InjectModel(Admin.name) private _AdminModel: Model<Admin>,
+    @InjectModel(Notification.name)
+    private _NotificationModel: Model<Notification>,
     private _WalletService: WalletService,
   ) {}
 
@@ -361,21 +364,40 @@ export class BookingService {
     };
   }
 
-  async confirmBooking(bookingId: string, status: TravelConfirmationStatus) {
+  async confirmBooking(
+    bookingId: string,
+    status: TravelConfirmationStatus,
+    agencyId: string,
+  ) {
     if (!bookingId || !status)
       throw new NotFoundException(
         !bookingId ? 'Cant find bookingId' : 'Cant find status',
       );
-    return await this._BookingModel.updateOne(
-      { _id: bookingId },
-      { $set: { confirmation: status } },
-    );
+    const bookings = await this._BookingModel.findById(bookingId);
+    const newNotification = new this._NotificationModel({
+      from_id: agencyId,
+      from_model: 'Agency',
+      to_id: bookings.user_id,
+      to_model: 'User',
+      title: 'Your booking has been confirmed!',
+      description: `The booking has been successfully confirmed and verified.`,
+      type: 'info',
+      priority: 2,
+    });
+    const [notificationResult, updateResult] = await Promise.all([
+      newNotification.save(),
+      this._BookingModel.updateOne(
+        { _id: bookingId },
+        { $set: { confirmation: status } },
+      ),
+    ]);
+
+    return { notificationResult, updateResult };
   }
 
-  async cancelBooking(userRole: string, bookingId: string): Promise<boolean> {
+  async cancelBooking(userRole: string, bookingId: string) {
     try {
       const bookedPackage = await this._BookingModel.findById(bookingId).exec();
-      console.log('booked ---->', bookedPackage);
       if (!bookedPackage) {
         throw new NotFoundException(ErrorMessages.BOOKING_NOT_FOUND);
       }
@@ -386,12 +408,23 @@ export class BookingService {
       if (!userWallet) {
         throw new BadRequestException(ErrorMessages.WALLET_NOT_FOUND);
       }
+      const admin = await this._AdminModel.find();
+      const adminWallet = await this._WalletService.getOrCreateUserWallet(
+        admin[0]._id,
+      );
+      if (!adminWallet) {
+        throw new BadRequestException(ErrorMessages.WALLET_NOT_FOUND);
+      }
 
       const newTransaction: Transaction = {
         amount: Number(bookedPackage.total_price),
         description: 'Booking canceled',
         type: TransactionType.CREDIT,
       };
+
+      const senderId =
+        userRole === 'agency' ? bookedPackage.agency_id : bookedPackage.user_id;
+      const senderModel = userRole === 'agency' ? 'Agency' : 'User';
 
       if (userRole === 'agency') {
         await Promise.all([
@@ -409,14 +442,36 @@ export class BookingService {
             userWallet.balance + Number(bookedPackage.total_price),
             newTransaction,
           ),
+          this._NotificationModel.create({
+            from_id: senderId,
+            from_model: senderModel,
+            to_id: bookedPackage.user_id,
+            to_model: 'User',
+            title: 'Booking Cancelled by Agency',
+            description: `Your booking has been cancelled by the agency. Full amount will be refunded to your wallet.`,
+            type: 'alert',
+            priority: 2,
+          }),
         ]);
-        return true;
+
+        const newTransactionForAdmin: Transaction = {
+          amount: Number(process.env.SERVICE_CHARGE),
+          description: 'Booking canceled',
+          type: TransactionType.DEBIT,
+        };
+        await this._WalletService.updateBalanceAndTransaction(
+          admin[0]._id,
+          adminWallet.balance - Number(process.env.SERVICE_CHARGE),
+          newTransactionForAdmin,
+        );
+        return bookedPackage;
       } else if (userRole === 'user') {
         const refundAmount = this._calculateRefund(
           bookedPackage.total_price,
           bookedPackage.createdAt,
         );
         console.log('refund amount', refundAmount);
+
         await Promise.all([
           this._BookingModel.updateOne(
             { _id: bookingId },
@@ -432,25 +487,29 @@ export class BookingService {
             userWallet.balance + refundAmount,
             { ...newTransaction, amount: refundAmount },
           ),
+          this._NotificationModel.create({
+            from_id: senderId,
+            from_model: senderModel,
+            to_id: bookedPackage.user_id,
+            to_model: 'User',
+            title: 'Booking Cancelled',
+            description: `Your booking has been cancelled. A refund of ${refundAmount} has been processed to your wallet.`,
+            type: 'info',
+            priority: 2,
+          }),
         ]);
-        //admin wallet
-        const admin = await this._AdminModel.find();
-        const adminWallet = await this._WalletService.getOrCreateUserWallet(
+
+        const newTransactionForAdmin: Transaction = {
+          amount: Number(process.env.SERVICE_CHARGE),
+          description: 'Booking canceled',
+          type: TransactionType.DEBIT,
+        };
+        await this._WalletService.updateBalanceAndTransaction(
           admin[0]._id,
+          adminWallet.balance - Number(process.env.SERVICE_CHARGE),
+          newTransactionForAdmin,
         );
-        if (adminWallet) {
-          const newTransactionForAdmin: Transaction = {
-            amount: Number(process.env.SERVICE_CHARGE),
-            description: 'Booking canceled',
-            type: TransactionType.DEBIT,
-          };
-          await this._WalletService.updateBalanceAndTransaction(
-            admin[0]._id,
-            adminWallet.balance - Number(process.env.SERVICE_CHARGE),
-            newTransactionForAdmin,
-          );
-        }
-        return true;
+        return bookedPackage;
       } else {
         throw new BadRequestException(
           'User role not authorized to cancel booking',

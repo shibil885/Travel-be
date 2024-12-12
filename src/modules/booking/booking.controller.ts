@@ -17,10 +17,14 @@ import { BookingService } from './booking.service';
 import { Response } from 'express';
 import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
 import { ErrorMessages } from 'src/common/enum/error.enum';
+import { SocketGateway } from '../socket/gateway/socket.gateway';
 
 @Controller('booking')
 export class BookingController {
-  constructor(private _bookingService: BookingService) {}
+  constructor(
+    private _bookingService: BookingService,
+    private _socket: SocketGateway,
+  ) {}
 
   @Get('getAllBooked')
   async getAllBooked(
@@ -170,6 +174,7 @@ export class BookingController {
 
   @Patch('confirmBooking/:bookingId')
   async confirmBooking(
+    @Req() req: Request,
     @Res() res: Response,
     @Param('bookingId') bookingId: string,
     @Body('status') status: TravelConfirmationStatus,
@@ -178,8 +183,12 @@ export class BookingController {
       const result = await this._bookingService.confirmBooking(
         bookingId,
         status,
+        req['agency']['sub'],
       );
-      if (result.modifiedCount > 0) {
+      if (result.updateResult.modifiedCount > 0 && result.notificationResult) {
+        this._socket.bookingConfirmed(
+          result.notificationResult.to_id.toString(),
+        );
         return res
           .status(HttpStatus.OK)
           .json({ success: true, message: 'Booking Confirmed' });
@@ -206,7 +215,7 @@ export class BookingController {
   ) {
     try {
       const result = await this._bookingService.cancelBooking(user, bookingId);
-      console.log('canceled', true);
+      this._socket.bookingCancelled(result.user_id.toString());
       return result
         ? res
             .status(HttpStatus.OK)

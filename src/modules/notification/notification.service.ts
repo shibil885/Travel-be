@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './schema/notification.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Admin } from '../admin/schema/admin.schema';
 
@@ -9,7 +9,7 @@ import { Admin } from '../admin/schema/admin.schema';
 export class NotificationService {
   constructor(
     @InjectModel(Notification.name)
-    private NotificationModel: Model<Notification>,
+    private _NotificationModel: Model<Notification>,
     @InjectModel(Admin.name)
     private AdminModel: Model<Admin>,
   ) {}
@@ -24,7 +24,7 @@ export class NotificationService {
         'agencyRegistration',
         { agencyName },
       );
-      const newNotification = new this.NotificationModel({
+      const newNotification = new this._NotificationModel({
         from_id: id,
         from_model: 'Agency',
         to_id: adminId,
@@ -65,38 +65,48 @@ export class NotificationService {
 
   async findAll(): Promise<Notification[]> {
     try {
-      return await this.NotificationModel.find({ is_deleted: false }).exec();
+      return await this._NotificationModel.find({ is_deleted: false }).exec();
     } catch (error) {
       console.error('Error fetching notifications:', error);
       throw new Error('Could not fetch notifications.');
     }
   }
 
+  async findNotifications(to_id: string, limit: number = Infinity) {
+    try {
+      const notifications = await this._NotificationModel
+        .find({
+          to_id: new Types.ObjectId(to_id),
+          is_deleted: false,
+          is_read: false,
+        })
+        .sort({ createdAt: -1 })
+        .limit(limit);
+      return notifications;
+    } catch (error) {
+      console.log('Error occured while fetching all notifications', error);
+      throw error;
+    }
+  }
+
   async findAllUnread(): Promise<Notification[]> {
     try {
-      return await this.NotificationModel.find({ is_read: false }).exec();
+      return await this._NotificationModel.find({ is_read: false }).exec();
     } catch (error) {
       console.error('Error fetching unread notifications:', error);
       throw new Error('Could not fetch unread notifications.');
     }
   }
 
-  async findById(id: string): Promise<Notification> {
-    try {
-      return await this.NotificationModel.findById(id).exec();
-    } catch (error) {
-      console.error(`Error fetching notification with id ${id}:`, error);
-      throw new Error('Could not fetch notification.');
-    }
-  }
-
   async markAsRead(id: string): Promise<Notification> {
     try {
-      return await this.NotificationModel.findByIdAndUpdate(
-        id,
-        { is_read: true, read_at: new Date() },
-        { new: true },
-      ).exec();
+      return await this._NotificationModel
+        .findByIdAndUpdate(
+          id,
+          { is_read: true, read_at: new Date() },
+          { new: true },
+        )
+        .exec();
     } catch (error) {
       console.error(`Error marking notification as read for id ${id}:`, error);
       throw new Error('Could not mark notification as read.');
@@ -105,11 +115,9 @@ export class NotificationService {
 
   async delete(id: string): Promise<Notification> {
     try {
-      return await this.NotificationModel.findByIdAndUpdate(
-        id,
-        { is_deleted: true },
-        { new: true },
-      ).exec();
+      return await this._NotificationModel
+        .findByIdAndUpdate(id, { is_deleted: true }, { new: true })
+        .exec();
     } catch (error) {
       console.error(`Error deleting notification with id ${id}:`, error);
       throw new Error('Could not delete notification.');
