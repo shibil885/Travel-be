@@ -18,6 +18,7 @@ import { Response } from 'express';
 import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
 import { ErrorMessages } from 'src/common/enum/error.enum';
 import { SocketGateway } from '../socket/gateway/socket.gateway';
+// import { CreateResponse } from 'src/common/response/createResponse';
 
 @Controller('booking')
 export class BookingController {
@@ -69,6 +70,47 @@ export class BookingController {
         .json({ success: false, booked: [] });
     }
   }
+  // @Get('getAllBooked')
+  // async getAllBooked(
+  //   @Req() req: Request,
+  //   @Query('page') page: number,
+  //   @Query('limit') limit: number,
+  //   @Res() res: Response,
+  // ) {
+  //   try {
+  //     if (!page || !limit) {
+  //       throw new BadRequestException(
+  //         !page ? 'Page not provided' : 'Limit not provided',
+  //       );
+  //     }
+  //     const response = await this._bookingService.getAllBookedPackages(
+  //       req['user'].sub,
+  //       Number(page),
+  //       Number(limit),
+  //     );
+
+  //     if (response.bookedPackages.length > 0) {
+  //       return CreateResponse.success(res, {
+  //         booked: response.bookedPackages,
+  //         totalItems: response.bookedPackageCount,
+  //         currentPage: response.page,
+  //       });
+  //     }
+  //     return CreateResponse.info(res, {
+  //       booked: [],
+  //       totalItems: response.bookedPackageCount,
+  //       currentPage: response.page,
+  //     });
+  //   } catch (error) {
+  //     console.log('Error occurred while fetching booked data from db', error);
+
+  //     if (error instanceof BadRequestException) {
+  //       return CreateResponse.error(res, error.message, HttpStatus.BAD_REQUEST);
+  //     }
+
+  //     return CreateResponse.error(res, 'Failed to fetch booked data');
+  //   }
+  // }
 
   @Get('travelHistory')
   async getTravelHistory(

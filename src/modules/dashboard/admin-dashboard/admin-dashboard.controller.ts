@@ -121,10 +121,13 @@ export class AdminDashboardController {
     @Query('end_date') end_date: string,
   ) {
     try {
+      console.log(start_date);
+      console.log(end_date);
       const result = await this._dashboardService.generateReport(
         start_date,
         end_date,
       );
+      console.log(result);
       if (result.length) {
         return res.status(HttpStatus.OK).json({
           success: true,
