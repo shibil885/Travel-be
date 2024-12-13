@@ -36,7 +36,6 @@ export class NotificationController {
         req[role]['sub'],
         limit,
       );
-      console.log('notification', result);
       return res.status(HttpStatus.OK).json({
         success: true,
         message: 'List of notifications',

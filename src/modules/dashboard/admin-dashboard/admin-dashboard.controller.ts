@@ -113,4 +113,65 @@ export class AdminDashboardController {
       });
     }
   }
+
+  @Get('generateReport')
+  async generateReport(
+    @Res() res: Response,
+    @Query('start_date') start_date: string,
+    @Query('end_date') end_date: string,
+  ) {
+    try {
+      const result = await this._dashboardService.generateReport(
+        start_date,
+        end_date,
+      );
+      if (result.length) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          message: `Report generated`,
+          report: result,
+        });
+      }
+      return res.status(HttpStatus.OK).json({
+        success: false,
+        message: `Report generated`,
+        report: [],
+      });
+    } catch (error) {
+      console.log('error in generate package', error);
+      const statusCode =
+        error instanceof BadRequestException
+          ? HttpStatus.BAD_REQUEST
+          : HttpStatus.INTERNAL_SERVER_ERROR;
+      return res.status(statusCode).json({
+        success: false,
+        message: error.message || 'An unexpected error occurred.',
+        packages: [],
+      });
+    }
+  }
+
+  @Get('booking-trends')
+  async getBookingTrends(
+    @Res() res: Response,
+    @Query('groupBy') groupBy: 'month' | 'year',
+  ) {
+    try {
+      const result = await this._dashboardService.getBookingsTrends(
+        groupBy || 'year',
+      );
+      if (result.length) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'List of graph data', data: result });
+      }
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: 'List of graph data', data: [] });
+    } catch (error) {
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message, data: [] });
+    }
+  }
 }

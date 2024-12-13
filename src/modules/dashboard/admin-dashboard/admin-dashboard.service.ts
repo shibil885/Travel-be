@@ -264,4 +264,77 @@ export class AdminDashboardService {
       throw new BadRequestException('Unidentified filter');
     }
   }
+
+  async generateReport(start_date: string, end_date: string) {
+    const report = await this._BookingModel.find({
+      travel_status: TravelStatus.COMPLETED,
+      createdAt: { $gte: start_date, $lte: end_date },
+    });
+    return report;
+  }
+
+  async getBookingsTrends(groupBy: 'month' | 'year'): Promise<any[]> {
+    try {
+      const groupStage =
+        groupBy === 'month'
+          ? {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' },
+            }
+          : { year: { $year: '$createdAt' } };
+
+      const groupId =
+        groupBy === 'month'
+          ? { year: '$year', month: '$month' }
+          : { year: '$year' };
+
+      const result = await this._BookingModel.aggregate([
+        { $project: groupStage },
+        { $group: { _id: groupId, totalBookings: { $sum: 1 } } },
+        {
+          $sort:
+            groupBy === 'month'
+              ? { '_id.year': 1, '_id.month': 1 }
+              : { '_id.year': 1 },
+        },
+        {
+          $project: {
+            year: '$_id.year',
+            month: groupBy === 'month' ? '$_id.month' : undefined,
+            totalBookings: 1,
+            _id: 0,
+          },
+        },
+      ]);
+
+      if (groupBy === 'month') {
+        const monthNames = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        return result.map((item) => ({
+          year: item.year,
+          month: monthNames[item.month - 1],
+          bookings: item.totalBookings,
+        }));
+      }
+
+      return result.map((item) => ({
+        year: item.year,
+        bookings: item.totalBookings,
+      }));
+    } catch (error) {
+      throw new Error(`Failed to fetch booking trends: ${error.message}`);
+    }
+  }
 }
