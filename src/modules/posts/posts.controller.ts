@@ -10,11 +10,11 @@ import {
   Post,
   Req,
   Res,
-  UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadPostDto } from 'src/common/dtos/uploadPost.dto';
 import { Request, Response } from 'express';
 import { LikeType } from 'src/common/enum/likeType.enum';
@@ -27,7 +27,6 @@ export class PostsController {
   async getAllPosts(@Req() req: Request, @Res() res: Response) {
     try {
       const result = await this._postService.getAllPost(req['user']['sub']);
-      console.log('-->', result);
       if (result) {
         return res.status(HttpStatus.OK).json({
           success: true,
@@ -63,26 +62,29 @@ export class PostsController {
   }
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FilesInterceptor('images', 5))
   async uploadPost(
     @Req() req: Request,
     @Res() res: Response,
     @Body() postData: UploadPostDto,
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFiles() images: Express.Multer.File[],
   ) {
     try {
       const response = await this._postService.uploadPost(
         req['user']['sub'],
         postData,
-        image,
+        images,
       );
+
       if (response) {
-        return res
-          .status(HttpStatus.CREATED)
-          .json({ success: true, message: 'New post uploaded' });
+        return res.status(HttpStatus.CREATED).json({
+          success: true,
+          message: `New post uploaded with ${images.length} image(s)`,
+        });
       }
     } catch (error) {
-      console.log('error occured while upload post', error);
+      console.log('Error occurred while uploading post', error);
+
       if (error instanceof NotFoundException) {
         return res
           .status(HttpStatus.NOT_FOUND)
@@ -92,6 +94,7 @@ export class PostsController {
           .status(HttpStatus.BAD_REQUEST)
           .json({ success: false, message: error.message });
       }
+
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ success: false, message: error.message });

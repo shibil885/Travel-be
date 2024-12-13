@@ -19,6 +19,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UpdateUserDto } from 'src/common/dtos/updateUser.dto';
 import { ChangePasswordDto } from 'src/common/dtos/changePassword.dto';
 import { ErrorMessages } from 'src/common/enum/error.enum';
+import sharp from 'sharp';
 
 @Injectable()
 export class UserService {
@@ -111,25 +112,42 @@ export class UserService {
     }
   }
 
-  async upoloadUserProfileImage(
+  async uploadUserProfileImage(
     userId: string,
     profileImage: Express.Multer.File,
   ) {
     try {
-      const imageUrl = await this._cloudinaryService
-        .uploadFile(profileImage)
-        .then((res) => {
-          return res.url;
+      // Define fixed dimensions for resizing (you can adjust these)
+      const FIXED_WIDTH = 300; // Example: 300px wide
+      const FIXED_HEIGHT = 300; // Example: 300px tall
+
+      // Resize and crop the image using sharp
+      const processedImageBuffer = await sharp(profileImage.buffer)
+        .resize(FIXED_WIDTH, FIXED_HEIGHT, {
+          fit: 'cover', // Ensures cropping and resizing
+          position: sharp.strategy.entropy, // Focus on the most interesting part of the image
         })
+        .toBuffer();
+
+      // Upload the processed image to Cloudinary
+      const imageUrl = await this._cloudinaryService
+        .uploadFileBuffer(
+          processedImageBuffer,
+          profileImage.mimetype, // Ensure the correct MIME type is passed
+        )
+        .then((res) => res.url)
         .catch((error) => {
-          new InternalServerErrorException(error.message);
+          throw new InternalServerErrorException(error.message);
         });
+
+      // Update the user's profile picture URL in the database
       const updateResult = await this.userModel.updateOne(
         {
           _id: new Types.ObjectId(userId),
         },
         { $set: { profilePicture: imageUrl } },
       );
+
       return updateResult.modifiedCount > 0 ? true : null;
     } catch (error) {
       throw new InternalServerErrorException(error.message);

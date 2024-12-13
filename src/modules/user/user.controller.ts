@@ -113,7 +113,7 @@ export class UserController {
     @Res() res: Response,
     @UploadedFile() image: Express.Multer.File,
   ) {
-    const response = await this.userService.upoloadUserProfileImage(
+    const response = await this.userService.uploadUserProfileImage(
       req['user']['sub'],
       image,
     );

@@ -9,6 +9,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Package } from './schema/package.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import sharp from 'sharp';
 
 @Injectable()
 export class PackageService {
@@ -17,6 +18,57 @@ export class PackageService {
     private _cloudinaryService: CloudinaryService,
   ) {}
 
+  // async addPackage(
+  //   agencyId: string,
+  //   createPackageDto: any,
+  //   images: Express.Multer.File[],
+  // ): Promise<Package> {
+  //   try {
+  //     console.log('ooooo>', createPackageDto);
+  //     console.log('ll', JSON.parse(createPackageDto.packageInfo));
+  //     const parsedPackageInfo = JSON.parse(createPackageDto.packageInfo);
+  //     const parsedTravelInfo = JSON.parse(createPackageDto.travelInfo);
+  //     const parsedPackageFeatures = JSON.parse(
+  //       createPackageDto.packageFeatures,
+  //     );
+  //     console.log('hhh', parsedPackageFeatures);
+  //     const parsedTourPlans = JSON.parse(createPackageDto.tourPlans);
+  //     const imageUploadPromises = images.map((file) =>
+  //       this._cloudinaryService
+  //         .uploadFile(file)
+  //         .then((response) => response.url),
+  //     );
+  //     const imageUrls = await Promise.all(imageUploadPromises);
+  //     const newPackageData = {
+  //       name: parsedPackageInfo.name,
+  //       category: new Types.ObjectId(parsedPackageInfo.category),
+  //       country: parsedPackageInfo.country,
+  //       description: parsedPackageInfo.description,
+  //       departure: parsedTravelInfo.departure,
+  //       finalDestination: parsedTravelInfo.finalDestination,
+  //       price: parsedTravelInfo.price,
+  //       people: parsedTravelInfo.people,
+  //       days: parsedTravelInfo.days,
+  //       included: parsedPackageFeatures.included,
+  //       notIncluded: parsedPackageFeatures.notIncluded,
+  //       tourPlans: parsedTourPlans,
+  //       images: imageUrls,
+  //       agencyId: agencyId,
+  //     };
+
+  //     const newPackage = new this._PackageModel(newPackageData);
+  //     return await newPackage.save();
+  //   } catch (error) {
+  //     console.error('Error adding package:', error);
+  //     throw new HttpException(
+  //       {
+  //         status: HttpStatus.BAD_REQUEST,
+  //         error: 'Could not create package: ' + error.message,
+  //       },
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   }
+  // }
   async addPackage(
     agencyId: string,
     createPackageDto: any,
@@ -32,12 +84,33 @@ export class PackageService {
       );
       console.log('hhh', parsedPackageFeatures);
       const parsedTourPlans = JSON.parse(createPackageDto.tourPlans);
-      const imageUploadPromises = images.map((file) =>
-        this._cloudinaryService
-          .uploadFile(file)
-          .then((response) => response.url),
-      );
+
+      // Define fixed dimensions for resizing images
+      const FIXED_WIDTH = 800; // Example: 800px wide
+      const FIXED_HEIGHT = 600; // Example: 600px tall
+
+      // Process and upload images
+      const imageUploadPromises = images.map(async (file) => {
+        // Resize and crop the image using sharp
+        const processedImageBuffer = await sharp(file.buffer)
+          .resize(FIXED_WIDTH, FIXED_HEIGHT, {
+            fit: 'cover', // Ensure cropping and resizing
+            position: sharp.strategy.entropy, // Focus on the most interesting part of the image
+          })
+          .toBuffer();
+
+        // Upload the processed image to Cloudinary
+        const response = await this._cloudinaryService.uploadFileBuffer(
+          processedImageBuffer,
+          file.mimetype, // Ensure the correct MIME type is passed
+        );
+
+        return response.url; // Return the URL of the uploaded image
+      });
+
+      // Wait for all image uploads to complete
       const imageUrls = await Promise.all(imageUploadPromises);
+
       const newPackageData = {
         name: parsedPackageInfo.name,
         category: new Types.ObjectId(parsedPackageInfo.category),
@@ -51,7 +124,7 @@ export class PackageService {
         included: parsedPackageFeatures.included,
         notIncluded: parsedPackageFeatures.notIncluded,
         tourPlans: parsedTourPlans,
-        images: imageUrls,
+        images: imageUrls, // Store image URLs in the package data
         agencyId: agencyId,
       };
 

@@ -10,6 +10,7 @@ import { Model, Types } from 'mongoose';
 import { UploadPostDto } from 'src/common/dtos/uploadPost.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { LikeType } from 'src/common/enum/likeType.enum';
+import sharp from 'sharp';
 
 @Injectable()
 export class PostsService {
@@ -36,34 +37,68 @@ export class PostsService {
   async uploadPost(
     userId: string,
     uploadPostData: UploadPostDto,
-    image: Express.Multer.File,
+    images: Express.Multer.File[],
   ) {
     if (!uploadPostData) {
       throw new NotFoundException('Post data not provided');
     }
 
-    if (!image) {
-      throw new BadRequestException('Image file is required');
+    if (!images || images.length === 0) {
+      throw new BadRequestException('At least one image is required');
     }
 
-    const imageUrl = await this._cloudinaryService
-      .uploadFile(image)
-      .then((res) => res.url)
-      .catch((error) => {
-        throw new InternalServerErrorException(
-          'Failed to upload image: ' + error.message,
-        );
+    // Validate maximum number of images
+    const MAX_IMAGES = 5;
+    if (images.length > MAX_IMAGES) {
+      throw new BadRequestException(
+        `Maximum ${MAX_IMAGES} images allowed per post`,
+      );
+    }
+
+    try {
+      // Define fixed dimensions for cropping and resizing
+      const FIXED_WIDTH = 800; // Example: 800px wide
+      const FIXED_HEIGHT = 600; // Example: 600px tall
+
+      // Process and upload images
+      const imageUrls = await Promise.all(
+        images.map(async (image) => {
+          // Resize and crop the image
+          const processedImageBuffer = await sharp(image.buffer)
+            .resize(FIXED_WIDTH, FIXED_HEIGHT, {
+              fit: 'cover', // Ensures cropping
+              position: sharp.strategy.entropy, // Focal point cropping
+            })
+            .toBuffer();
+
+          // Upload to Cloudinary
+          const uploadResult = await this._cloudinaryService.uploadFileBuffer(
+            processedImageBuffer,
+            image.mimetype, // Ensure the correct MIME type is passed
+          );
+
+          return uploadResult.url;
+        }),
+      );
+
+      // Create new post with multiple image URLs
+      const newPost = await this._PostModel.create({
+        userId: new Types.ObjectId(userId),
+        imageUrls, // Store array of image URLs
+        imageCount: imageUrls.length, // Track number of images
+        caption: uploadPostData.caption,
+        visibility: uploadPostData.visibility || 'public',
+        likes: [],
+        comments: [],
       });
 
-    const newPost = await this._PostModel.create({
-      userId: new Types.ObjectId(userId),
-      imageUrl,
-      caption: uploadPostData.caption,
-      visibility: uploadPostData.visibility,
-      likes: [],
-      comments: [],
-    });
-    return newPost ? true : false;
+      return newPost ? true : false;
+    } catch (error) {
+      // More specific error handling
+      throw new InternalServerErrorException(
+        `Failed to upload post: ${error.message}`,
+      );
+    }
   }
 
   async updateLike(userId: string, postId: string, action: LikeType) {
@@ -144,30 +179,4 @@ export class PostsService {
       .populate({ path: 'comments.userId', select: 'username' });
     return posts;
   }
-  // async getAllPost(userId: string) {
-  //   const posts = await this._PostModel.aggregate([
-  //     { $match: { userId: { $ne: userId }, visibility: 'public' } },
-  //     {
-  //       $lookup: {
-  //         from: 'users',
-  //         localField: 'userId',
-  //         foreignField: '_id',
-  //         as: 'user',
-  //       },
-  //     },
-  //     { $unwind: '$user' },
-  //     {
-  //       $lookup: {
-  //         from: 'users',
-  //         localField: 'comments.userId',
-  //         foreignField: '_id',
-  //         as: 'comments.user',
-  //       },
-  //     },
-  //     { $unwind: { path: '$comments.user', preserveNullAndEmptyArrays: true } },
-  //   ]);
-
-  //   console.log('-------->>', posts);
-  //   return posts;
-  // }
 }
