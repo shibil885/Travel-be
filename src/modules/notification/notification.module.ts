@@ -14,6 +14,6 @@ import { Admin, AdminSchema } from '../admin/schema/admin.schema';
   ],
   providers: [NotificationService],
   controllers: [NotificationController],
-  exports: [NotificationService],
+  exports: [NotificationService, MongooseModule],
 })
 export class NotificationModule {}

@@ -12,10 +12,6 @@ import { Agency, AgencySchema } from '../agency/schema/agency.schema';
 import { AdminModule } from '../admin/admin.module';
 import { Admin, AdminSchema } from '../admin/schema/admin.schema';
 import { NotificationModule } from '../notification/notification.module';
-import {
-  Notification,
-  NotificationSchema,
-} from '../notification/schema/notification.schema';
 
 @Module({
   imports: [
@@ -25,7 +21,6 @@ import {
       { name: Coupon.name, schema: CouponSchema },
       { name: Agency.name, schema: AgencySchema },
       { name: Admin.name, schema: AdminSchema },
-      { name: Notification.name, schema: NotificationSchema },
     ]),
     WalletModule,
     AgencyModule,

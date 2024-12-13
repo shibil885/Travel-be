@@ -24,6 +24,7 @@ export class SocketGateway
   private _logger: Logger = new Logger('SocketGateway');
   private _connectedUsers = new Map();
   private _connectedAgencies = new Map();
+  private _connectedAdmin = new Map();
 
   constructor(private _jwt: JwtService) {}
 
@@ -48,7 +49,9 @@ export class SocketGateway
         const decoded = this._jwt.verify(token);
         const userId = decoded.sub;
         this._connectedUsers.set(userId, client.id);
-        this._logger.log(`Client connected: ${client.id}`);
+        this._logger.log(
+          `Client ${userId} connected with client-id: ${client.id}`,
+        );
       } catch (error) {
         console.error('Invalid token:', error.message);
         client.disconnect();
@@ -88,6 +91,14 @@ export class SocketGateway
   handleUserLogin(client: Socket, userId: string) {
     this._connectedUsers.set(userId, client.id);
   }
+  @SubscribeMessage('agencyLoged')
+  handleAgencyLogin(client: Socket, userId: string) {
+    this._connectedAgencies.set(userId, client.id);
+  }
+  @SubscribeMessage('adminLoged')
+  handleAdminLogin(client: Socket, userId: string) {
+    this._connectedAdmin.set(userId, client.id);
+  }
 
   bookingConfirmed(userId: string) {
     const clientId = this._connectedUsers.get(userId);
@@ -99,5 +110,12 @@ export class SocketGateway
     const clientId = this._connectedUsers.get(userId);
     console.log(clientId);
     return this.server.to(clientId).emit('bookingCancelled');
+  }
+
+  userBookedNewPackage(agencyId: string, adminId: string) {
+    const agencyClientId = this._connectedAgencies.get(agencyId);
+    const adminClientId = this._connectedAdmin.get(adminId);
+    this.server.to(agencyClientId).emit('userBookedNewPackage');
+    this.server.to(adminClientId).emit('userBookedNewPackage');
   }
 }

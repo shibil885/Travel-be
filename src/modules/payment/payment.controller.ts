@@ -10,12 +10,14 @@ import {
 import { PaymentService } from './payment.service';
 import { BookingService } from '../booking/booking.service';
 import { Response } from 'express';
+import { SocketGateway } from '../socket/gateway/socket.gateway';
 
 @Controller('payment')
 export class PaymentController {
   constructor(
     private readonly paymentService: PaymentService,
     private bookingService: BookingService,
+    private _socket: SocketGateway,
   ) {}
 
   @Post('create-order')
@@ -71,6 +73,10 @@ export class PaymentController {
         bookingData,
       );
       console.log('Booking successful:', result);
+      this._socket.userBookedNewPackage(
+        result.agencyId,
+        result.adminId.toString(),
+      );
       return res
         .status(HttpStatus.CREATED)
         .json({ success: true, message: 'Successfully booked' });

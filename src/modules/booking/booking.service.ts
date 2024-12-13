@@ -13,7 +13,7 @@ import { addDays } from 'date-fns';
 import { WalletService } from '../wallet/wallet.service';
 import { TravelStatus } from 'src/common/enum/travelStatus.enum';
 import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
-import { Transaction } from '../wallet/schema/wallet.schema';
+import { Transaction, Wallet } from '../wallet/schema/wallet.schema';
 import { TransactionType } from 'src/common/enum/transactionType.enum';
 import { ErrorMessages } from 'src/common/enum/error.enum';
 import { IOffer } from 'src/common/interfaces/offer.interface';
@@ -22,6 +22,7 @@ import { BookingDataDto } from 'src/common/dtos/boookingData.gto';
 import { Agency } from '../agency/schema/agency.schema';
 import { Admin } from '../admin/schema/admin.schema';
 import { Notification } from '../notification/schema/notification.schema';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class BookingService {
@@ -33,7 +34,8 @@ export class BookingService {
     @InjectModel(Admin.name) private _AdminModel: Model<Admin>,
     @InjectModel(Notification.name)
     private _NotificationModel: Model<Notification>,
-    private _WalletService: WalletService,
+    @InjectModel(Wallet.name) private _WalletService: WalletService,
+    private _notificationService: NotificationService,
   ) {}
 
   private _calculateRefund(price: string, createdAt: Date): number {
@@ -50,6 +52,120 @@ export class BookingService {
     }
   }
 
+  // async saveBooking(
+  //   userId: string,
+  //   packageId: string,
+  //   agencyId: string,
+  //   couponId: string,
+  //   bookingData: BookingDataDto,
+  // ) {
+  //   if (!bookingData || !packageId || !agencyId) {
+  //     throw new NotFoundException(
+  //       !bookingData
+  //         ? 'Billing details not found'
+  //         : !packageId
+  //           ? 'Package ID not provided'
+  //           : 'Agency ID not found',
+  //     );
+  //   }
+
+  //   let amount: number = Number(process.env.SERVICE_CHARGE);
+  //   let discountPrice: number = 0;
+  //   const selectedPackage = await this._PackageModel
+  //     .findById(packageId, {
+  //       price: 1,
+  //       days: 1,
+  //     })
+  //     .populate('offerId');
+  //   amount = Number(selectedPackage.price);
+  //   if (!selectedPackage) throw new NotFoundException('Package not found');
+  //   if (selectedPackage.offerId) {
+  //     const offer = selectedPackage.offerId as IOffer;
+  //     if (offer.discount_type === DiscountType.FIXED) {
+  //       amount = amount - offer.discount_value;
+  //     } else if (offer.discount_type === DiscountType.PERCENTAGE) {
+  //       amount = amount * (offer.percentage / 100);
+  //     }
+  //   }
+  //   if (couponId) {
+  //     const selectedCoupon = await this._CouponModel.findById(couponId);
+  //     if (!selectedCoupon) throw new NotFoundException('Coupon not found');
+
+  //     if (selectedCoupon.discount_type === 'fixed') {
+  //       discountPrice = selectedCoupon.discount_value || 0;
+  //       amount -= discountPrice;
+  //     } else if (selectedCoupon.discount_type === 'percentage') {
+  //       let discount = (amount * (selectedCoupon.percentage || 0)) / 100;
+  //       if (selectedCoupon.maxAmt && discount > selectedCoupon.maxAmt) {
+  //         discount = selectedCoupon.maxAmt;
+  //       }
+  //       discountPrice = discount;
+  //       amount -= discount;
+  //     }
+  //   }
+
+  //   const startDate = new Date(bookingData.travelDates);
+  //   const endDate = addDays(startDate, Number(selectedPackage.days));
+  //   if (amount <= 50) {
+  //     amount = 50;
+  //   }
+  //   const newBooking = new this._BookingModel({
+  //     package_id: new Types.ObjectId(packageId),
+  //     user_id: new Types.ObjectId(userId),
+  //     agency_id: new Types.ObjectId(agencyId),
+  //     payment: 'online',
+  //     start_date: startDate,
+  //     end_date: endDate,
+  //     travel_status: TravelStatus.PENDING,
+  //     confirmation: TravelConfirmationStatus.PENDING,
+  //     coupon_id: couponId || null,
+  //     discounted_price: discountPrice,
+  //     total_price: amount,
+  //     peoples: bookingData.travelers,
+  //     billing_details: {
+  //       firstName: bookingData.firstName,
+  //       lastName: bookingData.lastName,
+  //       email: bookingData.email,
+  //       phone: bookingData.phone,
+  //     },
+  //   });
+  //   const admin = await this._AdminModel.find();
+  //   const userWallet = await this._WalletService.getOrCreateUserWallet(
+  //     admin[0]._id,
+  //   );
+  //   if (userWallet) {
+  //     const newTransaction: Transaction = {
+  //       amount: Number(process.env.SERVICE_CHARGE),
+  //       description: 'New Booking',
+  //       type: TransactionType.CREDIT,
+  //     };
+  //     await this._WalletService.updateBalanceAndTransaction(
+  //       admin[0]._id,
+  //       userWallet.balance + Number(process.env.SERVICE_CHARGE),
+  //       newTransaction,
+  //     );
+  //   }
+
+  //   try {
+  //     if (couponId) {
+  //       await Promise.all([
+  //         newBooking.save(),
+  //         this._CouponModel.updateOne(
+  //           { _id: couponId },
+  //           {
+  //             $push: { used: userId },
+  //           },
+  //         ),
+  //       ]);
+  //       return true;
+  //     }
+  //     await newBooking.save();
+  //     return true;
+  //   } catch (error) {
+  //     console.error('Error saving booking:', error);
+  //     throw new InternalServerErrorException('Failed to save booking');
+  //   }
+  // }
   async saveBooking(
     userId: string,
     packageId: string,
@@ -57,6 +173,7 @@ export class BookingService {
     couponId: string,
     bookingData: BookingDataDto,
   ) {
+    // Validate required inputs and throw appropriate error messages if missing
     if (!bookingData || !packageId || !agencyId) {
       throw new NotFoundException(
         !bookingData
@@ -67,24 +184,34 @@ export class BookingService {
       );
     }
 
+    // Initialize base amount and discount price
     let amount: number = Number(process.env.SERVICE_CHARGE);
     let discountPrice: number = 0;
+
+    // Fetch the package details and populate any associated offers
     const selectedPackage = await this._PackageModel
       .findById(packageId, {
         price: 1,
         days: 1,
       })
       .populate('offerId');
-    amount = Number(selectedPackage.price);
+
     if (!selectedPackage) throw new NotFoundException('Package not found');
+
+    // Set the base amount to the package price
+    amount = Number(selectedPackage.price);
+
+    // Apply package offer discounts if available
     if (selectedPackage.offerId) {
       const offer = selectedPackage.offerId as IOffer;
       if (offer.discount_type === DiscountType.FIXED) {
-        amount = amount - offer.discount_value;
+        amount -= offer.discount_value;
       } else if (offer.discount_type === DiscountType.PERCENTAGE) {
-        amount = amount * (offer.percentage / 100);
+        amount *= 1 - offer.percentage / 100;
       }
     }
+
+    // Apply coupon discounts if a valid coupon is provided
     if (couponId) {
       const selectedCoupon = await this._CouponModel.findById(couponId);
       if (!selectedCoupon) throw new NotFoundException('Coupon not found');
@@ -102,11 +229,16 @@ export class BookingService {
       }
     }
 
+    // Calculate booking start and end dates based on travel dates and package duration
     const startDate = new Date(bookingData.travelDates);
     const endDate = addDays(startDate, Number(selectedPackage.days));
+
+    // Ensure the minimum charge for the booking is at least 50
     if (amount <= 50) {
       amount = 50;
     }
+
+    // Create a new booking instance with provided data
     const newBooking = new this._BookingModel({
       package_id: new Types.ObjectId(packageId),
       user_id: new Types.ObjectId(userId),
@@ -127,24 +259,36 @@ export class BookingService {
         phone: bookingData.phone,
       },
     });
-    const admin = await this._AdminModel.find();
-    const userWallet = await this._WalletService.getOrCreateUserWallet(
-      admin[0]._id,
-    );
-    if (userWallet) {
-      const newTransaction: Transaction = {
-        amount: Number(process.env.SERVICE_CHARGE),
-        description: 'New Booking',
-        type: TransactionType.CREDIT,
-      };
-      await this._WalletService.updateBalanceAndTransaction(
-        admin[0]._id,
-        userWallet.balance + Number(process.env.SERVICE_CHARGE),
-        newTransaction,
-      );
-    }
 
+    // Fetch admin details
+    const admin = await this._AdminModel.find();
+
+    // Create notifications for agency and admin about the booking
     try {
+      const notifications = [
+        {
+          fromId: new Types.ObjectId(userId),
+          fromModel: 'User', // Use exact string literal type
+          toId: new Types.ObjectId(agencyId), // Corrected field name
+          toModel: 'Agency',
+          title: 'New Booking Alert',
+          description: `A new package has been booked by a user. Please confirm the booking.`,
+          type: 'info',
+          priority: 2,
+        },
+        {
+          fromId: new Types.ObjectId(userId),
+          fromModel: 'User',
+          toId: new Types.ObjectId(admin[0]._id),
+          toModel: 'Admin',
+          title: 'New Booking Notification',
+          description: `A user has booked a new package. Booking charges have been credited to your wallet.`,
+          type: 'success',
+          priority: 1,
+        },
+      ];
+
+      // Save the notifications, booking, and coupon updates (if applicable) in parallel
       if (couponId) {
         await Promise.all([
           newBooking.save(),
@@ -154,12 +298,22 @@ export class BookingService {
               $push: { used: userId },
             },
           ),
+          ...notifications.map((notification) =>
+            this._notificationService.createNotification(notification),
+          ),
         ]);
-        return true;
+        return { agencyId: agencyId, adminId: admin[0]._id };
       }
-      await newBooking.save();
-      return true;
+
+      await Promise.all([
+        newBooking.save(),
+        ...notifications.map((notification) =>
+          this._notificationService.createNotification(notification),
+        ),
+      ]);
+      return { agencyId: agencyId, adminId: admin[0]._id };
     } catch (error) {
+      // Handle errors and throw an internal server error exception if something fails
       console.error('Error saving booking:', error);
       throw new InternalServerErrorException('Failed to save booking');
     }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   HttpStatus,
@@ -24,16 +25,18 @@ export class NotificationController {
     return this._notificationService.findAllUnread();
   }
 
-  @Get(':role')
+  @Get(':role/:isRead')
   async getNotification(
     @Req() req: Request,
     @Res() res: Response,
     @Param('role') role: string,
+    @Param('isRead') isRead: boolean,
     @Query('limit') limit: number,
   ) {
     try {
       const result = await this._notificationService.findNotifications(
         req[role]['sub'],
+        isRead,
         limit,
       );
       return res.status(HttpStatus.OK).json({
@@ -49,8 +52,23 @@ export class NotificationController {
   }
 
   @Patch(':id/read')
-  async markNotificationAsRead(@Param('id') id: string): Promise<Notification> {
-    return this._notificationService.markAsRead(id);
+  async markNotificationAsRead(@Res() res: Response, @Param('id') id: string) {
+    try {
+      if (!id) throw new BadRequestException('Id not found');
+      await this._notificationService.markAsRead(id);
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: 'Message read' });
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ success: false, error: error.message });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, error: error.message });
+    }
   }
 
   @Patch(':id/delete')

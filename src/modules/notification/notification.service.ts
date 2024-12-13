@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './schema/notification.schema';
 import { Model, Types } from 'mongoose';
@@ -72,13 +72,17 @@ export class NotificationService {
     }
   }
 
-  async findNotifications(to_id: string, limit: number = Infinity) {
+  async findNotifications(
+    to_id: string,
+    is_read: boolean,
+    limit: number = Infinity,
+  ) {
     try {
       const notifications = await this._NotificationModel
         .find({
           to_id: new Types.ObjectId(to_id),
           is_deleted: false,
-          is_read: false,
+          is_read: is_read,
         })
         .sort({ createdAt: -1 })
         .limit(limit);
@@ -121,6 +125,48 @@ export class NotificationService {
     } catch (error) {
       console.error(`Error deleting notification with id ${id}:`, error);
       throw new Error('Could not delete notification.');
+    }
+  }
+
+  async createNotification(notificationData: {
+    fromId: Types.ObjectId;
+    fromModel: string;
+    toId: Types.ObjectId;
+    toModel: string;
+    title: string;
+    description: string;
+    type?: string;
+    priority?: number;
+  }) {
+    const {
+      fromId,
+      fromModel,
+      toId,
+      toModel,
+      title,
+      description,
+      type = 'info',
+      priority = 2,
+    } = notificationData;
+
+    const newNotification = new this._NotificationModel({
+      from_id: fromId,
+      from_model: fromModel,
+      to_id: toId,
+      to_model: toModel,
+      title,
+      description,
+      type,
+      priority,
+    });
+
+    try {
+      await newNotification.save();
+      console.log('Notification created successfully');
+      return newNotification;
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw new InternalServerErrorException('Failed to create notification');
     }
   }
 }
