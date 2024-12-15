@@ -203,6 +203,8 @@ export class AdminDashboardService {
           bookingsCount: { $size: '$bookings' },
         },
       },
+      { $match: { bookingsCount: { $gt: 0 } } },
+
       {
         $sort: { bookingsCount: -1 },
       },

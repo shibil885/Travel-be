@@ -20,7 +20,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('package')
 export class PackageController {
-  constructor(private packageService: PackageService) {}
+  constructor(private _packageService: PackageService) {}
 
   @Get('getAllPackages')
   async getAllPackages(
@@ -31,7 +31,7 @@ export class PackageController {
   ) {
     try {
       const { totalItems, currentPage, packages } =
-        await this.packageService.getAllPackages(
+        await this._packageService.getAllPackages(
           req['agency'].sub,
           page,
           Number(limit),
@@ -64,7 +64,7 @@ export class PackageController {
   @Get('offer')
   async getOfferPackages(@Res() res: Response) {
     try {
-      const offerPackages = await this.packageService.getOfferPackages();
+      const offerPackages = await this._packageService.getOfferPackages();
       if (offerPackages.length) {
         return res.status(HttpStatus.OK).json({
           success: true,
@@ -92,7 +92,7 @@ export class PackageController {
     @Query('searchText') searchText: string,
   ) {
     try {
-      const packages = await this.packageService.searchPackges(
+      const packages = await this._packageService.searchPackges(
         req['agency'].sub,
         searchText,
       );
@@ -117,7 +117,7 @@ export class PackageController {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.packageService.changeStatus(id, action);
+      const result = await this._packageService.changeStatus(id, action);
       if (result) {
         return res
           .status(HttpStatus.OK)
@@ -142,7 +142,7 @@ export class PackageController {
     @Body() packageData,
   ) {
     try {
-      const response = await this.packageService.saveChanges(
+      const response = await this._packageService.saveChanges(
         packageData,
         packageId,
       );
@@ -178,7 +178,7 @@ export class PackageController {
   ) {
     try {
       const agencyId = req['agency'].sub;
-      const result = await this.packageService.addPackage(
+      const result = await this._packageService.addPackage(
         agencyId,
         createPackageDto,
         images,
@@ -196,6 +196,22 @@ export class PackageController {
         error: error.message,
         success: false,
       });
+    }
+  }
+
+  @Get('topBooked')
+  async getTopBookedPackges(@Res() res: Response) {
+    try {
+      const result = await this._packageService.fetchTopBookedPackages();
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: 'List of top booked packages',
+        packages: result,
+      });
+    } catch (error) {
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: error.message, packages: [] });
     }
   }
 }
