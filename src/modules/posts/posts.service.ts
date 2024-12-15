@@ -162,11 +162,10 @@ export class PostsService {
               comments: { _id: new Types.ObjectId(commentId) },
             },
           };
-    const updateResult = await this._PostModel.updateOne(
-      { _id: parsedPostId },
-      updateOperator,
-    );
-    return updateResult.modifiedCount > 0;
+    const updateResult = await this._PostModel
+      .updateOne({ _id: parsedPostId }, updateOperator)
+      .exec();
+    return updateResult;
   }
 
   async getAllPost(userId: string) {
@@ -176,7 +175,7 @@ export class PostsService {
         visibility: 'public',
       })
       .populate('userId')
-      .populate({ path: 'comments.userId', select: 'username' });
+      .populate('comments.userId');
     return posts;
   }
 }

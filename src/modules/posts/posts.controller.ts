@@ -174,6 +174,7 @@ export class PostsController {
         'add',
       );
       if (response) {
+        console.log('resukt', response);
         return res
           .status(HttpStatus.OK)
           .json({ success: true, message: 'Comment added' });
