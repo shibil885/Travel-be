@@ -47,7 +47,6 @@ export class PostsService {
       throw new BadRequestException('At least one image is required');
     }
 
-    // Validate maximum number of images
     const MAX_IMAGES = 5;
     if (images.length > MAX_IMAGES) {
       throw new BadRequestException(
@@ -56,36 +55,29 @@ export class PostsService {
     }
 
     try {
-      // Define fixed dimensions for cropping and resizing
-      const FIXED_WIDTH = 800; // Example: 800px wide
-      const FIXED_HEIGHT = 600; // Example: 600px tall
+      const FIXED_WIDTH = 800;
+      const FIXED_HEIGHT = 600;
 
-      // Process and upload images
       const imageUrls = await Promise.all(
         images.map(async (image) => {
-          // Resize and crop the image
           const processedImageBuffer = await sharp(image.buffer)
             .resize(FIXED_WIDTH, FIXED_HEIGHT, {
-              fit: 'cover', // Ensures cropping
-              position: sharp.strategy.entropy, // Focal point cropping
+              fit: 'cover',
+              position: sharp.strategy.entropy,
             })
             .toBuffer();
-
-          // Upload to Cloudinary
           const uploadResult = await this._cloudinaryService.uploadFileBuffer(
             processedImageBuffer,
-            image.mimetype, // Ensure the correct MIME type is passed
+            image.mimetype,
           );
 
           return uploadResult.url;
         }),
       );
-
-      // Create new post with multiple image URLs
       const newPost = await this._PostModel.create({
         userId: new Types.ObjectId(userId),
-        imageUrls, // Store array of image URLs
-        imageCount: imageUrls.length, // Track number of images
+        imageUrls,
+        imageCount: imageUrls.length,
         caption: uploadPostData.caption,
         visibility: uploadPostData.visibility || 'public',
         likes: [],
@@ -94,7 +86,6 @@ export class PostsService {
 
       return newPost ? true : false;
     } catch (error) {
-      // More specific error handling
       throw new InternalServerErrorException(
         `Failed to upload post: ${error.message}`,
       );

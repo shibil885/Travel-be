@@ -169,4 +169,13 @@ export class NotificationService {
       throw new InternalServerErrorException('Failed to create notification');
     }
   }
+  async markAllMessageAsRead(userId: string) {
+    const updateResult = await this._NotificationModel.updateMany(
+      {
+        to_id: new Types.ObjectId(userId),
+      },
+      { is_read: true, read_at: new Date() },
+    );
+    return updateResult;
+  }
 }

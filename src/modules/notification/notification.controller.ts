@@ -12,6 +12,7 @@ import {
 import { NotificationService } from './notification.service';
 import { Notification } from './schema/notification.schema';
 import { Request, Response } from 'express';
+import { Role } from 'src/common/enum/role.enum';
 
 @Controller('notification')
 export class NotificationController {
@@ -74,5 +75,27 @@ export class NotificationController {
   @Patch(':id/delete')
   async softDeleteNotification(@Param('id') id: string): Promise<Notification> {
     return this._notificationService.delete(id);
+  }
+  @Patch('markAllAsRead/:role')
+  async markAllMsgAsRead(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('role') role: Role,
+  ) {
+    try {
+      const result = await this._notificationService.markAllMessageAsRead(
+        req[`${role}`]['sub'],
+      );
+      if (result.modifiedCount) {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'All message marked as read' });
+      }
+    } catch (error) {
+      console.log('Error', error);
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: false, message: error.message });
+    }
   }
 }
