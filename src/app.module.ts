@@ -32,6 +32,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { RatingReviewAgencyModule } from './modules/rating-review-agency/rating-review-agency.module';
 import { RatingReviewPackageModule } from './modules/rating-review-package/rating-review-package.module';
 import { SocketModule } from './modules/socket/socket.module';
+import { ReportModule } from './modules/report/report.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { SocketModule } from './modules/socket/socket.module';
     RatingReviewAgencyModule,
     RatingReviewPackageModule,
     SocketModule,
+    ReportModule,
   ],
   controllers: [],
   providers: [],
