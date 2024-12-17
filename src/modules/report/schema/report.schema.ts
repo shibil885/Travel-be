@@ -11,7 +11,7 @@ export class Report {
   @Prop({
     type: String,
     required: true,
-    enum: ['agency', 'package', 'post', 'comment'],
+    enum: ['Agency', 'Package', 'Post', 'Comment'],
   })
   targetType: string;
 
@@ -19,26 +19,23 @@ export class Report {
   targetId: Types.ObjectId;
 
   @Prop({ type: String, required: true })
-  reason: string; // Reason for the report (e.g., spam, abuse)
+  reason: string;
 
   @Prop({ type: String })
-  description: string; // Additional details provided by the user
+  description: string;
 
   @Prop({
     type: String,
     enum: ['pending', 'reviewed', 'resolved'],
     default: 'pending',
   })
-  status: string; // Status of the report
-
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  reviewedBy?: Types.ObjectId; // Admin who reviewed the report
+  status: string;
 
   @Prop({ type: String })
-  reviewComment?: string; // Admin's comment on the resolution
+  reviewComment?: string;
 
   @Prop({ type: Date })
-  resolvedAt?: Date; // Timestamp of resolution
+  resolvedAt?: Date;
 }
 
 export const ReportSchema = SchemaFactory.createForClass(Report);

@@ -149,9 +149,26 @@ export class PackageService {
   }
 
   async getOfferPackages() {
-    const offerPackages = await this._PackageModel
-      .find({ offerId: { $ne: null } })
-      .populate('offerId');
+    const offerPackages = await this._PackageModel.aggregate([
+      { $match: { offerId: { $ne: null } } },
+      {
+        $lookup: {
+          from: 'offers',
+          localField: 'offerId',
+          foreignField: '_id',
+          as: 'offerId',
+        },
+      },
+      { $unwind: '$offerId' },
+      {
+        $lookup: {
+          from: 'reviewforpackages',
+          localField: '_id',
+          foreignField: 'packageId',
+          as: 'ratingAndReview',
+        },
+      },
+    ]);
     return offerPackages;
   }
 
