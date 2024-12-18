@@ -37,7 +37,7 @@ import { ReportModule } from './modules/report/report.module';
 @Module({
   imports: [
     UserModule,
-    MongooseModule.forRoot('mongodb://127.0.0.1/travel'),
+    MongooseModule.forRoot(process.env.DATABASE_HOST),
     ConfigModule.forRoot({ isGlobal: true }),
     RazorpayModule.forRoot({
       key_id: process.env.RAZORPAY_KEY_ID,
