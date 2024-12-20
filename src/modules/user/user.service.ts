@@ -117,7 +117,6 @@ export class UserService {
     profileImage: Express.Multer.File,
   ) {
     try {
-      // Define fixed dimensions for resizing (you can adjust these)
       const FIXED_WIDTH = 300; // Example: 300px wide
       const FIXED_HEIGHT = 300; // Example: 300px tall
 
@@ -184,13 +183,24 @@ export class UserService {
           },
         },
         { $unwind: '$category' },
+        {
+          $lookup: {
+            from: 'offers',
+            localField: 'offerId',
+            foreignField: '_id',
+            as: 'offerId',
+          },
+        },
+        { $unwind: { path: '$offerId', preserveNullAndEmptyArrays: true } },
       ]);
-      if (!singlePackage) {
+
+      if (!singlePackage || singlePackage.length === 0) {
         throw new NotFoundException();
       }
+
       return singlePackage[0];
     } catch (error) {
-      console.log('error occured while fetch single Packag', error);
+      console.log('Error occurred while fetching single Package:', error);
       throw new InternalServerErrorException();
     }
   }

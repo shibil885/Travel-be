@@ -35,7 +35,7 @@ export class PaymentService {
     }).populate('offerId');
     if (!selectedPackage.price)
       throw new NotFoundException('Cant find package');
-    amount = Number(selectedPackage.price) + Number(process.env.SERVICE_CHARGE);
+    amount = Number(selectedPackage.price);
     if (selectedPackage.offerId) {
       const offer = selectedPackage.offerId as IOffer;
       if (offer.discount_type === DiscountType.FIXED) {
