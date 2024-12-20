@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   HttpStatus,
+  Param,
   Post,
   Query,
   Req,
@@ -60,6 +62,45 @@ export class ReportController {
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ success: false, message: error.message });
+    }
+  }
+
+  @Get('getsinglereport/:id/:targetType')
+  async getReport(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('id') reportId: string,
+    @Param('targetType') targetType: string,
+    @Query('commentId') commentId: string,
+  ) {
+    try {
+      const result = await this._reportService.getOneReport(
+        reportId,
+        targetType,
+        commentId,
+      );
+      console.log('targetType ==>', result);
+      if (result.length) {
+        return res.status(HttpStatus.OK).json({
+          success: true,
+          message: 'report data',
+          reportData: result[0],
+        });
+      } else {
+        return res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'report data', reportData: [] });
+      }
+    } catch (error) {
+      console.error('error occured', error);
+      if (error instanceof BadRequestException) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ success: true, message: error.message, reportData: [] });
+      }
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: true, message: error.message, reportData: [] });
     }
   }
 }
