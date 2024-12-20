@@ -188,7 +188,6 @@ export class BookingService {
     let amount: number = Number(process.env.SERVICE_CHARGE);
     let discountPrice: number = 0;
 
-    // Fetch the package details and populate any associated offers
     const selectedPackage = await this._PackageModel
       .findById(packageId, {
         price: 1,

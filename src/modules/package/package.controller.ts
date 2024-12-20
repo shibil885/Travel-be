@@ -135,6 +135,7 @@ export class PackageController {
         .json({ message: error.message, success: false });
     }
   }
+
   @Put('saveChanges/:id')
   async saveChanges(
     @Param('id') packageId,
@@ -173,7 +174,7 @@ export class PackageController {
   async addPackage(
     @Req() req: Request,
     @Res() res: Response,
-    @Body() createPackageDto: any,
+    @Body() createPackageDto,
     @UploadedFiles() images: Express.Multer.File[],
   ) {
     try {

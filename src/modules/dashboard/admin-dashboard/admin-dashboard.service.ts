@@ -275,7 +275,7 @@ export class AdminDashboardService {
     return report;
   }
 
-  async getBookingsTrends(groupBy: 'month' | 'year'): Promise<any[]> {
+  async getBookingsTrends(groupBy: 'month' | 'year') {
     try {
       const groupStage =
         groupBy === 'month'

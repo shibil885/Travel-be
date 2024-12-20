@@ -20,7 +20,7 @@ export class PackageService {
 
   async addPackage(
     agencyId: string,
-    createPackageDto: any,
+    createPackageDto,
     images: Express.Multer.File[],
   ): Promise<Package> {
     try {

@@ -157,7 +157,7 @@ export class ChatService {
     return messages;
   }
 
-  async getUsersOrAgenciesToChat(userType: MessageSenderType): Promise<any[]> {
+  async getUsersOrAgenciesToChat(userType: MessageSenderType) {
     try {
       if (userType === MessageSenderType.AGENCY) {
         return await this._UserModel.find(
