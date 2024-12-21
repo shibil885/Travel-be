@@ -8,8 +8,8 @@ import { AllExceptionsFilter } from './common/filter/ecception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    // origin: 'https://travel.shibil.site',
-    origin: 'http://localhost:4200',
+    origin: 'https://travel.shibil.site',
+    // origin: 'http://localhost:4200',
     credentials: true,
   });
   app.useGlobalFilters(new AllExceptionsFilter());
