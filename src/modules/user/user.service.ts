@@ -12,7 +12,7 @@ import { CreateUserDto } from 'src/common/dtos/user.dto';
 import { Response } from 'express';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Otp } from '../otp/schema/otp.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { Agency } from '../agency/schema/agency.schema';
 import { Package } from '../package/schema/package.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';

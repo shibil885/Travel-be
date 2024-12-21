@@ -9,7 +9,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Agency } from './schema/agency.schema';
 import { Model, Types } from 'mongoose';
 import { Response } from 'express';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Otp } from '../otp/schema/otp.schema';
 
