@@ -168,6 +168,7 @@ export class BookingController {
           .status(HttpStatus.BAD_REQUEST)
           .json({ success: false, message: 'Unable to cancel booking' });
   }
+
   @Get('byAgencies')
   @UseFilters(AllExceptionsFilter)
   async bookingsByAgencies(

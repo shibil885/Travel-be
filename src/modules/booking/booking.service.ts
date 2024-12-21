@@ -13,7 +13,7 @@ import { addDays } from 'date-fns';
 import { WalletService } from '../wallet/wallet.service';
 import { TravelStatus } from 'src/common/enum/travelStatus.enum';
 import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
-import { Transaction, Wallet } from '../wallet/schema/wallet.schema';
+import { Transaction } from '../wallet/schema/wallet.schema';
 import { TransactionType } from 'src/common/enum/transactionType.enum';
 import { ErrorMessages } from 'src/common/enum/error.enum';
 import { IOffer } from 'src/common/interfaces/offer.interface';
@@ -34,7 +34,7 @@ export class BookingService {
     @InjectModel(Admin.name) private _AdminModel: Model<Admin>,
     @InjectModel(Notification.name)
     private _NotificationModel: Model<Notification>,
-    @InjectModel(Wallet.name) private _WalletService: WalletService,
+    private _WalletService: WalletService,
     private _notificationService: NotificationService,
   ) {}
 
@@ -42,7 +42,7 @@ export class BookingService {
     const today = Date.now();
     const bookedDate = createdAt.getTime();
     const diffInHours = (today - bookedDate) / (1000 * 60 * 60);
-    console.log('houres --->', diffInHours);
+    console.log('hours --->', diffInHours);
     if (diffInHours <= 24) {
       return Number(price);
     } else if (diffInHours >= 72 && diffInHours <= 168) {
@@ -173,7 +173,6 @@ export class BookingService {
     couponId: string,
     bookingData: BookingDataDto,
   ) {
-    // Validate required inputs and throw appropriate error messages if missing
     if (!bookingData || !packageId || !agencyId) {
       throw new NotFoundException(
         !bookingData
@@ -183,9 +182,6 @@ export class BookingService {
             : 'Agency ID not found',
       );
     }
-
-    // Initialize base amount and discount price
-    let amount: number = Number(process.env.SERVICE_CHARGE);
     let discountPrice: number = 0;
 
     const selectedPackage = await this._PackageModel
@@ -194,13 +190,8 @@ export class BookingService {
         days: 1,
       })
       .populate('offerId');
-
     if (!selectedPackage) throw new NotFoundException('Package not found');
-
-    // Set the base amount to the package price
-    amount = Number(selectedPackage.price);
-
-    // Apply package offer discounts if available
+    let amount = Number(selectedPackage.price);
     if (selectedPackage.offerId) {
       const offer = selectedPackage.offerId as IOffer;
       if (offer.discount_type === DiscountType.FIXED) {
@@ -209,8 +200,6 @@ export class BookingService {
         amount *= 1 - offer.percentage / 100;
       }
     }
-
-    // Apply coupon discounts if a valid coupon is provided
     if (couponId) {
       const selectedCoupon = await this._CouponModel.findById(couponId);
       if (!selectedCoupon) throw new NotFoundException('Coupon not found');
@@ -227,17 +216,11 @@ export class BookingService {
         amount -= discount;
       }
     }
-
-    // Calculate booking start and end dates based on travel dates and package duration
     const startDate = new Date(bookingData.travelDates);
     const endDate = addDays(startDate, Number(selectedPackage.days));
-
-    // Ensure the minimum charge for the booking is at least 50
     if (amount <= 50) {
       amount = 50;
     }
-
-    // Create a new booking instance with provided data
     const newBooking = new this._BookingModel({
       package_id: new Types.ObjectId(packageId),
       user_id: new Types.ObjectId(userId),
@@ -258,17 +241,16 @@ export class BookingService {
         phone: bookingData.phone,
       },
     });
-
-    // Fetch admin details
     const admin = await this._AdminModel.find();
-
-    // Create notifications for agency and admin about the booking
+    const adminWallet = await this._WalletService.getOrCreateUserWallet(
+      admin[0]._id,
+    );
     try {
       const notifications = [
         {
           fromId: new Types.ObjectId(userId),
-          fromModel: 'User', // Use exact string literal type
-          toId: new Types.ObjectId(agencyId), // Corrected field name
+          fromModel: 'User',
+          toId: new Types.ObjectId(agencyId),
           toModel: 'Agency',
           title: 'New Booking Alert',
           description: `A new package has been booked by a user. Please confirm the booking.`,
@@ -287,7 +269,22 @@ export class BookingService {
         },
       ];
 
-      // Save the notifications, booking, and coupon updates (if applicable) in parallel
+      await Promise.all([
+        newBooking.save(),
+        ...notifications.map((notification) =>
+          this._notificationService.createNotification(notification),
+        ),
+      ]);
+      const newTransactionForAdmin: Transaction = {
+        amount: Number(process.env.SERVICE_CHARGE),
+        description: 'New booking added',
+        type: TransactionType.CREDIT,
+      };
+      await this._WalletService.updateBalanceAndTransaction(
+        admin[0]._id,
+        adminWallet.balance + Number(process.env.SERVICE_CHARGE),
+        newTransactionForAdmin,
+      );
       if (couponId) {
         await Promise.all([
           newBooking.save(),
@@ -303,16 +300,8 @@ export class BookingService {
         ]);
         return { agencyId: agencyId, adminId: admin[0]._id };
       }
-
-      await Promise.all([
-        newBooking.save(),
-        ...notifications.map((notification) =>
-          this._notificationService.createNotification(notification),
-        ),
-      ]);
       return { agencyId: agencyId, adminId: admin[0]._id };
     } catch (error) {
-      // Handle errors and throw an internal server error exception if something fails
       console.error('Error saving booking:', error);
       throw new InternalServerErrorException('Failed to save booking');
     }
@@ -390,8 +379,6 @@ export class BookingService {
           ],
         }),
       ]);
-      console.log(bookedPackages);
-      console.log(bookedPackageCount);
       return {
         bookedPackageCount,
         bookedPackages,
@@ -554,7 +541,6 @@ export class BookingService {
       if (!bookedPackage) {
         throw new NotFoundException(ErrorMessages.BOOKING_NOT_FOUND);
       }
-
       const userWallet = await this._WalletService.getOrCreateUserWallet(
         bookedPackage.user_id,
       );
@@ -623,45 +609,51 @@ export class BookingService {
           bookedPackage.total_price,
           bookedPackage.createdAt,
         );
-        console.log('refund amount', refundAmount);
-
-        await Promise.all([
-          this._BookingModel.updateOne(
-            { _id: bookingId },
-            {
-              $set: {
-                travel_status: TravelStatus.CANCELLED,
-                confirmation: TravelConfirmationStatus.REJECTED,
-              },
+        await this._BookingModel.updateOne(
+          { _id: bookingId },
+          {
+            $set: {
+              travel_status: TravelStatus.CANCELLED,
+              confirmation: TravelConfirmationStatus.REJECTED,
             },
-          ),
-          this._WalletService.updateBalanceAndTransaction(
+          },
+        );
+
+        if (refundAmount) {
+          await this._WalletService.updateBalanceAndTransaction(
             bookedPackage.user_id,
             userWallet.balance + refundAmount,
             { ...newTransaction, amount: refundAmount },
-          ),
-          this._NotificationModel.create({
-            from_id: senderId,
-            from_model: senderModel,
-            to_id: bookedPackage.user_id,
-            to_model: 'User',
-            title: 'Booking Cancelled',
-            description: `Your booking has been cancelled. A refund of ${refundAmount} has been processed to your wallet.`,
-            type: 'info',
-            priority: 2,
-          }),
-        ]);
+          );
+        }
 
-        const newTransactionForAdmin: Transaction = {
-          amount: Number(process.env.SERVICE_CHARGE),
-          description: 'Booking canceled',
-          type: TransactionType.DEBIT,
-        };
-        await this._WalletService.updateBalanceAndTransaction(
-          admin[0]._id,
-          adminWallet.balance - Number(process.env.SERVICE_CHARGE),
-          newTransactionForAdmin,
-        );
+        await this._NotificationModel.create({
+          from_id: senderId,
+          from_model: senderModel,
+          to_id: bookedPackage.user_id,
+          to_model: 'User',
+          title: 'Booking Cancelled',
+          description: `Your booking has been cancelled. ${refundAmount > 0 ? `A refund of ${refundAmount} has been processed to your wallet.` : ''}`,
+          type: 'info',
+          priority: 2,
+        });
+
+        const today = Date.now();
+        const bookedDate = bookedPackage.createdAt.getTime();
+        const diffInHours = (today - bookedDate) / (1000 * 60 * 60);
+        const fullRefund = diffInHours <= 24;
+        if (fullRefund) {
+          const newTransactionForAdmin: Transaction = {
+            amount: Number(process.env.SERVICE_CHARGE),
+            description: 'Booking canceled',
+            type: TransactionType.DEBIT,
+          };
+          await this._WalletService.updateBalanceAndTransaction(
+            admin[0]._id,
+            adminWallet.balance - Number(process.env.SERVICE_CHARGE),
+            newTransactionForAdmin,
+          );
+        }
         return bookedPackage;
       } else {
         throw new BadRequestException(
@@ -669,7 +661,7 @@ export class BookingService {
         );
       }
     } catch (error) {
-      console.error('Error cancelling booking:', error.message);
+      console.error('Error cancelling booking:', error);
       if (error.message === ErrorMessages.WALLET_CREATION_FAILED) {
         throw new BadRequestException(error.message);
       } else if (error instanceof BadRequestException) {
