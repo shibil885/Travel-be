@@ -38,7 +38,6 @@ import { ReportModule } from './modules/report/report.module';
   imports: [
     UserModule,
     MongooseModule.forRoot(process.env.DATABASE_HOST),
-    // MongooseModule.forRoot('mongodb://127.0.0.1/travel'),
     ConfigModule.forRoot({ isGlobal: true }),
     RazorpayModule.forRoot({
       key_id: process.env.RAZORPAY_KEY_ID,
