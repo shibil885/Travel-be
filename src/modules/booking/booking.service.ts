@@ -52,120 +52,6 @@ export class BookingService {
     }
   }
 
-  // async saveBooking(
-  //   userId: string,
-  //   packageId: string,
-  //   agencyId: string,
-  //   couponId: string,
-  //   bookingData: BookingDataDto,
-  // ) {
-  //   if (!bookingData || !packageId || !agencyId) {
-  //     throw new NotFoundException(
-  //       !bookingData
-  //         ? 'Billing details not found'
-  //         : !packageId
-  //           ? 'Package ID not provided'
-  //           : 'Agency ID not found',
-  //     );
-  //   }
-
-  //   let amount: number = Number(process.env.SERVICE_CHARGE);
-  //   let discountPrice: number = 0;
-  //   const selectedPackage = await this._PackageModel
-  //     .findById(packageId, {
-  //       price: 1,
-  //       days: 1,
-  //     })
-  //     .populate('offerId');
-  //   amount = Number(selectedPackage.price);
-  //   if (!selectedPackage) throw new NotFoundException('Package not found');
-  //   if (selectedPackage.offerId) {
-  //     const offer = selectedPackage.offerId as IOffer;
-  //     if (offer.discount_type === DiscountType.FIXED) {
-  //       amount = amount - offer.discount_value;
-  //     } else if (offer.discount_type === DiscountType.PERCENTAGE) {
-  //       amount = amount * (offer.percentage / 100);
-  //     }
-  //   }
-  //   if (couponId) {
-  //     const selectedCoupon = await this._CouponModel.findById(couponId);
-  //     if (!selectedCoupon) throw new NotFoundException('Coupon not found');
-
-  //     if (selectedCoupon.discount_type === 'fixed') {
-  //       discountPrice = selectedCoupon.discount_value || 0;
-  //       amount -= discountPrice;
-  //     } else if (selectedCoupon.discount_type === 'percentage') {
-  //       let discount = (amount * (selectedCoupon.percentage || 0)) / 100;
-  //       if (selectedCoupon.maxAmt && discount > selectedCoupon.maxAmt) {
-  //         discount = selectedCoupon.maxAmt;
-  //       }
-  //       discountPrice = discount;
-  //       amount -= discount;
-  //     }
-  //   }
-
-  //   const startDate = new Date(bookingData.travelDates);
-  //   const endDate = addDays(startDate, Number(selectedPackage.days));
-  //   if (amount <= 50) {
-  //     amount = 50;
-  //   }
-  //   const newBooking = new this._BookingModel({
-  //     package_id: new Types.ObjectId(packageId),
-  //     user_id: new Types.ObjectId(userId),
-  //     agency_id: new Types.ObjectId(agencyId),
-  //     payment: 'online',
-  //     start_date: startDate,
-  //     end_date: endDate,
-  //     travel_status: TravelStatus.PENDING,
-  //     confirmation: TravelConfirmationStatus.PENDING,
-  //     coupon_id: couponId || null,
-  //     discounted_price: discountPrice,
-  //     total_price: amount,
-  //     peoples: bookingData.travelers,
-  //     billing_details: {
-  //       firstName: bookingData.firstName,
-  //       lastName: bookingData.lastName,
-  //       email: bookingData.email,
-  //       phone: bookingData.phone,
-  //     },
-  //   });
-  //   const admin = await this._AdminModel.find();
-  //   const userWallet = await this._WalletService.getOrCreateUserWallet(
-  //     admin[0]._id,
-  //   );
-  //   if (userWallet) {
-  //     const newTransaction: Transaction = {
-  //       amount: Number(process.env.SERVICE_CHARGE),
-  //       description: 'New Booking',
-  //       type: TransactionType.CREDIT,
-  //     };
-  //     await this._WalletService.updateBalanceAndTransaction(
-  //       admin[0]._id,
-  //       userWallet.balance + Number(process.env.SERVICE_CHARGE),
-  //       newTransaction,
-  //     );
-  //   }
-
-  //   try {
-  //     if (couponId) {
-  //       await Promise.all([
-  //         newBooking.save(),
-  //         this._CouponModel.updateOne(
-  //           { _id: couponId },
-  //           {
-  //             $push: { used: userId },
-  //           },
-  //         ),
-  //       ]);
-  //       return true;
-  //     }
-  //     await newBooking.save();
-  //     return true;
-  //   } catch (error) {
-  //     console.error('Error saving booking:', error);
-  //     throw new InternalServerErrorException('Failed to save booking');
-  //   }
-  // }
   async saveBooking(
     userId: string,
     packageId: string,
@@ -475,8 +361,8 @@ export class BookingService {
     return await this._BookingModel
       .findOne({
         _id: bookingId,
-        travel_status: { $ne: 'completed' },
       })
+      .sort({ createdAt: -1 })
       .populate(['package_id', 'user_id', 'agency_id']);
   }
 
@@ -831,5 +717,12 @@ export class BookingService {
       startedBookingsCount,
       page,
     };
+  }
+
+  changeStatus(bookingId: string, status: TravelStatus) {
+    if (!bookingId || !status) throw new BadRequestException('Invalid inputs');
+    return this._BookingModel.findByIdAndUpdate(new Types.ObjectId(bookingId), {
+      travel_status: status,
+    });
   }
 }

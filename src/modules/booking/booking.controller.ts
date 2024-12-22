@@ -19,6 +19,7 @@ import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enu
 import { ErrorMessages } from 'src/common/enum/error.enum';
 import { SocketGateway } from '../socket/gateway/socket.gateway';
 import { AllExceptionsFilter } from 'src/common/filter/ecception.filter';
+import { TravelStatus } from 'src/common/enum/travelStatus.enum';
 
 @Controller('booking')
 export class BookingController {
@@ -351,5 +352,22 @@ export class BookingController {
         page: 0,
       });
     }
+  }
+
+  @Patch('changestatus/:id')
+  @UseFilters(AllExceptionsFilter)
+  async changeTravelStatus(
+    @Res() res: Response,
+    @Body('status') status: TravelStatus,
+    @Param('id') bookingId: string,
+  ) {
+    const response = await this._bookingService.changeStatus(bookingId, status);
+    return response.isModified
+      ? res
+          .status(HttpStatus.OK)
+          .json({ success: true, message: 'Status changed' })
+      : res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json({ success: true, message: 'Somthing went wrong' });
   }
 }
