@@ -27,7 +27,6 @@ export class AuthController {
 
   @Post('validate-token')
   async validateToken(@Req() req: Request, @Res() res: Response) {
-    console.log('invoked');
     const tokenToValidate = req.cookies['access_token'];
     if (!tokenToValidate) {
       return res.status(HttpStatus.OK).json({

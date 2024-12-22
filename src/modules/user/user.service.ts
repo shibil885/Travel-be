@@ -60,8 +60,9 @@ export class UserService {
       }
 
       const saltRound = 10;
+      console.log('user data', userData);
       const hashedPassword = await bcrypt.hash(userData.password, saltRound);
-
+      console.log('hashed passss', hashedPassword);
       const createdUser = new this.userModel({
         email: userData.email,
         username: userData.userName,
