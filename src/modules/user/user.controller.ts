@@ -79,8 +79,6 @@ export class UserController {
 
   @Post('signup')
   createUser(@Res() res: Response, @Req() req: Request, @Body() userData) {
-    console.log('req', req);
-    console.log('body', req.body);
     return this.userService.createUser(res, userData);
   }
 

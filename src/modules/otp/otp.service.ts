@@ -129,7 +129,7 @@ export class OtpService {
       await Promise.all([mailPromise, otpSavePromise]);
       res.status(HttpStatus.CREATED).json({
         message: 'Check email for the resent OTP',
-        email: otpData.email,
+        user: otpData.email,
       });
     } catch (error) {
       console.error('Error during OTP resend:', error);
