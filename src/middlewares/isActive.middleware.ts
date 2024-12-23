@@ -24,7 +24,7 @@ export class CheckActiveMiddleware implements NestMiddleware {
       return res.status(401).json({ message: 'Unexpected role encountered' });
     }
 
-    let accountData: any;
+    let accountData;
 
     try {
       if (role === 'agency') {
