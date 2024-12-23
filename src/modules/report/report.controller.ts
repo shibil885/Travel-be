@@ -5,13 +5,16 @@ import {
   Get,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Req,
   Res,
+  UseFilters,
 } from '@nestjs/common';
 import { ReportService } from './report.service';
 import { Request, Response } from 'express';
+import { AllExceptionsFilter } from 'src/common/filter/ecception.filter';
 
 @Controller('report')
 export class ReportController {
@@ -79,7 +82,6 @@ export class ReportController {
         targetType,
         commentId,
       );
-      console.log('targetType ==>', result);
       if (result.length) {
         return res.status(HttpStatus.OK).json({
           success: true,
@@ -102,5 +104,41 @@ export class ReportController {
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ success: true, message: error.message, reportData: [] });
     }
+  }
+
+  @Post('addReview/:id')
+  @UseFilters(AllExceptionsFilter)
+  async addReview(
+    @Res() res: Response,
+    @Param('id') reportId: string,
+    @Body('review') review: string,
+  ) {
+    const result = await this._reportService.addReview(reportId, review);
+    if (result.isModified) {
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: 'Review added' });
+    }
+    return res
+      .status(HttpStatus.OK)
+      .json({ success: true, message: 'Cant update review' });
+  }
+
+  @Patch('changestatus/:id')
+  @UseFilters(AllExceptionsFilter)
+  async changesStatus(
+    @Res() res: Response,
+    @Param('id') reportId: string,
+    @Body('status') status: string,
+  ) {
+    const result = await this._reportService.changeStatus(reportId, status);
+    if (result) {
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: 'Status updated' });
+    }
+    return res
+      .status(HttpStatus.OK)
+      .json({ success: true, message: 'Status not updated' });
   }
 }

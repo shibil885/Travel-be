@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Report } from './schema/report.schema';
 import { Model, Types } from 'mongoose';
+import { statSync } from 'fs';
 
 @Injectable()
 export class ReportService {
@@ -94,7 +95,6 @@ export class ReportService {
 
   async getOneReport(reportId: string, targetType: string, commentId = '') {
     if (targetType === 'Post') {
-      console.log('from post if');
       return this._handleFetchOfSingleReport(reportId, 'posts');
     } else if (targetType === 'Package') {
       return this._handleFetchOfSingleReport(reportId, 'packages');
@@ -105,5 +105,23 @@ export class ReportService {
     } else {
       throw new BadRequestException('Unidentified target type');
     }
+  }
+
+  async addReview(reportId: string, review: string) {
+    if (!review) throw new BadRequestException('Review not provided');
+    const result = await this._ReportModel.findByIdAndUpdate(
+      new Types.ObjectId(reportId),
+      { reviewComment: review },
+    );
+    return result;
+  }
+
+  async changeStatus(reportId: string, status: string) {
+    if (!statSync) throw new BadRequestException('status not provided');
+    const result = await this._ReportModel.findByIdAndUpdate(
+      new Types.ObjectId(reportId),
+      { status: status },
+    );
+    return result;
   }
 }
