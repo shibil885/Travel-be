@@ -35,6 +35,7 @@ export class UserService {
     try {
       const isExisting = await this.userModel.findOne({
         email: email,
+        isVerified: true,
       });
       if (isExisting) {
         return res.status(HttpStatus.OK).json({ isExisting: true });

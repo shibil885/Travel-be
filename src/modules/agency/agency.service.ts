@@ -40,6 +40,7 @@ export class AgencyService {
     try {
       const isExisting = await this._AgencyModel.findOne({
         email: email,
+        isVerified: true,
       });
       if (isExisting) {
         return res.status(HttpStatus.OK).json({ isExisting: true });
@@ -56,6 +57,7 @@ export class AgencyService {
     try {
       const isExisting = await this._AgencyModel.findOne({
         name: name,
+        isVerified: true,
       });
       if (isExisting) {
         return res.status(HttpStatus.OK).json({ isExisting: true });
