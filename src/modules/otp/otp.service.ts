@@ -21,10 +21,9 @@ export class OtpService {
 
   async userOtpSubmission(otpdata) {
     try {
-      console.log('otp data', otpdata);
       const isMatched = await this.OtpModel.findOne({
         email: otpdata.email,
-        otp: otpdata.otp,
+        otp: parseInt(otpdata.otp),
       });
       if (!isMatched) {
         return {
