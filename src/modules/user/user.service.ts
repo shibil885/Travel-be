@@ -50,7 +50,7 @@ export class UserService {
   async createUser(res: Response, userData: CreateUserDto) {
     try {
       const existingUser = await this.userModel
-        .findOne({ email: userData.email, isVerified: true })
+        .findOne({ email: userData.email })
         .exec();
       if (existingUser) {
         return res.status(HttpStatus.CONFLICT).json({
