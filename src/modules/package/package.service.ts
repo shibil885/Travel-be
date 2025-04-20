@@ -168,9 +168,9 @@ export class PackageService {
           as: 'ratingAndReview',
         },
       },
-      {
-        $unwind: { path: '$ratingAndReview', preserveNullAndEmptyArrays: true },
-      },
+      // {
+      //   $unwind: { path: '$ratingAndReview', preserveNullAndEmptyArrays: true },
+      // },
     ]);
     return offerPackages;
   }

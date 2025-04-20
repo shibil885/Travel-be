@@ -18,6 +18,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class AgencyController {
   constructor(private _agencyService: AgencyService) {}
 
+  @Get()
+  @UseInterceptors()
+  getAllAgencies() {
+    return this._agencyService.getAllAgencies();
+  }
+
   @Post('signup')
   @UseInterceptors(FileInterceptor('document'))
   signup(

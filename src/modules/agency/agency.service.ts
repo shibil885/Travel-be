@@ -20,6 +20,22 @@ export class AgencyService {
     @InjectModel(Otp.name) private _OtpModel: Model<Otp>,
   ) {}
 
+  async getAllAgencies() {
+    return this._AgencyModel.aggregate([
+      {
+        $match: { isVerified: true, isConfirmed: true, isActive: true },
+      },
+      {
+        $lookup: {
+          from: 'reviewforagencies',
+          localField: '_id',
+          foreignField: 'agencyId',
+          as: 'ratings',
+        },
+      },
+    ]);
+  }
+
   async findEmail(res: Response, email: string) {
     try {
       const isExisting = await this._AgencyModel.findOne({
