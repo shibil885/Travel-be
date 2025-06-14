@@ -1,7 +1,7 @@
 
 ---
 
-## 📄 `travel-be` (Backend – NestJS) `README.md`
+## 📄 `travel` (Backend – NestJS) `README.md`
 
 ```markdown
 # 🚀 Travel Package Management System – Backend
