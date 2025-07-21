@@ -38,11 +38,12 @@ git clone https://github.com/shibil885/Travel-be.git
 cd Travel-be
 npm install
 npm run start:dev
-
+```
 ⚠️ Requires .env file with Razorpay key, DB connection, JWT secrets
-
+```env
 MONGODB_URI=your_mongo_uri
 JWT_ACCESS_SECRET=your_access_token_secret
 JWT_REFRESH_SECRET=your_refresh_token_secret
 RAZORPAY_KEY_ID=your_key_id
 RAZORPAY_KEY_SECRET=your_key_secret
+```
