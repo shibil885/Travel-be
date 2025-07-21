@@ -42,7 +42,6 @@ export class BookingService {
     const today = Date.now();
     const bookedDate = createdAt.getTime();
     const diffInHours = (today - bookedDate) / (1000 * 60 * 60);
-    console.log('hours --->', diffInHours);
     if (diffInHours <= 24) {
       return Number(price);
     } else if (diffInHours >= 72 && diffInHours <= 168) {
@@ -271,8 +270,7 @@ export class BookingService {
         page,
       };
     } catch (error) {
-      console.log('Error occured while fetch booking', error);
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -367,8 +365,6 @@ export class BookingService {
   }
 
   async getAllBookingsForAgency(agencyId: string, page: number, limit: number) {
-    console.log('limit', limit);
-    console.log('page', page);
     const skip = (page - 1) * limit;
     const [bookings, bookingCount] = await Promise.all([
       this._BookingModel

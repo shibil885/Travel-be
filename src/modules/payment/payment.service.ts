@@ -56,20 +56,16 @@ export class PaymentService {
         amount = amount - selectedCoupon.discount_value;
       } else if (selectedCoupon.discount_type == DiscountType.PERCENTAGE) {
         const discount = amount * (selectedCoupon.percentage / 100);
-        console.log('dicount', discount);
-        console.log('max', selectedCoupon.maxAmt);
         if (discount > selectedCoupon.maxAmt) {
           amount = amount - selectedCoupon.maxAmt;
         } else {
           amount = amount - discount;
         }
-        console.log('last amt', amount);
       }
     }
     if (amount <= 50) {
       amount = 50;
     }
-    console.log('final amout to pay', amount);
     const options = {
       amount: amount ? amount * 100 : 50 * 100,
       currency,
@@ -77,8 +73,7 @@ export class PaymentService {
     };
     try {
       const order = await this.razorpay.orders.create(options);
-      console.log('payment created--->', order);
-      return order;
+      return { ...order, key_id: process.env.RAZORPAY_KEY_SECRET };
     } catch (error) {
       console.log('Error occured while creating order', error);
       throw new Error(`Error creating order: ${error.message}`);
