@@ -18,7 +18,7 @@ import { Response } from 'express';
 import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
 import { ErrorMessages } from 'src/common/enum/error.enum';
 import { SocketGateway } from '../socket/gateway/socket.gateway';
-import { AllExceptionsFilter } from 'src/common/filter/ecception.filter';
+import { AllExceptionsFilter } from 'src/common/filters/ecception.filter';
 import { TravelStatus } from 'src/common/enum/travelStatus.enum';
 
 @Controller('booking')

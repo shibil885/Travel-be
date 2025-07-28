@@ -1,4 +1,4 @@
-import { Model, Document } from 'mongoose';
+import { Document, Model } from 'mongoose';
 
 export class BaseRepository<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
@@ -9,6 +9,10 @@ export class BaseRepository<T extends Document> {
 
   async findById(id: string): Promise<T | null> {
     return this.model.findById(id).exec();
+  }
+
+  async findOne(filter: Partial<Record<keyof T, any>>): Promise<T | null> {
+    return this.model.findOne(filter).exec();
   }
 
   async create(data: Partial<T>): Promise<T> {

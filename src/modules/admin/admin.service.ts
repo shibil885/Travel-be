@@ -1,24 +1,24 @@
 import {
+  HttpException,
   HttpStatus,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Admin } from './schema/admin.schema';
 import { Model } from 'mongoose';
 import { Agency } from '../agency/schema/agency.schema';
 import { Response } from 'express';
 import { User } from '../user/schemas/user.schema';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
-import { Package } from '../package/schema/package.schema';
+import { AdminRepository } from './repositories/admin.repository';
 
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectModel(Admin.name) private _AdminModel: Model<Admin>,
     @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
     @InjectModel(User.name) private _UserModel: Model<User>,
-    @InjectModel(Package.name) private _PackageModel: Model<Package>,
+    private readonly _adminRepository: AdminRepository,
   ) {}
 
   async findAllAgencies(page: number, pageSize: number) {
@@ -53,23 +53,31 @@ export class AdminService {
   }
 
   async findOne(email: string, password: string) {
-    const admin = await this._AdminModel.findOne({
-      email: email,
-      password: password,
-    });
-    return admin ? admin : null;
+    try {
+      const admin = await this._adminRepository.findOne({ email, password });
+
+      if (!admin) {
+        throw new NotFoundException('Admin not found');
+      }
+
+      return admin;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Database error');
+    }
   }
 
   async findAdmin(email: string) {
     try {
-      const admin = await this._AdminModel.findOne({ email: email });
-      if (!admin) return null;
+      const admin = await this._adminRepository.findOne({ email: email });
+      if (!admin) throw new NotFoundException('Admin not found');
       return admin;
     } catch (error) {
-      console.log('Error occured while fetching Admin:', error);
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException();
     }
   }
+
   async changeAgencyStatus(id: string, res: Response, action: string) {
     try {
       const agency = await this._AgencyModel.findById(id);

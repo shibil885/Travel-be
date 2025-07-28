@@ -179,29 +179,23 @@ export class AuthController {
 
   @Post('admin')
   async adminSignIn(@Res() res: Response, @Body() adminData: AdminDto) {
-    try {
-      const response = await this._authService.adminSignIn(adminData);
-      res.cookie('access_token', response.token, {
-        httpOnly: true,
-        sameSite: 'strict',
-      });
-      res.cookie('refresh_token', response.refreshToken, {
-        httpOnly: true,
-        sameSite: 'strict',
-      });
-      return res.status(HttpStatus.OK).json({
-        admin: response.admin,
-        access_token: response.token,
-        message: response.message,
-        success: response.success,
-      });
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        return res
-          .status(HttpStatus.UNAUTHORIZED)
-          .json({ message: 'Invalid email or password' });
-      }
-    }
+    console.log('log - 1');
+    const response = await this._authService.adminSignIn(adminData);
+    console.log('log - 2');
+    res.cookie('access_token', response.token, {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+    res.cookie('refresh_token', response.refreshToken, {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+    return res.status(HttpStatus.OK).json({
+      admin: response.admin,
+      access_token: response.token,
+      message: response.message,
+      success: response.success,
+    });
   }
 
   @Patch('resetLink')

@@ -187,18 +187,17 @@ export class AuthService {
       message: '',
     };
   }
+
   async adminSignIn(adminData: AdminDto) {
     const admin = await this._adminService.findOne(
       adminData.email,
       adminData.password,
     );
-    if (!admin) {
-      throw new UnauthorizedException();
-    }
+
     const payload = {
-      sub: admin.id,
+      sub: admin._id,
       email: admin.email,
-      role: 'admin',
+      role: Role.ADMIN,
     };
     const tokens = await this.generateTokens(payload);
     return {

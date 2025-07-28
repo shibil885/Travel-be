@@ -7,6 +7,7 @@ import { User, UserSchema } from '../user/schemas/user.schema';
 import { Agency, AgencySchema } from '../agency/schema/agency.schema';
 import { PackageModule } from '../package/package.module';
 import { Package, PackageSchema } from '../package/schema/package.schema';
+import { AdminRepository } from './repositories/admin.repository';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { Package, PackageSchema } from '../package/schema/package.schema';
     PackageModule,
   ],
   controllers: [AdminController],
-  providers: [AdminService],
+  providers: [AdminService, AdminRepository],
   exports: [AdminService],
 })
 export class AdminModule {}
