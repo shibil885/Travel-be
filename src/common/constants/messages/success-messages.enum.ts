@@ -18,6 +18,8 @@ export enum UserSuccessMessages {
   USER_LIST_FETCHED = 'User list fetched successfully',
   USER_STATUS_UPDATED = 'User status updated successfully',
   USER_PROFILE_PICTURE_UPDATED = 'Profile picture updated successfully',
+  USER_ACTIVATED = 'User activated successfully',
+  USER_DEACTIVATED = 'USER deactivated successfully',
 }
 
 export enum AgencySuccessMessages {

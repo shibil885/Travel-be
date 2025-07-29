@@ -46,19 +46,14 @@ export class AdminController {
     @Res() res: Response,
     @Body() action: UpdateUserStatusDto,
   ) {
-    const { isActive } = await this._adminService.updateAgencyStatus(
+    const { isActive, message } = await this._adminService.updateAgencyStatus(
       agencyId,
       action.status,
     );
 
-    CreateResponse.success(
-      res,
-      { isActive },
-      AgencySuccessMessages.AGENCY_ACTIVATED,
-    );
+    CreateResponse.success(res, { isActive }, message);
   }
-
-  @Get('users')
+  @Get('user')
   async getAllUsers(
     @Query('page') page: number,
     @Query('limit') limit: number,
@@ -75,10 +70,20 @@ export class AdminController {
     );
   }
 
-  @Patch('changeUserStatus/:id')
-  changeUserStatus(@Param() param, @Res() res: Response, @Body() action) {
-    return this._adminService.changeUserStatus(param.id, res, action.status);
+  @Patch('user/:userId')
+  async changeUserStatus(
+    @Param('userId') userId,
+    @Res() res: Response,
+    @Body() action: UpdateUserStatusDto,
+  ) {
+    const { isActive, message } = await this._adminService.updateUserStatus(
+      userId,
+      action.status,
+    );
+
+    CreateResponse.success(res, { isActive }, message);
   }
+
   @Patch('confirmation/:id')
   confirmation(@Param() param, @Res() res: Response, @Body() action) {
     return this._adminService.confirmation(param.id, res, action.status);

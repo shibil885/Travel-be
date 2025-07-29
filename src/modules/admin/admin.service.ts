@@ -15,8 +15,10 @@ import { AdminRepository } from './repositories/admin.repository';
 import {
   AdminErrorMessages,
   AgencyErrorMessages,
+  AgencySuccessMessages,
   GeneralErrorMessages,
   UserErrorMessages,
+  UserSuccessMessages,
 } from 'src/common/constants/messages';
 
 @Injectable()
@@ -106,49 +108,46 @@ export class AdminService {
   async updateAgencyStatus(agencyId: string, action: string) {
     try {
       const status: boolean = action !== 'block';
-      const updatedAgency = this._adminRepository.updateAgencyById(
+      const updatedAgency = await this._adminRepository.updateAgencyById(
         agencyId,
         status,
       );
-      console.log('status', status);
-
       if (!updatedAgency)
         throw new NotFoundException(AgencyErrorMessages.AGENCY_NOT_FOUND);
-      return updatedAgency;
+      return {
+        isActive: updatedAgency.isActive,
+        message: status
+          ? AgencySuccessMessages.AGENCY_ACTIVATED
+          : AgencySuccessMessages.AGENCY_DEACTIVATED,
+      };
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException();
     }
   }
 
-  async changeUserStatus(id: string, res: Response, action: string) {
+  async updateUserStatus(userId: string, action: string) {
     try {
-      const user = await this._UserModel.findById(id);
-      if (!user) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ message: 'User Not Found', success: false });
-      }
-      if (action !== 'block' && action !== 'unblock') {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json({ success: false, message: 'Invalid Action' });
-      }
-      user.isActive = action === 'unblock';
-      await user.save();
-      return res.status(HttpStatus.OK).json({
-        message: `User successfully ${action}ed`,
-        success: true,
-      });
+      const status: boolean = action !== 'block';
+      const updatedUser = await this._adminRepository.updateUserById(
+        userId,
+        status,
+      );
+
+      if (!updatedUser)
+        throw new NotFoundException(UserErrorMessages.USER_NOT_FOUND);
+      return {
+        isActive: updatedUser.isActive,
+        message: status
+          ? UserSuccessMessages.USER_ACTIVATED
+          : UserSuccessMessages.USER_DEACTIVATED,
+      };
     } catch (error) {
-      console.log('Error while changing user status:', error);
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Internal Server Error',
-        error: error.message,
-      });
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException();
     }
   }
+
   async confirmation(id: string, res: Response, action: string) {
     try {
       const agency = await this._AgencyModel.findById(id);
