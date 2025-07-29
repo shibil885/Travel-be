@@ -19,8 +19,9 @@ export class ChangePasswordDto {
   @IsString()
   @MinLength(8, { message: 'New password must be at least 8 characters long.' })
   @MaxLength(20, { message: 'New password must not exceed 20 characters.' })
-  @Matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]+$/, {
-    message: 'New password must include at least one letter and one number.',
+  @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+    message:
+      'Password must contain at least one letter, one number, and one special character',
   })
   newpassword: string;
 
@@ -30,9 +31,9 @@ export class ChangePasswordDto {
     message: 'Confirm password must be at least 8 characters long.',
   })
   @MaxLength(20, { message: 'Confirm password must not exceed 20 characters.' })
-  @Matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]+$/, {
+  @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
     message:
-      'Confirm password must include at least one letter and one number.',
+      'Password must contain at least one letter, one number, and one special character',
   })
   confirmpassword: string;
 }
