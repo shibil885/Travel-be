@@ -226,34 +226,30 @@ export class AdminService {
     }
   }
 
-  async searchUsers(searchText: string, user: string) {
+  async searchUsers(searchText: string, userType: 'user' | 'agency') {
     try {
-      let searchResult;
-      if (user === 'agency') {
-        searchResult = await this._AgencyModel
-          .find({
-            $or: [
-              { name: { $regex: searchText, $options: 'i' } },
-              { email: { $regex: searchText, $options: 'i' } },
-            ],
-          })
-          .exec();
-      } else if (user === 'user') {
-        searchResult = await this._UserModel
-          .find({
-            $or: [
-              { username: { $regex: searchText, $options: 'i' } },
-              { email: { $regex: searchText, $options: 'i' } },
-            ],
-          })
-          .exec();
-      } else {
-        throw new Error('Invalid user type');
+      const users = await this._adminRepository.searchUsers(
+        userType,
+        searchText,
+      );
+
+      if (!users || users.length === 0) {
+        throw new NotFoundException(
+          userType == 'agency'
+            ? AgencyErrorMessages.AGENCY_NOT_FOUND
+            : UserErrorMessages.USER_NOT_FOUND,
+        );
       }
-      return searchResult;
+      return {
+        users,
+        message:
+          userType == 'user'
+            ? UserSuccessMessages.USER_LIST_FETCHED
+            : AgencySuccessMessages.AGENCY_LIST_FETCHED,
+      };
     } catch (error) {
-      console.error('Error searching users:', error.message);
-      return new Error('Failed to search users. Please try again later.');
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Failed to search users');
     }
   }
 }

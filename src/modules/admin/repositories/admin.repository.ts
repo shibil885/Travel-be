@@ -75,4 +75,30 @@ export class AdminRepository extends BaseRepository<AdminDocument> {
       return this._agencyRepository.findAll(filter, { password: 0 });
     }
   }
+
+  searchUsers(userType: 'user' | 'agency', searchText: string) {
+    const regexQuery = {
+      $regex: searchText,
+      $options: 'i',
+    };
+
+    if (userType === 'agency') {
+      return this._agencyRepository.findAll(
+        {
+          $or: [{ name: regexQuery }, { email: regexQuery }],
+        },
+        { password: 0 },
+      );
+    }
+
+    if (userType === 'user') {
+      return this._userRepository.findAll(
+        {
+          $or: [{ username: regexQuery }, { email: regexQuery }],
+        },
+        { password: 0 },
+      );
+    }
+    throw new Error('Invalid user type');
+  }
 }

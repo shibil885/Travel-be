@@ -114,8 +114,12 @@ export class AdminController {
   }
 
   @Post('searchUsers')
-  async searchUsers(@Query() searchText, @Body() user) {
-    return this._adminService.searchUsers(searchText.searchText, user.user);
+  async searchUsers(@Query() searchText, @Res() res: Response, @Body() user) {
+    const { message, users } = await this._adminService.searchUsers(
+      searchText.searchText,
+      user.user,
+    );
+    CreateResponse.success(res, { users }, message);
   }
   @Patch('logout')
   async agencyLogout(@Req() req: Request, @Res() res: Response) {
