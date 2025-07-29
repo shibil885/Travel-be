@@ -49,4 +49,11 @@ export class AdminRepository extends BaseRepository<AdminDocument> {
   countVerifiedUsers() {
     return this._userRepository.countDocument({ isVerified: true });
   }
+
+  updateAgencyById(
+    agencyId: string,
+    action: boolean,
+  ): Promise<AgencyDocument | null> {
+    return this._agencyRepository.update(agencyId, { isActive: action });
+  }
 }

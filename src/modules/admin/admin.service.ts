@@ -103,32 +103,21 @@ export class AdminService {
     }
   }
 
-  async changeAgencyStatus(id: string, res: Response, action: string) {
+  async updateAgencyStatus(agencyId: string, action: string) {
     try {
-      const agency = await this._AgencyModel.findById(id);
-      if (!agency) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ message: 'Agency Not Found', success: false });
-      }
-      if (action !== 'block' && action !== 'unblock') {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json({ success: false, message: 'Invalid Action' });
-      }
-      agency.isActive = action === 'unblock';
-      await agency.save();
-      return res.status(HttpStatus.OK).json({
-        message: `User successfully ${action}ed`,
-        success: true,
-      });
+      const status: boolean = action !== 'block';
+      const updatedAgency = this._adminRepository.updateAgencyById(
+        agencyId,
+        status,
+      );
+      console.log('status', status);
+
+      if (!updatedAgency)
+        throw new NotFoundException(AgencyErrorMessages.AGENCY_NOT_FOUND);
+      return updatedAgency;
     } catch (error) {
-      console.log('Error while changing agency status:', error);
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Internal Server Error',
-        error: error.message,
-      });
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException();
     }
   }
 

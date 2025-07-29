@@ -18,11 +18,12 @@ import {
   AgencySuccessMessages,
   UserSuccessMessages,
 } from 'src/common/constants/messages';
+import { UpdateUserStatusDto } from 'src/common/dtos/updateUserStaus.dto';
 @Controller('admin')
 export class AdminController {
   constructor(private _adminService: AdminService) {}
 
-  @Get('agencies')
+  @Get('agency')
   async getAllAgencies(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 5,
@@ -36,6 +37,24 @@ export class AdminController {
       { agencies, totalAgencies, currentPage },
       AgencySuccessMessages.AGENCY_LIST_FETCHED,
       HttpStatus.OK,
+    );
+  }
+
+  @Patch('agency/:agencyId')
+  async changeAgencyStatus(
+    @Param('agencyId') agencyId,
+    @Res() res: Response,
+    @Body() action: UpdateUserStatusDto,
+  ) {
+    const { isActive } = await this._adminService.updateAgencyStatus(
+      agencyId,
+      action.status,
+    );
+
+    CreateResponse.success(
+      res,
+      { isActive },
+      AgencySuccessMessages.AGENCY_ACTIVATED,
     );
   }
 
@@ -54,12 +73,6 @@ export class AdminController {
       UserSuccessMessages.USER_LIST_FETCHED,
       HttpStatus.OK,
     );
-  }
-
-  @Patch('changeAgencyStatus/:id')
-  changeAgencyStatus(@Param() param, @Res() res: Response, @Body() action) {
-    console.log('param', param);
-    return this._adminService.changeAgencyStatus(param.id, res, action.status);
   }
 
   @Patch('changeUserStatus/:id')
