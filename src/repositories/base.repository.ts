@@ -3,8 +3,11 @@ import { Document, FilterQuery, Model, ProjectionType } from 'mongoose';
 export class BaseRepository<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
 
-  async findAll(): Promise<T[]> {
-    return this.model.find().exec();
+  async findAll(
+    filter?: FilterQuery<T>,
+    projection?: ProjectionType<T>,
+  ): Promise<T[]> {
+    return this.model.find(filter, projection).exec();
   }
 
   async findById(id: string): Promise<T | null> {

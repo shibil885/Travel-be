@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   Injectable,
   InternalServerErrorException,
@@ -169,35 +170,59 @@ export class AdminService {
     }
   }
 
-  async getFilteredData(filterData: FilterDataDto, user: string) {
-    const { isActive, isVerified, isConfirmed } = filterData;
-    let query: { isActive: boolean; isVerified: boolean; isConfirmed: boolean };
-
-    if (isActive !== undefined) {
-      query.isActive = isActive;
-    }
-
-    if (isVerified !== undefined) {
-      query.isVerified = isVerified;
-    }
-
-    if (user === 'agency' && isConfirmed !== undefined) {
-      query.isConfirmed = isConfirmed;
-    }
-    let filteredData;
+  async getFilteredData(filterData: FilterDataDto, user: 'user' | 'agency') {
     try {
-      if (user === 'agency') {
-        filteredData = await this._AgencyModel.find(query).exec();
-      } else if (user === 'user') {
-        filteredData = await this._UserModel.find(query).exec();
-      } else {
-        throw new Error('Invalid user type provided.');
+      if (user !== 'user' && user !== 'agency') {
+        throw new BadRequestException(
+          'Type USER must be either "agency" or "user"',
+        );
       }
 
-      return filteredData;
+      const { isActive, isVerified, isConfirmed } = filterData;
+
+      const query: {
+        isActive?: boolean;
+        isVerified?: boolean;
+        isConfirmed?: boolean;
+      } = {};
+
+      if (isActive !== undefined) {
+        query.isActive = isActive;
+      }
+
+      if (isVerified !== undefined) {
+        query.isVerified = isVerified;
+      }
+
+      if (user === 'agency' && isConfirmed !== undefined) {
+        query.isConfirmed = isConfirmed;
+      }
+
+      const filteredData = await this._adminRepository.findWIthFilter(
+        user,
+        query,
+      );
+
+      if (!filteredData || filteredData.length === 0) {
+        throw new NotFoundException(
+          user === 'agency'
+            ? AgencyErrorMessages.AGENCY_NOT_FOUND
+            : UserErrorMessages.USER_NOT_FOUND,
+        );
+      }
+
+      return {
+        filteredData,
+        message:
+          user === 'agency'
+            ? AgencySuccessMessages.AGENCY_LIST_FETCHED
+            : UserSuccessMessages.USER_LIST_FETCHED,
+      };
     } catch (error) {
-      console.error('Error fetching filtered data:', error.message);
-      return new Error('Failed to retrieve filtered data');
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        'Failed to retrieve filtered data',
+      );
     }
   }
 

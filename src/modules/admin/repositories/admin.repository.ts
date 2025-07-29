@@ -67,4 +67,12 @@ export class AdminRepository extends BaseRepository<AdminDocument> {
   confirmAgency(agencyId: string, action: boolean) {
     return this._agencyRepository.update(agencyId, { isConfirmed: action });
   }
+
+  findWIthFilter(user: 'agency' | 'user', filter) {
+    if (user == 'user') {
+      return this._userRepository.findAll(filter, { password: 0 });
+    } else {
+      return this._agencyRepository.findAll(filter, { password: 0 });
+    }
+  }
 }

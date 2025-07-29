@@ -101,9 +101,18 @@ export class AdminController {
   }
 
   @Post('filter')
-  async getFilteredData(@Query() filterData: FilterDataDto, @Body() user) {
-    return this._adminService.getFilteredData(filterData, user.user);
+  async getFilteredData(
+    @Query() filterData: FilterDataDto,
+    @Res() res: Response,
+    @Body('user') user: 'user' | 'agency',
+  ) {
+    const { filteredData, message } = await this._adminService.getFilteredData(
+      filterData,
+      user,
+    );
+    CreateResponse.success(res, { filteredData }, message);
   }
+
   @Post('searchUsers')
   async searchUsers(@Query() searchText, @Body() user) {
     return this._adminService.searchUsers(searchText.searchText, user.user);
