@@ -1,6 +1,6 @@
 import { IsIn } from 'class-validator';
 
-export class UpdateUserStatusDto {
+export class UpdateStatusDto {
   @IsIn(['block', 'unblock'], {
     message: 'Status must be either "block" or "unblock"',
   })

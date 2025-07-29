@@ -63,4 +63,8 @@ export class AdminRepository extends BaseRepository<AdminDocument> {
   ): Promise<UserDocument | null> {
     return this._userRepository.update(userId, { isActive: action });
   }
+
+  confirmAgency(agencyId: string, action: boolean) {
+    return this._agencyRepository.update(agencyId, { isConfirmed: action });
+  }
 }

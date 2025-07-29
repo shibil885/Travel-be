@@ -1,6 +1,5 @@
 import {
   HttpException,
-  HttpStatus,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -8,7 +7,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Agency } from '../agency/schema/agency.schema';
-import { Response } from 'express';
 import { User } from '../user/schemas/user.schema';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
 import { AdminRepository } from './repositories/admin.repository';
@@ -148,34 +146,29 @@ export class AdminService {
     }
   }
 
-  async confirmation(id: string, res: Response, action: string) {
+  async updateConfirmationOfAgency(agencyId: string, action: string) {
     try {
-      const agency = await this._AgencyModel.findById(id);
-      if (!agency) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ message: 'Agency Not Found', success: false });
-      }
-      if (action !== 'declin' && action !== 'confirm') {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json({ success: false, message: 'Invalid Action' });
-      }
-      agency.isConfirmed = action === 'confirm';
-      await agency.save();
-      return res.status(HttpStatus.OK).json({
-        message: `Agency successfully ${action}ed`,
-        success: true,
-      });
+      const confirmation = action == 'confirm';
+      const updatedAgency = await this._adminRepository.confirmAgency(
+        agencyId,
+        confirmation,
+      );
+
+      if (!updatedAgency)
+        throw new NotFoundException(AgencyErrorMessages.AGENCY_NOT_FOUND);
+      return {
+        isConfirmed: updatedAgency.isConfirmed,
+        message:
+          action == 'confirm'
+            ? AgencySuccessMessages.AGENCY_APPROVED
+            : AgencySuccessMessages.AGENCY_REJECTED,
+      };
     } catch (error) {
-      console.log('Error while changing Agency status:', error);
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Internal Server Error',
-        error: error.message,
-      });
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException();
     }
   }
+
   async getFilteredData(filterData: FilterDataDto, user: string) {
     const { isActive, isVerified, isConfirmed } = filterData;
     let query: { isActive: boolean; isVerified: boolean; isConfirmed: boolean };
