@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Agency, AgencySchema } from './schema/agency.schema';
 import { Otp, OtpSchema } from '../otp/schema/otp.schema';
 import { MulterModule } from '@nestjs/platform-express';
+import { AgencyRepository } from './repositories/agency.repository';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { MulterModule } from '@nestjs/platform-express';
     }),
   ],
   controllers: [AgencyController],
-  providers: [AgencyService],
+  providers: [AgencyService, AgencyRepository],
   exports: [AgencyService],
 })
 export class AgencyModule {}

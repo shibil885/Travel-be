@@ -12,28 +12,31 @@ import { Response } from 'express';
 import * as bcrypt from 'bcryptjs';
 import { mailsenderFunc } from 'src/utils/mailSender.util';
 import { Otp } from '../otp/schema/otp.schema';
+import { AgencyRepository } from './repositories/agency.repository';
 
 @Injectable()
 export class AgencyService {
   constructor(
     @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
     @InjectModel(Otp.name) private _OtpModel: Model<Otp>,
+    private readonly _agencyRepository: AgencyRepository,
   ) {}
 
   async getAllAgencies() {
-    return this._AgencyModel.aggregate([
-      {
-        $match: { isVerified: true, isConfirmed: true, isActive: true },
-      },
-      {
-        $lookup: {
-          from: 'reviewforagencies',
-          localField: '_id',
-          foreignField: 'agencyId',
-          as: 'ratings',
-        },
-      },
-    ]);
+    // const agenciees = await this._agencyRepository.findAll()
+    // return this._AgencyModel.aggregate([
+    //   {
+    //     $match: { isVerified: true, isConfirmed: true, isActive: true },
+    //   },
+    //   {
+    //     $lookup: {
+    //       from: 'reviewforagencies',
+    //       localField: '_id',
+    //       foreignField: 'agencyId',
+    //       as: 'ratings',
+    //     },
+    //   },
+    // ]);
   }
 
   async findEmail(res: Response, email: string) {

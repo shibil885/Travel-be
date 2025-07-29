@@ -20,7 +20,11 @@ import { AdminRepository } from './repositories/admin.repository';
     PackageModule,
   ],
   controllers: [AdminController],
-  providers: [AdminService, AdminRepository],
+  providers: [
+    { provide: 'IAdminRepository', useClass: AdminRepository },
+    AdminService,
+    AdminRepository,
+  ],
   exports: [AdminService],
 })
 export class AdminModule {}

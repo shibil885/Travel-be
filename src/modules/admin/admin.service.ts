@@ -1,12 +1,12 @@
 import {
   BadRequestException,
   HttpException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
-import { AdminRepository } from './repositories/admin.repository';
 import {
   AdminErrorMessages,
   AgencyErrorMessages,
@@ -15,10 +15,14 @@ import {
   UserErrorMessages,
   UserSuccessMessages,
 } from 'src/common/constants/messages';
+import { IAdminRepository } from 'src/repositories/admin/admin.repository';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly _adminRepository: AdminRepository) {}
+  constructor(
+    @Inject('IAdminRepository')
+    private readonly _adminRepository: IAdminRepository,
+  ) {}
 
   async getPaginatedVerifiedAgencies(page: number, pageSize: number) {
     try {

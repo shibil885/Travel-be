@@ -1,7 +1,9 @@
 import { AgencyDocument } from 'src/modules/agency/schema/agency.schema';
 import { UserDocument } from 'src/modules/user/schemas/user.schema';
+import { IBaseRepository } from '../base/base.interface';
+import { AdminDocument } from 'src/modules/admin/schema/admin.schema';
 
-export interface IAdminRepository {
+export interface IAdminRepository extends IBaseRepository<AdminDocument> {
   findPaginatedVerifiedAgencies(
     limit: number,
     skip: number,

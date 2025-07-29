@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Admin, AdminDocument } from '../schema/admin.schema';
-import { BaseRepository } from 'src/repositories/base.repository';
+import { BaseRepository } from 'src/repositories/base/base.repository';
 import {
   Agency,
   AgencyDocument,
