@@ -6,7 +6,7 @@ import { Model } from 'mongoose';
 import { Coupon } from '../coupon/schema/coupon.schema';
 import * as crypto from 'crypto';
 import { IOffer } from 'src/common/interfaces/offer.interface';
-import { DiscountType } from 'src/common/enum/discountType.enum';
+import { DiscountType } from 'src/common/constants/enum/discountType.enum';
 @Injectable()
 export class PaymentService {
   private razorpay: Razorpay;

@@ -9,7 +9,7 @@ import { Post } from './schema/post.schema';
 import { Model, Types } from 'mongoose';
 import { UploadPostDto } from 'src/common/dtos/uploadPost.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-import { LikeType } from 'src/common/enum/likeType.enum';
+import { LikeType } from 'src/common/constants/enum/likeType.enum';
 import sharp from 'sharp';
 
 @Injectable()

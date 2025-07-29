@@ -1,6 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { OfferType } from 'src/common/enum/offerType.enum';
+import { OfferType } from 'src/common/constants/enum/offerType.enum';
 
 @Schema({ timestamps: true })
 export class Offer extends Document {

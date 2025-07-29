@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Transaction, Wallet } from './schema/wallet.schema';
 import { Model, Types } from 'mongoose';
-import { ErrorMessages } from 'src/common/enum/error.enum';
+import { ErrorMessages } from 'src/common/constants/enum/error.enum';
 
 @Injectable()
 export class WalletService {

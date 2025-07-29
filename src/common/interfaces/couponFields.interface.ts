@@ -1,4 +1,4 @@
-import { DiscountType } from '../enum/discountType.enum';
+import { DiscountType } from '../constants/enum/discountType.enum';
 
 export interface CouponFields {
   code: string;

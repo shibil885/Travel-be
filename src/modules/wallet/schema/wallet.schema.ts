@@ -1,6 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { TransactionType } from 'src/common/enum/transactionType.enum';
+import { TransactionType } from 'src/common/constants/enum/transactionType.enum';
 
 @Schema({ timestamps: true })
 export class Transaction {

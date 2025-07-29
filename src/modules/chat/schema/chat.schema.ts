@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { MessageSenderType } from 'src/common/enum/messageSenderType.enum';
+import { MessageSenderType } from 'src/common/constants/enum/messageSenderType.enum';
 
 @Schema({ timestamps: true })
 export class Message extends Document {

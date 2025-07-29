@@ -12,7 +12,7 @@ import {
 import { NotificationService } from './notification.service';
 import { Notification } from './schema/notification.schema';
 import { Request, Response } from 'express';
-import { Role } from 'src/common/enum/role.enum';
+import { Role } from 'src/common/constants/enum/role.enum';
 
 @Controller('notification')
 export class NotificationController {

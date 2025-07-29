@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { AgencyFilter } from 'src/common/enum/agency-filter.enum';
-import { PackageFilter } from 'src/common/enum/package-filter.enum';
-import { TravelStatus } from 'src/common/enum/travelStatus.enum';
+import { AgencyFilter } from 'src/common/constants/enum/agency-filter.enum';
+import { PackageFilter } from 'src/common/constants/enum/package-filter.enum';
+import { TravelStatus } from 'src/common/constants/enum/travelStatus.enum';
 import { Agency } from 'src/modules/agency/schema/agency.schema';
 import { Booking } from 'src/modules/booking/schema/booking.schema';
 import { Package } from 'src/modules/package/schema/package.schema';

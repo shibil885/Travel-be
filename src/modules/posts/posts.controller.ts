@@ -17,7 +17,7 @@ import { PostsService } from './posts.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadPostDto } from 'src/common/dtos/uploadPost.dto';
 import { Request, Response } from 'express';
-import { LikeType } from 'src/common/enum/likeType.enum';
+import { LikeType } from 'src/common/constants/enum/likeType.enum';
 
 @Controller('posts')
 export class PostsController {

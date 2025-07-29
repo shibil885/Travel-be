@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { DiscountType } from 'src/common/enum/discountType.enum';
+import { DiscountType } from 'src/common/constants/enum/discountType.enum';
 
 export interface IOffer {
   title: string;

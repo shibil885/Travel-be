@@ -8,7 +8,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
-import { Role } from 'src/common/enum/role.enum';
+import { Role } from 'src/common/constants/enum/role.enum';
 import { Message } from 'src/modules/chat/schema/chat.schema';
 import { JwtService } from '@nestjs/jwt';
 

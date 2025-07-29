@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
-import { TravelStatus } from 'src/common/enum/travelStatus.enum';
+import { TravelConfirmationStatus } from 'src/common/constants/enum/travelConfirmation.enum';
+import { TravelStatus } from 'src/common/constants/enum/travelStatus.enum';
 import { Booking } from 'src/modules/booking/schema/booking.schema';
 import { Category } from 'src/modules/category/schema/category.schema';
 import { Package } from 'src/modules/package/schema/package.schema';

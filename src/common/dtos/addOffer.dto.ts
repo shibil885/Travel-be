@@ -6,8 +6,8 @@ import {
   IsNotEmpty,
   IsOptional,
 } from 'class-validator';
-import { OfferType } from 'src/common/enum/offerType.enum';
-import { DiscountType } from '../enum/discountType.enum';
+import { OfferType } from 'src/common/constants/enum/offerType.enum';
+import { DiscountType } from '../constants/enum/discountType.enum';
 
 export class AddOfferDto {
   @IsString()

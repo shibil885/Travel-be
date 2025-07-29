@@ -5,7 +5,7 @@ import {
   IsNumber,
   IsOptional,
 } from 'class-validator';
-import { OfferType } from 'src/common/enum/offerType.enum';
+import { OfferType } from 'src/common/constants/enum/offerType.enum';
 
 export class EditOfferDto {
   @IsString()

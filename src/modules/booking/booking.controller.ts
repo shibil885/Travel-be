@@ -15,11 +15,11 @@ import {
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { Response } from 'express';
-import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
-import { ErrorMessages } from 'src/common/enum/error.enum';
+import { TravelConfirmationStatus } from 'src/common/constants/enum/travelConfirmation.enum';
+import { ErrorMessages } from 'src/common/constants/enum/error.enum';
 import { SocketGateway } from '../socket/gateway/socket.gateway';
 import { AllExceptionsFilter } from 'src/common/filters/ecception.filter';
-import { TravelStatus } from 'src/common/enum/travelStatus.enum';
+import { TravelStatus } from 'src/common/constants/enum/travelStatus.enum';
 
 @Controller('booking')
 export class BookingController {

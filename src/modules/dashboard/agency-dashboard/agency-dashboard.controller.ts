@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Req, Res } from '@nestjs/common';
 import { AgencyDashboardService } from './agency-dashboard.service';
 import { Request, Response } from 'express';
-import { Role } from 'src/common/enum/role.enum';
+import { Role } from 'src/common/constants/enum/role.enum';
 
 @Controller('agency-dashboard')
 export class AgencyDashboardController {

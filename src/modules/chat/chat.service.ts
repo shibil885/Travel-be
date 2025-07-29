@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Chat, Message } from './schema/chat.schema';
 import { Model, Types } from 'mongoose';
 import { Agency } from '../agency/schema/agency.schema';
-import { MessageSenderType } from 'src/common/enum/messageSenderType.enum';
+import { MessageSenderType } from 'src/common/constants/enum/messageSenderType.enum';
 import { User } from '../user/schemas/user.schema';
 
 @Injectable()

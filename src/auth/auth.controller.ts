@@ -18,8 +18,8 @@ import { LoginUserDto } from 'src/common/dtos/loginUser.dto';
 import { AuthService } from './auth.service';
 import { LoginAgencyDto } from 'src/common/dtos/loginAgency.dto';
 import { AdminDto } from 'src/common/dtos/admin.dto';
-import { ErrorMessages } from 'src/common/enum/error.enum';
-import { Role } from 'src/common/enum/role.enum';
+import { ErrorMessages } from 'src/common/constants/enum/error.enum';
+import { Role } from 'src/common/constants/enum/role.enum';
 
 @Controller('auth')
 export class AuthController {

@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { Request, Response } from 'express';
-import { MessageSenderType } from 'src/common/enum/messageSenderType.enum';
+import { MessageSenderType } from 'src/common/constants/enum/messageSenderType.enum';
 import { SocketGateway } from 'src/modules/socket/gateway/socket.gateway';
 
 @Controller('chat')

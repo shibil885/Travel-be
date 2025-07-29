@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { TravelConfirmationStatus } from 'src/common/enum/travelConfirmation.enum';
-import { TravelStatus } from 'src/common/enum/travelStatus.enum';
+import { TravelConfirmationStatus } from 'src/common/constants/enum/travelConfirmation.enum';
+import { TravelStatus } from 'src/common/constants/enum/travelStatus.enum';
 
 @Schema({ timestamps: true })
 export class Booking extends Document {

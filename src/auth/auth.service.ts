@@ -18,7 +18,7 @@ import { AgencyService } from 'src/modules/agency/agency.service';
 import { AdminDto } from 'src/common/dtos/admin.dto';
 import { AdminService } from 'src/modules/admin/admin.service';
 import { JwtPayload } from 'jsonwebtoken';
-import { Role } from 'src/common/enum/role.enum';
+import { Role } from 'src/common/constants/enum/role.enum';
 @Injectable()
 export class AuthService {
   constructor(

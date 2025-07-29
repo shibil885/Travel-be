@@ -18,7 +18,7 @@ import { Package } from '../package/schema/package.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UpdateUserDto } from 'src/common/dtos/updateUser.dto';
 import { ChangePasswordDto } from 'src/common/dtos/changePassword.dto';
-import { ErrorMessages } from 'src/common/enum/error.enum';
+import { ErrorMessages } from 'src/common/constants/enum/error.enum';
 import sharp from 'sharp';
 
 @Injectable()

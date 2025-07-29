@@ -8,7 +8,7 @@ import { Model, Types } from 'mongoose';
 import { Offer } from './schema/offers.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { AddOfferDto } from 'src/common/dtos/addOffer.dto';
-import { DiscountType } from 'src/common/enum/discountType.enum';
+import { DiscountType } from 'src/common/constants/enum/discountType.enum';
 import { IOffer } from 'src/common/interfaces/offer.interface';
 import { EditOfferDto } from 'src/common/dtos/editOffer.dto';
 import { Package } from '../package/schema/package.schema';

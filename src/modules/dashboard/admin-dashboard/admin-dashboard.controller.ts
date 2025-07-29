@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AdminDashboardService } from './admin-dashboard.service';
-import { AgencyFilter } from 'src/common/enum/agency-filter.enum';
-import { PackageFilter } from 'src/common/enum/package-filter.enum';
+import { AgencyFilter } from 'src/common/constants/enum/agency-filter.enum';
+import { PackageFilter } from 'src/common/constants/enum/package-filter.enum';
 
 @Controller('admin-dashboard')
 export class AdminDashboardController {
