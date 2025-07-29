@@ -8,9 +8,13 @@ import {
 } from 'src/modules/agency/schema/agency.schema';
 import { Model } from 'mongoose';
 import { User, UserDocument } from 'src/modules/user/schemas/user.schema';
+import { IAdminRepository } from 'src/repositories/admin/admin.repository';
 
 @Injectable()
-export class AdminRepository extends BaseRepository<AdminDocument> {
+export class AdminRepository
+  extends BaseRepository<AdminDocument>
+  implements IAdminRepository
+{
   private _agencyRepository: BaseRepository<AgencyDocument>;
   private _userRepository: BaseRepository<UserDocument>;
   constructor(

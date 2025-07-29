@@ -5,10 +5,6 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Agency } from '../agency/schema/agency.schema';
-import { User } from '../user/schemas/user.schema';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
 import { AdminRepository } from './repositories/admin.repository';
 import {
@@ -22,11 +18,7 @@ import {
 
 @Injectable()
 export class AdminService {
-  constructor(
-    @InjectModel(Agency.name) private _AgencyModel: Model<Agency>,
-    @InjectModel(User.name) private _UserModel: Model<User>,
-    private readonly _adminRepository: AdminRepository,
-  ) {}
+  constructor(private readonly _adminRepository: AdminRepository) {}
 
   async getPaginatedVerifiedAgencies(page: number, pageSize: number) {
     try {
