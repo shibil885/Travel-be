@@ -13,6 +13,7 @@ import {
 import { AdminService } from './admin.service';
 import { Request, Response } from 'express';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
+import { CreateResponse } from 'src/common/response/createResponse';
 @Controller('admin')
 export class AdminController {
   constructor(private _adminService: AdminService) {}
@@ -23,29 +24,15 @@ export class AdminController {
     @Query('limit') limit: number = 5,
     @Res() res: Response,
   ) {
-    try {
-      const { agencies, totalAgencies, currentPage } =
-        await this._adminService.findAllAgencies(page, limit);
+    const { agencies, totalAgencies, currentPage } =
+      await this._adminService.findAllAgencies(page, limit);
 
-      if (!agencies.length) {
-        return res.status(HttpStatus.OK).json({
-          message: 'No Agencies',
-          success: false,
-        });
-      }
-      return res.status(HttpStatus.OK).json({
-        message: 'List of Agencies',
-        success: true,
-        agencies,
-        currentPage,
-        totalAgencies,
-      });
-    } catch (error) {
-      console.error('Error while fetching paginated agencies:', error);
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ message: 'Internal Server Error', success: false });
-    }
+    CreateResponse.success(
+      res,
+      { agencies, totalAgencies, currentPage },
+      'List of Agencies',
+      HttpStatus.OK,
+    );
   }
 
   @Get('users')

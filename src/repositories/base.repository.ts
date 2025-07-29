@@ -1,4 +1,4 @@
-import { Document, Model } from 'mongoose';
+import { Document, FilterQuery, Model } from 'mongoose';
 
 export class BaseRepository<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
@@ -11,7 +11,7 @@ export class BaseRepository<T extends Document> {
     return this.model.findById(id).exec();
   }
 
-  async findOne(filter: Partial<Record<keyof T, any>>): Promise<T | null> {
+  async findOne(filter: FilterQuery<T>): Promise<T | null> {
     return this.model.findOne(filter).exec();
   }
 
@@ -25,5 +25,17 @@ export class BaseRepository<T extends Document> {
 
   async delete(id: string): Promise<T | null> {
     return this.model.findByIdAndDelete(id).exec();
+  }
+
+  async countDocument(filter: FilterQuery<T>): Promise<number> {
+    return this.model.countDocuments(filter);
+  }
+
+  async findAllWithPaginationAndFilter(
+    filter: FilterQuery<T>,
+    skip: number,
+    limit: number,
+  ): Promise<T[]> {
+    return this.model.find(filter).skip(skip).limit(limit).exec();
   }
 }

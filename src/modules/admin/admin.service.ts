@@ -22,18 +22,26 @@ export class AdminService {
   ) {}
 
   async findAllAgencies(page: number, pageSize: number) {
-    const skip = (page - 1) * pageSize;
+    try {
+      const skip = (page - 1) * pageSize;
+      const [agencies, totalAgencies] = await Promise.all([
+        this._adminRepository.findAllAgenciesWithpaginationAndFilter(
+          pageSize,
+          skip,
+        ),
+        this._adminRepository.countAllAgenciesWithFilter(),
+      ]);
 
-    const [agencies, totalAgencies] = await Promise.all([
-      this._AgencyModel.find({ isVerified: true }).skip(skip).limit(pageSize),
-      this._AgencyModel.countDocuments({ isVerified: true }),
-    ]);
-
-    return {
-      agencies,
-      totalAgencies: totalAgencies,
-      currentPage: page,
-    };
+      if (!totalAgencies) throw new NotFoundException('No agencies');
+      return {
+        agencies,
+        totalAgencies: totalAgencies,
+        currentPage: page,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException();
+    }
   }
 
   async findAllUsers(page: number, pageSize: number) {
