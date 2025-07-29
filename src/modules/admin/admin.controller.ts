@@ -14,6 +14,10 @@ import { AdminService } from './admin.service';
 import { Request, Response } from 'express';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
 import { CreateResponse } from 'src/common/response/createResponse';
+import {
+  AgencySuccessMessages,
+  UserSuccessMessages,
+} from 'src/common/constants/messages';
 @Controller('admin')
 export class AdminController {
   constructor(private _adminService: AdminService) {}
@@ -25,12 +29,12 @@ export class AdminController {
     @Res() res: Response,
   ) {
     const { agencies, totalAgencies, currentPage } =
-      await this._adminService.findAllAgencies(page, limit);
+      await this._adminService.getPaginatedVerifiedAgencies(page, limit);
 
     CreateResponse.success(
       res,
       { agencies, totalAgencies, currentPage },
-      'List of Agencies',
+      AgencySuccessMessages.AGENCY_LIST_FETCHED,
       HttpStatus.OK,
     );
   }
@@ -41,30 +45,15 @@ export class AdminController {
     @Query('limit') limit: number,
     @Res() res: Response,
   ) {
-    try {
-      const { users, totalUsers, totalPages, currentPage } =
-        await this._adminService.findAllUsers(page, limit);
+    const { users, totalUsers, currentPage } =
+      await this._adminService.getPaginatedVerifiedUsers(page, limit);
 
-      if (!users.length) {
-        return res.status(HttpStatus.OK).json({
-          message: 'No Users',
-          success: false,
-        });
-      }
-      return res.status(HttpStatus.OK).json({
-        message: 'List of Users',
-        success: true,
-        users,
-        totalUsers,
-        currentPage,
-        totalPages,
-      });
-    } catch (error) {
-      console.error('Error while fetching paginated users:', error);
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ message: 'Internal Server Error', success: false });
-    }
+    return CreateResponse.success(
+      res,
+      { users, totalUsers, currentPage },
+      UserSuccessMessages.USER_LIST_FETCHED,
+      HttpStatus.OK,
+    );
   }
 
   @Patch('changeAgencyStatus/:id')

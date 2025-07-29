@@ -18,10 +18,12 @@ export class CreateResponse {
     res: Response,
     message = 'An error occurred',
     status = HttpStatus.INTERNAL_SERVER_ERROR,
+    data: any = {},
   ) {
     return res.status(status).json({
       success: false,
       message,
+      data,
     });
   }
   static info(

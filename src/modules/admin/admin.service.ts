@@ -12,6 +12,12 @@ import { Response } from 'express';
 import { User } from '../user/schemas/user.schema';
 import { FilterDataDto } from 'src/common/dtos/filterData.dto';
 import { AdminRepository } from './repositories/admin.repository';
+import {
+  AdminErrorMessages,
+  AgencyErrorMessages,
+  GeneralErrorMessages,
+  UserErrorMessages,
+} from 'src/common/constants/messages';
 
 @Injectable()
 export class AdminService {
@@ -21,18 +27,16 @@ export class AdminService {
     private readonly _adminRepository: AdminRepository,
   ) {}
 
-  async findAllAgencies(page: number, pageSize: number) {
+  async getPaginatedVerifiedAgencies(page: number, pageSize: number) {
     try {
       const skip = (page - 1) * pageSize;
       const [agencies, totalAgencies] = await Promise.all([
-        this._adminRepository.findAllAgenciesWithpaginationAndFilter(
-          pageSize,
-          skip,
-        ),
-        this._adminRepository.countAllAgenciesWithFilter(),
+        this._adminRepository.findPaginatedVerifiedAgencies(pageSize, skip),
+        this._adminRepository.countVerifiedAgencies(),
       ]);
 
-      if (!totalAgencies) throw new NotFoundException('No agencies');
+      if (!totalAgencies)
+        throw new NotFoundException(AgencyErrorMessages.AGENCY_NOT_FOUND);
       return {
         agencies,
         totalAgencies: totalAgencies,
@@ -44,41 +48,54 @@ export class AdminService {
     }
   }
 
-  async findAllUsers(page: number, pageSize: number) {
-    const skip = (page - 1) * pageSize;
+  async getPaginatedVerifiedUsers(page: number, pageSize: number) {
+    try {
+      const skip = (page - 1) * pageSize;
 
-    const [users, totalUsers] = await Promise.all([
-      this._UserModel.find({ isVerified: true }).skip(skip).limit(pageSize),
-      this._UserModel.countDocuments({ isVerified: true }),
-    ]);
+      const [users, totalUsers] = await Promise.all([
+        this._adminRepository.findPaginatedVerifiedUsers(pageSize, skip),
+        this._adminRepository.countVerifiedUsers(),
+      ]);
 
-    return {
-      users,
-      totalUsers,
-      totalPages: Math.ceil(totalUsers / pageSize),
-      currentPage: page,
-    };
+      if (!totalUsers)
+        throw new NotFoundException(UserErrorMessages.USER_NOT_FOUND);
+
+      return {
+        users,
+        totalUsers,
+        currentPage: page,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException();
+    }
   }
 
-  async findOne(email: string, password: string) {
+  async getAdmin(email: string, password: string) {
     try {
-      const admin = await this._adminRepository.findOne({ email, password });
+      const admin = await this._adminRepository.findOne(
+        { email, password },
+        { password: 0 },
+      );
 
       if (!admin) {
-        throw new NotFoundException('Admin not found');
+        throw new NotFoundException(AdminErrorMessages.ADMIN_NOT_FOUND);
       }
 
       return admin;
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException('Database error');
+      throw new InternalServerErrorException(
+        GeneralErrorMessages.DATABASE_ERROR,
+      );
     }
   }
 
-  async findAdmin(email: string) {
+  async getAdminWithMail(email: string) {
     try {
       const admin = await this._adminRepository.findOne({ email: email });
-      if (!admin) throw new NotFoundException('Admin not found');
+      if (!admin)
+        throw new NotFoundException(AdminErrorMessages.ADMIN_NOT_FOUND);
       return admin;
     } catch (error) {
       if (error instanceof HttpException) throw error;

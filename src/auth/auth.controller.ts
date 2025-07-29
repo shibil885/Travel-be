@@ -20,6 +20,7 @@ import { LoginAgencyDto } from 'src/common/dtos/loginAgency.dto';
 import { AdminDto } from 'src/common/dtos/admin.dto';
 import { ErrorMessages } from 'src/common/constants/enum/error.enum';
 import { Role } from 'src/common/constants/enum/role.enum';
+import { CreateResponse } from 'src/common/response/createResponse';
 
 @Controller('auth')
 export class AuthController {
@@ -179,9 +180,7 @@ export class AuthController {
 
   @Post('admin')
   async adminSignIn(@Res() res: Response, @Body() adminData: AdminDto) {
-    console.log('log - 1');
     const response = await this._authService.adminSignIn(adminData);
-    console.log('log - 2');
     res.cookie('access_token', response.token, {
       httpOnly: true,
       sameSite: 'strict',
@@ -190,12 +189,14 @@ export class AuthController {
       httpOnly: true,
       sameSite: 'strict',
     });
-    return res.status(HttpStatus.OK).json({
-      admin: response.admin,
-      access_token: response.token,
-      message: response.message,
-      success: response.success,
-    });
+    return CreateResponse.success(
+      res,
+      {
+        admin: response.admin,
+        access_token: response.token,
+      },
+      response.message,
+    );
   }
 
   @Patch('resetLink')

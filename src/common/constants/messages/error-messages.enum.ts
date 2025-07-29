@@ -126,5 +126,6 @@ export enum GeneralErrorMessages {
   FEATURE_NOT_AVAILABLE = 'This feature is currently not available',
   DATA_VALIDATION_ERROR = 'Data validation failed',
   DATABASE_CONNECTION_ERROR = 'Database connection error',
+  DATABASE_ERROR = 'Database error',
   THIRD_PARTY_SERVICE_ERROR = 'Third-party service error',
 }

@@ -1,4 +1,4 @@
-import { Document, FilterQuery, Model } from 'mongoose';
+import { Document, FilterQuery, Model, ProjectionType } from 'mongoose';
 
 export class BaseRepository<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
@@ -11,8 +11,11 @@ export class BaseRepository<T extends Document> {
     return this.model.findById(id).exec();
   }
 
-  async findOne(filter: FilterQuery<T>): Promise<T | null> {
-    return this.model.findOne(filter).exec();
+  async findOne(
+    filter: FilterQuery<T>,
+    projection?: ProjectionType<T>,
+  ): Promise<T | null> {
+    return this.model.findOne(filter, projection).exec();
   }
 
   async create(data: Partial<T>): Promise<T> {
@@ -35,7 +38,8 @@ export class BaseRepository<T extends Document> {
     filter: FilterQuery<T>,
     skip: number,
     limit: number,
+    projection?: ProjectionType<T>,
   ): Promise<T[]> {
-    return this.model.find(filter).skip(skip).limit(limit).exec();
+    return this.model.find(filter, projection).skip(skip).limit(limit).exec();
   }
 }

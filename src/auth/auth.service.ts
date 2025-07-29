@@ -19,6 +19,7 @@ import { AdminDto } from 'src/common/dtos/admin.dto';
 import { AdminService } from 'src/modules/admin/admin.service';
 import { JwtPayload } from 'jsonwebtoken';
 import { Role } from 'src/common/constants/enum/role.enum';
+import { AuthSuccessMessages } from 'src/common/constants/messages';
 @Injectable()
 export class AuthService {
   constructor(
@@ -61,7 +62,7 @@ export class AuthService {
           entity = await this._agencyService.findOne(decodedData.email);
           break;
         case Role.ADMIN:
-          entity = await this._adminService.findAdmin(decodedData.email);
+          entity = await this._adminService.getAdminWithMail(decodedData.email);
           break;
         default:
           return { valid: false, role: decodedData.role, id: decodedData.sub };
@@ -88,7 +89,7 @@ export class AuthService {
           entity = await this._agencyService.findOne(decodedData.email);
           break;
         case Role.ADMIN:
-          entity = await this._adminService.findAdmin(decodedData.email);
+          entity = await this._adminService.getAdminWithMail(decodedData.email);
           break;
         default:
           console.log('Unknown role in token');
@@ -189,7 +190,7 @@ export class AuthService {
   }
 
   async adminSignIn(adminData: AdminDto) {
-    const admin = await this._adminService.findOne(
+    const admin = await this._adminService.getAdmin(
       adminData.email,
       adminData.password,
     );
@@ -205,7 +206,7 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       admin: admin,
       success: true,
-      message: true,
+      message: AuthSuccessMessages.LOGIN_SUCCESS,
     };
   }
 
