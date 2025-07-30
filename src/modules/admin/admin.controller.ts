@@ -20,11 +20,13 @@ import {
 } from 'src/common/constants/messages';
 import { UpdateStatusDto } from 'src/common/dtos/updateUserStaus.dto';
 import { UpdateConfirmationDto } from 'src/common/dtos/agencyConfirmation.dto';
+import { ApiResponse } from 'src/common/decorators/response.decorator';
 @Controller('admin')
 export class AdminController {
   constructor(private _adminService: AdminService) {}
 
   @Get('agency')
+  @ApiResponse(AgencySuccessMessages.AGENCY_LIST_FETCHED)
   async getAllAgencies(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 5,

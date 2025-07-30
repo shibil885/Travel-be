@@ -79,11 +79,11 @@ export class AppModule implements NestModule {
       .exclude(
         { path: 'auth/(.*)', method: RequestMethod.ALL },
         { path: '/user/isExistingMail', method: RequestMethod.POST },
-        { path: '/agency/isExistingMail', method: RequestMethod.POST },
-        { path: '/agency/isExistingName', method: RequestMethod.POST },
+        { path: '/agency/check-email', method: RequestMethod.POST },
+        { path: '/agency/check-name', method: RequestMethod.POST },
         { path: '/agency', method: RequestMethod.GET },
         { path: '/user/signup', method: RequestMethod.POST },
-        { path: '/agency/signup', method: RequestMethod.POST },
+        { path: '/agency', method: RequestMethod.POST },
         { path: '/otp/(.*)', method: RequestMethod.ALL },
       )
       .forRoutes('*');
@@ -93,11 +93,11 @@ export class AppModule implements NestModule {
         { path: 'auth/(.*)', method: RequestMethod.ALL },
         { path: 'admin/(.*)', method: RequestMethod.ALL },
         { path: '/user/isExistingMail', method: RequestMethod.POST },
-        { path: '/agency/isExistingMail', method: RequestMethod.POST },
-        { path: '/agency/isExistingName', method: RequestMethod.POST },
+        { path: '/agency/check-email', method: RequestMethod.POST },
+        { path: '/agency/check-name', method: RequestMethod.POST },
         { path: '/agency', method: RequestMethod.GET },
         { path: '/user/signup', method: RequestMethod.POST },
-        { path: '/agency/signup', method: RequestMethod.POST },
+        { path: '/agency', method: RequestMethod.POST },
         { path: '/otp/(.*)', method: RequestMethod.ALL },
       )
       .forRoutes('*');

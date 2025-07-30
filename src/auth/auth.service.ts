@@ -59,7 +59,9 @@ export class AuthService {
           entity = await this._userservice.findOne(decodedData.email);
           break;
         case Role.AGENCY:
-          entity = await this._agencyService.findOne(decodedData.email);
+          entity = await this._agencyService.findActiveAgencyByEmail(
+            decodedData.email,
+          );
           break;
         case Role.ADMIN:
           entity = await this._adminService.getAdminWithMail(decodedData.email);
@@ -86,7 +88,9 @@ export class AuthService {
           entity = await this._userservice.findOne(decodedData.email);
           break;
         case Role.AGENCY:
-          entity = await this._agencyService.findOne(decodedData.email);
+          entity = await this._agencyService.findActiveAgencyByEmail(
+            decodedData.email,
+          );
           break;
         case Role.ADMIN:
           entity = await this._adminService.getAdminWithMail(decodedData.email);
@@ -151,7 +155,9 @@ export class AuthService {
   }
 
   async agencySignIn(agencyData: LoginAgencyDto) {
-    const agency = await this._agencyService.findOne(agencyData.email);
+    const agency = await this._agencyService.findActiveAgencyByEmail(
+      agencyData.email,
+    );
     if (!agency) {
       throw new UnauthorizedException('Invalid email or password');
     } else if (!agency.isActive) {
@@ -229,7 +235,7 @@ export class AuthService {
       console.log('token', token);
       return this._sendResetMail(email, token, isExistingUser.username);
     } else if (role === Role.AGENCY) {
-      isExistingUser = await this._agencyService.findOne(email);
+      isExistingUser = await this._agencyService.findActiveAgencyByEmail(email);
       token = this._jwtService.sign(
         { id: isExistingUser._id },
         {
@@ -273,11 +279,11 @@ export class AuthService {
             ? 'password not provided'
             : 'Role is not provided',
       );
-    const parsedId = this._jwtService.decode(token);
+    const agencyId = this._jwtService.decode(token);
     if (role === Role.USER) {
-      return this._userservice.userPasswordRest(parsedId, password);
+      return this._userservice.userPasswordRest(agencyId, password);
     } else if (role == Role.AGENCY) {
-      return this._agencyService.agencyPasswordRest(parsedId, password);
+      return this._agencyService.resetPassword({ agencyId, password });
     }
   }
 }

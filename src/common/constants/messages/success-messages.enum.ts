@@ -33,6 +33,10 @@ export enum AgencySuccessMessages {
   AGENCY_DOCUMENTS_UPLOADED = 'Documents uploaded successfully',
   AGENCY_LIST_FETCHED = 'Agency list fetched successfully',
   AGENCY_DETAILS_FETCHED = 'Agency details fetched successfully',
+  PASSWORD_RESET_SUCCESS = 'Password reset successfully',
+  EMAIL_AVAILABILITY_CHECKED = 'Email availability checked',
+  NAME_AVAILABILITY_CHECKED = 'Name availability checked',
+  LOGOUT_SUCCESS = 'Logged out successfully',
 }
 
 export enum PackageSuccessMessages {

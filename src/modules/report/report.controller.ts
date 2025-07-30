@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ReportService } from './report.service';
 import { Request, Response } from 'express';
-import { AllExceptionsFilter } from 'src/common/filters/ecception.filter';
+import { AllExceptionsFilter } from 'src/common/filters/exception.filter';
 
 @Controller('report')
 export class ReportController {

@@ -6,6 +6,7 @@ import { Agency, AgencySchema } from './schema/agency.schema';
 import { Otp, OtpSchema } from '../otp/schema/otp.schema';
 import { MulterModule } from '@nestjs/platform-express';
 import { AgencyRepository } from './repositories/agency.repository';
+import { OtpRepository } from '../otp/repositories/otp.repsitory';
 
 @Module({
   imports: [
@@ -18,7 +19,15 @@ import { AgencyRepository } from './repositories/agency.repository';
     }),
   ],
   controllers: [AgencyController],
-  providers: [AgencyService, AgencyRepository],
+  providers: [
+    AgencyService,
+    AgencyRepository,
+    { provide: 'IAgencyRepository', useClass: AgencyRepository },
+    {
+      provide: 'IOtpRepository',
+      useClass: OtpRepository,
+    },
+  ],
   exports: [AgencyService],
 })
 export class AgencyModule {}

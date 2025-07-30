@@ -36,6 +36,7 @@ export enum AgencyErrorMessages {
   AGENCY_REGISTRATION_FAILED = 'Agency registration failed',
   INSUFFICIENT_PERMISSIONS = 'Insufficient permissions to perform this action',
   AGENCY_LIMIT_EXCEEDED = 'Maximum number of agencies reached',
+  DOCUMENT_REQUIRED = 'Agency document is required',
 }
 
 export enum PackageErrorMessages {

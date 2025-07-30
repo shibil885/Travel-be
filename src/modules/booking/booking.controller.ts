@@ -18,8 +18,8 @@ import { Response } from 'express';
 import { TravelConfirmationStatus } from 'src/common/constants/enum/travelConfirmation.enum';
 import { ErrorMessages } from 'src/common/constants/enum/error.enum';
 import { SocketGateway } from '../socket/gateway/socket.gateway';
-import { AllExceptionsFilter } from 'src/common/filters/ecception.filter';
 import { TravelStatus } from 'src/common/constants/enum/travelStatus.enum';
+import { AllExceptionsFilter } from 'src/common/filters/exception.filter';
 
 @Controller('booking')
 export class BookingController {

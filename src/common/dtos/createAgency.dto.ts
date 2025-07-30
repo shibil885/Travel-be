@@ -1,7 +1,6 @@
 import {
   IsEmail,
   IsNotEmpty,
-  IsNumber,
   IsString,
   Matches,
   MinLength,
@@ -10,12 +9,13 @@ import {
 export class CreateAgencyDto {
   @IsString()
   @IsNotEmpty({ message: 'Name is required' })
-  name: string;
+  agencyName: string;
 
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  @Matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, {
-    message: 'Password must contain at least one letter and one number',
+  @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+    message:
+      'Password must contain at least one letter, one number, and one special character',
   })
   password: string;
 
@@ -27,11 +27,6 @@ export class CreateAgencyDto {
   @IsNotEmpty({ message: 'Place name is required' })
   place: string;
 
-  @IsString()
-  @IsNotEmpty({ message: 'Document is required' })
-  document: string;
-
-  @IsNumber()
   @IsNotEmpty({ message: 'Phone number  is required' })
   phone: number;
 }
