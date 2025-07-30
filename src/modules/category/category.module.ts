@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { CategoryController } from './category.controller';
 import { CategoryService } from './category.service';
-import { MongooseModule } from '@nestjs/mongoose';
+import { CategoryRepository } from './repositories/category.repository';
 import { Category, CategorySchema } from './schema/category.schema';
 import { NotificationModule } from '../notification/notification.module';
 
@@ -13,6 +14,18 @@ import { NotificationModule } from '../notification/notification.module';
     NotificationModule,
   ],
   controllers: [CategoryController],
-  providers: [CategoryService],
+  providers: [
+    CategoryService,
+    CategoryRepository,
+    {
+      provide: 'ICategoryRepository',
+      useClass: CategoryRepository,
+    },
+    {
+      provide: 'CategoryService',
+      useClass: CategoryService,
+    },
+  ],
+  exports: [CategoryService, CategoryRepository],
 })
 export class CategoryModule {}
