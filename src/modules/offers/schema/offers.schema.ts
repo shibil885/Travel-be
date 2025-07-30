@@ -1,7 +1,7 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, HydratedDocument, Types } from 'mongoose';
 import { OfferType } from 'src/common/constants/enum/offerType.enum';
-
+export type OfferDocument = HydratedDocument<Offer>;
 @Schema({ timestamps: true })
 export class Offer extends Document {
   @Prop({ type: String, required: true })

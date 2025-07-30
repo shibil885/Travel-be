@@ -17,12 +17,12 @@ import { Transaction } from '../wallet/schema/wallet.schema';
 import { TransactionType } from 'src/common/constants/enum/transactionType.enum';
 import { ErrorMessages } from 'src/common/constants/enum/error.enum';
 import { IOffer } from 'src/common/interfaces/offer.interface';
-import { DiscountType } from 'src/common/constants/enum/discountType.enum';
 import { BookingDataDto } from 'src/common/dtos/boookingData.gto';
 import { Agency } from '../agency/schema/agency.schema';
 import { Admin } from '../admin/schema/admin.schema';
 import { Notification } from '../notification/schema/notification.schema';
 import { NotificationService } from '../notification/notification.service';
+import { OfferType } from 'src/common/constants/enum/offerType.enum';
 
 @Injectable()
 export class BookingService {
@@ -79,9 +79,9 @@ export class BookingService {
     let amount = Number(selectedPackage.price);
     if (selectedPackage.offerId) {
       const offer = selectedPackage.offerId as IOffer;
-      if (offer.discount_type === DiscountType.FIXED) {
+      if (offer.discount_type === OfferType.FIXED) {
         amount -= offer.discount_value;
-      } else if (offer.discount_type === DiscountType.PERCENTAGE) {
+      } else if (offer.discount_type === OfferType.PERCENTAGE) {
         amount *= 1 - offer.percentage / 100;
       }
     }

@@ -1,4 +1,10 @@
-import { Document, FilterQuery, Model, ProjectionType } from 'mongoose';
+import {
+  Document,
+  FilterQuery,
+  Model,
+  ProjectionType,
+  UpdateQuery,
+} from 'mongoose';
 
 export class BaseRepository<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
@@ -25,7 +31,7 @@ export class BaseRepository<T extends Document> {
     return this.model.create(data);
   }
 
-  async update(id: string, data: Partial<T>): Promise<T | null> {
+  async update(id: string, data: UpdateQuery<T>): Promise<T | null> {
     return this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 

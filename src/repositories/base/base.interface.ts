@@ -1,4 +1,4 @@
-import { FilterQuery, ProjectionType } from 'mongoose';
+import { FilterQuery, ProjectionType, UpdateQuery } from 'mongoose';
 
 export interface IBaseRepository<T> {
   findAll(
@@ -15,7 +15,7 @@ export interface IBaseRepository<T> {
 
   create(data: Partial<T>): Promise<T>;
 
-  update(id: string, data: Partial<T>): Promise<T | null>;
+  update(id: string, data: UpdateQuery<T>): Promise<T | null>;
 
   delete(id: string): Promise<T | null>;
 

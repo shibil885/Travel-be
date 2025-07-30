@@ -1,19 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import Razorpay from 'razorpay';
-import { Package } from '../package/schema/package.schema';
-import { Model } from 'mongoose';
-import { Coupon } from '../coupon/schema/coupon.schema';
 import * as crypto from 'crypto';
 import { IOffer } from 'src/common/interfaces/offer.interface';
 import { DiscountType } from 'src/common/constants/enum/discountType.enum';
+import { IPackageRepository } from 'src/repositories/package/package.repository';
+import { ICouponRepository } from 'src/repositories/coupon/coupon.interface';
+import { OfferType } from 'src/common/constants/enum/offerType.enum';
 @Injectable()
 export class PaymentService {
   private razorpay: Razorpay;
 
   constructor(
-    @InjectModel(Package.name) private PackageModel: Model<Package>,
-    @InjectModel(Coupon.name) private CouponModel: Model<Coupon>,
+    @Inject('IPackageRepository')
+    private readonly _packageRepository: IPackageRepository,
+    @Inject('ICouponRepository')
+    private readonly _couponRepository: ICouponRepository,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
@@ -29,23 +30,22 @@ export class PaymentService {
   ) {
     if (!packageId) throw new NotFoundException('Cant find packageId');
     let amount: number;
-    const selectedPackage = await this.PackageModel.findOne({
-      _id: packageId,
-      isActive: true,
-    }).populate('offerId');
+    const selectedPackage =
+      await this._packageRepository.findOnePackageWithOffer(packageId);
     if (!selectedPackage.price)
       throw new NotFoundException('Cant find package');
     amount = Number(selectedPackage.price);
+    console.log('selectedPackage.offerId', selectedPackage.offerId);
     if (selectedPackage.offerId) {
       const offer = selectedPackage.offerId as IOffer;
-      if (offer.discount_type === DiscountType.FIXED) {
+      if (offer.discount_type === OfferType.FIXED) {
         amount = amount - offer.discount_value;
-      } else if (offer.discount_type === DiscountType.PERCENTAGE) {
+      } else if (offer.discount_type === OfferType.PERCENTAGE) {
         amount = amount * (offer.percentage / 100);
       }
     }
     if (couponId) {
-      const selectedCoupon = await this.CouponModel.findOne({
+      const selectedCoupon = await this._couponRepository.findOne({
         _id: couponId,
         minAmt: { $lte: amount },
         used: { $ne: userId },

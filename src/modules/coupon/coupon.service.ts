@@ -141,15 +141,13 @@ import {
   BadRequestException,
   Inject,
 } from '@nestjs/common';
-import {
-  CreateCouponDto,
-  DiscountType,
-} from 'src/common/dtos/createCoupon.gto';
+import { CreateCouponDto } from 'src/common/dtos/createCoupon.gto';
 import { ICouponRepository } from 'src/repositories/coupon/coupon.interface';
 import { CouponDocument } from './schema/coupon.schema';
 import { EditCouponDto } from 'src/common/dtos/editCoupon.dto';
 import { IPackageRepository } from 'src/repositories/package/package.repository';
 import { IOffer } from 'src/common/interfaces/offer.interface';
+import { OfferType } from 'src/common/constants/enum/offerType.enum';
 
 @Injectable()
 export class CouponService {
@@ -224,9 +222,9 @@ export class CouponService {
       Number(selectedPackage.price) + Number(process.env.SERVICE_CHARGE);
     if (selectedPackage.offerId) {
       const offer = selectedPackage.offerId as IOffer;
-      if (offer.discount_type === DiscountType.FIXED) {
+      if (offer.discount_type === OfferType.FIXED) {
         amount = amount - offer.discount_value;
-      } else if (offer.discount_type === DiscountType.PERCENTAGE) {
+      } else if (offer.discount_type === OfferType.PERCENTAGE) {
         amount = amount * (offer.percentage / 100);
       }
     }

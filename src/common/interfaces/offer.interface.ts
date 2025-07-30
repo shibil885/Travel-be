@@ -1,10 +1,10 @@
 import { Types } from 'mongoose';
-import { DiscountType } from 'src/common/constants/enum/discountType.enum';
+import { OfferType } from '../constants/enum/offerType.enum';
 
 export interface IOffer {
   title: string;
   description: string;
-  discount_type: DiscountType;
+  discount_type: OfferType;
   percentage?: number;
   discount_value?: number;
   expiry_date: Date;

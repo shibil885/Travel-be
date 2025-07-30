@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsEnum,
-  IsDate,
-  IsNumber,
-  IsOptional,
-} from 'class-validator';
+import { IsString, IsEnum, IsNumber, IsOptional } from 'class-validator';
 import { OfferType } from 'src/common/constants/enum/offerType.enum';
 
 export class EditOfferDto {
@@ -20,7 +14,6 @@ export class EditOfferDto {
   @IsOptional()
   discount_type?: OfferType;
 
-  @IsNumber()
   @IsOptional()
   discount_value?: number;
 
@@ -28,7 +21,6 @@ export class EditOfferDto {
   @IsOptional()
   percentage?: number;
 
-  @IsDate()
   @IsOptional()
   expiry_date?: Date;
 }

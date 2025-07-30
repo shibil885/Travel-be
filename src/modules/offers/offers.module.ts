@@ -4,6 +4,8 @@ import { OffersController } from './offers.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Offer, OfferSchema } from './schema/offers.schema';
 import { Package, PackageSchema } from '../package/schema/package.schema';
+import { PackageRepository } from '../package/repositories/package.repository';
+import { OfferRepository } from './repository/offer.repository';
 
 @Module({
   imports: [
@@ -12,7 +14,11 @@ import { Package, PackageSchema } from '../package/schema/package.schema';
       { name: Package.name, schema: PackageSchema },
     ]),
   ],
-  providers: [OffersService],
+  providers: [
+    OffersService,
+    { provide: 'IPackageRepository', useClass: PackageRepository },
+    { provide: 'IOfferRepository', useClass: OfferRepository },
+  ],
   controllers: [OffersController],
 })
 export class OffersModule {}

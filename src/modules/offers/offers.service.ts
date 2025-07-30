@@ -1,31 +1,29 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
-  NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
-import { Model, Types } from 'mongoose';
-import { Offer } from './schema/offers.schema';
-import { InjectModel } from '@nestjs/mongoose';
 import { AddOfferDto } from 'src/common/dtos/addOffer.dto';
-import { DiscountType } from 'src/common/constants/enum/discountType.enum';
 import { IOffer } from 'src/common/interfaces/offer.interface';
 import { EditOfferDto } from 'src/common/dtos/editOffer.dto';
-import { Package } from '../package/schema/package.schema';
+import { IOfferRepository } from 'src/repositories/offer/offer.interface';
+import { IPackageRepository } from 'src/repositories/package/package.repository';
+import { OfferType } from 'src/common/constants/enum/offerType.enum';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class OffersService {
   constructor(
-    @InjectModel(Offer.name) private readonly _OfferModel: Model<Offer>,
-    @InjectModel(Package.name) private readonly _PackageModel: Model<Package>,
+    @Inject('IOfferRepository')
+    private readonly _offerRepository: IOfferRepository,
+    @Inject('IPackageRepository')
+    private readonly _packageRepository: IPackageRepository,
   ) {}
 
-  async addOffer(agencyId: string, offerData: AddOfferDto) {
-    if (!offerData) {
-      throw new NotFoundException('Required fields are not available');
-    }
+  async createOffer(agencyId: string, offerData: AddOfferDto) {
     const lowerCaseTitle = offerData.title.toLocaleLowerCase();
-    const isExistingOffer = await this._OfferModel.findOne({
+    const isExistingOffer = await this._offerRepository.findOne({
       title: lowerCaseTitle,
     });
     if (isExistingOffer) {
@@ -38,170 +36,144 @@ export class OffersService {
       expiry_date: offerData.expiry_date,
       agencyId: new Types.ObjectId(agencyId),
     };
-    if (offerData.discount_type === DiscountType.FIXED) {
+    if (offerData.discount_type === OfferType.FIXED) {
       offerFields.discount_value = offerData.discount_value;
-    } else if (offerData.discount_type === DiscountType.PERCENTAGE) {
+    } else if (offerData.discount_type === OfferType.PERCENTAGE) {
       offerFields.percentage = offerData.percentage;
     }
-    const createdOffer = await new this._OfferModel(offerFields).save();
+    const createdOffer = await this._offerRepository.create({ ...offerFields });
     return createdOffer;
   }
 
-  async editOffer(offerId: string, offerData: EditOfferDto) {
-    if (!offerData || !offerId)
+  async editOffer(offerId: string, offerData: EditOfferDto): Promise<boolean> {
+    if (!offerData || !offerId) {
       throw new NotFoundException(
-        !offerData ? 'Offer data not provided' : 'Offer id is not provided',
+        !offerData ? 'Offer data not provided' : 'Offer ID not provided',
       );
-    const lowerCaseTitle = offerData.title.toLowerCase();
-    const parserOfferId = new Types.ObjectId(offerId);
-    const [fetchResult] = await this._OfferModel.aggregate([
-      {
-        $facet: {
-          offers: [{ $match: { _id: parserOfferId } }],
-          isExisting: [
-            {
-              $match: {
-                title: lowerCaseTitle,
-                _id: { $ne: parserOfferId },
-              },
-            },
-          ],
-        },
-      },
-    ]);
-    const { offers, isExisting } = fetchResult;
-    if (offers.length == 0) {
-      throw new NotFoundException('Offer not found');
-    } else if (isExisting.length > 0) {
-      throw new ConflictException('Offer title already exist');
-    } else {
-      const updateResult = await this._OfferModel.updateOne(
-        {
-          _id: parserOfferId,
-        },
-        offerData,
-      );
-      return updateResult.modifiedCount > 0;
     }
+
+    const title = offerData.title.toLowerCase();
+
+    const offerExists = await this._offerRepository.existsById(offerId);
+    if (!offerExists) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    const titleConflict = await this._offerRepository.editOfferTitleConflict(
+      offerId,
+      title,
+    );
+    if (titleConflict) {
+      throw new ConflictException('Offer title already exists');
+    }
+
+    const result = await this._offerRepository.update(offerId, {
+      ...offerData,
+    });
+
+    if (!result) {
+      throw new NotFoundException('Failed to update offer');
+    }
+
+    return true;
   }
 
   async getAllOffers(agencyId: string, page: number, limit: number) {
-    if (!page || !limit) {
-      throw new NotAcceptableException(
-        !page ? 'Page is not provided' : 'Limit is not provided',
-      );
-    }
     const skip = (page - 1) * limit;
-    const [offers, offerCount] = await Promise.all([
-      this._OfferModel
-        .find({ agencyId: new Types.ObjectId(agencyId) })
-        .skip(skip)
-        .limit(limit),
-      this._OfferModel.countDocuments({
-        agencyId: new Types.ObjectId(agencyId),
-      }),
+    const [offers, totalCount] = await Promise.all([
+      this._offerRepository.findAllWithPaginationAndFilter(
+        { agencyId: new Types.ObjectId(agencyId) },
+        skip,
+        limit,
+      ),
+      this._offerRepository.countDocument({}),
     ]);
     return {
       offers,
-      offerCount,
-      page,
+      totalCount,
+      currentPage: page,
     };
   }
 
   async getOneOffer(offerId: string) {
     if (!offerId) throw new NotFoundException('Offer id is not provided');
-    const offer = await this._OfferModel.findOne({
+    const offer = await this._offerRepository.findOne({
       _id: new Types.ObjectId(offerId),
     });
+    if (!offer) throw new NotFoundException('Offer not found');
     return offer;
   }
 
   async getApplicablePackages(offerId: string) {
     if (!offerId) throw new NotFoundException('Offer id is not provided');
-    const offerExists = await this._OfferModel.exists({
-      _id: new Types.ObjectId(offerId),
-    });
+    const offerExists = await this._offerRepository.existsById(offerId);
+
     if (!offerExists) throw new NotFoundException('Offer not found');
-    const applicablePackages = await this._OfferModel.aggregate([
-      { $match: { _id: new Types.ObjectId(offerId) } },
-      {
-        $unwind: {
-          path: '$applicable_packages',
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: 'packages',
-          localField: 'applicable_packages',
-          foreignField: '_id',
-          as: 'packages',
-        },
-      },
-      // { $unwind: { path: '$packages', preserveNullAndEmptyArrays: true } },
-      {
-        $project: {
-          _id: 0,
-          packages: {
-            name: 1,
-            price: 1,
-            images: 1,
-            _id: 1,
-          },
-        },
-      },
-    ]);
-    return applicablePackages;
+
+    const applicablePackages =
+      await this._offerRepository.getApplicablePackages(offerId);
+
+    return applicablePackages[0];
   }
 
   async getPackagesForApplyOffer(agencyId: string, offerId: string) {
     if (!offerId) throw new NotFoundException('Offer id not provided');
-    const packages = await this._PackageModel.find({
+
+    const packages = await this._packageRepository.findAll({
       agencyId: new Types.ObjectId(agencyId),
       offerId: null,
     });
     return packages;
   }
 
-  async applyOffer(offerId: string, packageId: string) {
-    if (!offerId) throw new NotFoundException('Offer id not provided');
-    const [resultOfOffer, resultOfPackage] = await Promise.all([
-      this._OfferModel.updateOne(
-        {
-          _id: new Types.ObjectId(offerId),
-        },
-        { $push: { applicable_packages: new Types.ObjectId(packageId) } },
-      ),
-      this._PackageModel.updateOne(
-        { _id: new Types.ObjectId(packageId) },
-        {
-          $set: { offerId: new Types.ObjectId(offerId) },
-        },
-      ),
+  async applyOffer(offerId: string, packageId: string): Promise<boolean> {
+    if (!offerId || !packageId) {
+      throw new NotFoundException(
+        !offerId ? 'Offer ID is not provided' : 'Package ID is not provided',
+      );
+    }
+
+    const offerObjectId = new Types.ObjectId(offerId);
+    const packageObjectId = new Types.ObjectId(packageId);
+
+    const [offerExists, packageExists] = await Promise.all([
+      this._offerRepository.existsById(offerId),
+      this._packageRepository.findOne({ _id: packageId }),
     ]);
-    return resultOfOffer.modifiedCount > 0 && resultOfPackage.modifiedCount > 0
-      ? true
-      : false;
+
+    if (!offerExists) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    if (!packageExists) {
+      throw new NotFoundException('Package not found');
+    }
+
+    const [offerUpdateResult, packageUpdateResult] = await Promise.all([
+      this._offerRepository.update(offerId, {
+        $push: { applicable_packages: packageObjectId },
+      }),
+      this._packageRepository.update(packageId, {
+        $set: { offerId: offerObjectId },
+      }),
+    ]);
+
+    const success = offerUpdateResult && packageUpdateResult;
+    return !!success;
   }
 
   async removeOffer(offerId: string, packageId: string) {
     if (!offerId) throw new NotFoundException('Offer id not provided');
+
     const [resultOfOffer, resultOfPackage] = await Promise.all([
-      this._OfferModel.updateOne(
-        {
-          _id: new Types.ObjectId(offerId),
-        },
-        { $pull: { applicable_packages: new Types.ObjectId(packageId) } },
-      ),
-      this._PackageModel.updateOne(
-        { _id: new Types.ObjectId(packageId) },
-        {
-          $set: { offerId: null },
-        },
-      ),
+      this._offerRepository.update(offerId, {
+        $pull: { applicable_packages: new Types.ObjectId(packageId) },
+      }),
+      this._packageRepository.update(packageId, {
+        $set: { offerId: null },
+      }),
     ]);
-    return resultOfOffer.modifiedCount > 0 && resultOfPackage.modifiedCount > 0
-      ? true
-      : false;
+    const success = resultOfOffer && resultOfPackage;
+    return !!success;
   }
 }

@@ -12,6 +12,8 @@ import { Agency, AgencySchema } from '../agency/schema/agency.schema';
 import { AdminModule } from '../admin/admin.module';
 import { Admin, AdminSchema } from '../admin/schema/admin.schema';
 import { NotificationModule } from '../notification/notification.module';
+import { PackageRepository } from '../package/repositories/package.repository';
+import { CouponRepository } from '../coupon/repositories/coupon.repository';
 
 @Module({
   imports: [
@@ -28,6 +30,11 @@ import { NotificationModule } from '../notification/notification.module';
     NotificationModule,
   ],
   controllers: [PaymentController],
-  providers: [PaymentService, BookingService],
+  providers: [
+    PaymentService,
+    BookingService,
+    { provide: 'IPackageRepository', useClass: PackageRepository },
+    { provide: 'ICouponRepository', useClass: CouponRepository },
+  ],
 })
 export class PaymentModule {}

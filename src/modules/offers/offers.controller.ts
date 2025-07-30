@@ -1,273 +1,88 @@
 import {
   Body,
-  ConflictException,
   Controller,
+  Delete,
   Get,
-  HttpStatus,
-  NotAcceptableException,
-  NotFoundException,
   Param,
   Patch,
   Post,
   Put,
   Query,
   Req,
-  Res,
 } from '@nestjs/common';
 import { OffersService } from './offers.service';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { AddOfferDto } from 'src/common/dtos/addOffer.dto';
 import { EditOfferDto } from 'src/common/dtos/editOffer.dto';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { ApiResponse } from 'src/common/decorators/response.decorator';
 
-@Controller('offers')
+@Controller('offer')
 export class OffersController {
   constructor(private readonly _offerService: OffersService) {}
 
   @Get()
-  async getAllOffers(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Query('page') page: number,
-    @Query('limit') limit: number,
-  ) {
-    try {
-      const response = await this._offerService.getAllOffers(
-        req['agency']['sub'],
-        Number(page),
-        Number(limit),
-      );
-      if (response.offers.length > 0) {
-        return res.status(HttpStatus.OK).json({
-          success: true,
-          message: '',
-          offers: response.offers,
-          totalItems: response.offerCount,
-        });
-      }
-      return res.status(HttpStatus.OK).json({
-        info: true,
-        message: 'No offers available. Please add',
-        offers: [],
-        totalItem: 0,
-      });
-    } catch (error) {
-      if (error instanceof NotAcceptableException) {
-        return res
-          .status(HttpStatus.NOT_ACCEPTABLE)
-          .json({ success: false, message: error.message });
-      }
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
-    }
+  async getAllOffers(@Req() req: Request, @Query() pagination: PaginationDto) {
+    return await this._offerService.getAllOffers(
+      req['agency']['sub'],
+      pagination.page,
+      pagination.limit,
+    );
   }
 
   @Get(':offerId')
-  async getOneOffer(@Res() res: Response, @Param('offerId') offerId: string) {
-    try {
-      const offer = await this._offerService.getOneOffer(offerId);
-      if (offer) {
-        return res
-          .status(HttpStatus.OK)
-          .json({ success: true, message: 'Requisted offer', offer: offer });
-      }
-      return res.status(HttpStatus.OK).json({
-        info: true,
-        message: 'Requisted offer not found',
-        offer: {},
-      });
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ success: false, message: error.message });
-      }
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
-    }
-  }
-
-  @Get('applicable/:id')
-  async getApplicablePackages(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Param('id') offerId: string,
-  ) {
-    try {
-      const response = await this._offerService.getApplicablePackages(offerId);
-      if (response) {
-        return res.status(HttpStatus.OK).json({
-          success: true,
-          message: 'List of  applicable packages',
-          packages: response[0].packages,
-        });
-      }
-      return res
-        .status(HttpStatus.OK)
-        .json({ info: true, message: 'Add offers to packages' });
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ success: false, message: error.message });
-      }
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
-    }
-  }
-
-  @Post('addOffer')
-  async addOffer(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Body() offerData: AddOfferDto,
-  ) {
-    try {
-      const response = await this._offerService.addOffer(
-        req['agency']['sub'],
-        offerData,
-      );
-      if (response) {
-        return res
-          .status(HttpStatus.CREATED)
-          .json({ success: true, message: 'New Offer Added' });
-      }
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ success: false, message: error.message });
-      } else if (error instanceof ConflictException) {
-        return res
-          .status(HttpStatus.CONFLICT)
-          .json({ success: false, message: error.message });
-      } else {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json({ success: false, message: error.message });
-      }
-    }
-  }
-
-  @Put('edit/:id')
-  async editOffer(
-    @Res() res: Response,
-    @Body() offerData: EditOfferDto,
-    @Param('id') offerId: string,
-  ) {
-    try {
-      const response = await this._offerService.editOffer(offerId, offerData);
-      if (response) {
-        return res
-          .status(HttpStatus.OK)
-          .json({ success: true, message: 'Offer updated' });
-      }
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ success: false, message: error.message });
-      } else if (error instanceof ConflictException) {
-        return res
-          .status(HttpStatus.CONFLICT)
-          .json({ success: false, message: error.message });
-      }
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
-    }
+  async getOneOffer(@Param('offerId') offerId: string) {
+    const offer = await this._offerService.getOneOffer(offerId);
+    if (offer) return { offer: offer };
+    return { info: true };
   }
 
   @Get('packages/:id')
+  @ApiResponse('Applicable packages')
+  async getApplicablePackages(@Param('id') offerId: string) {
+    return await this._offerService.getApplicablePackages(offerId);
+  }
+
+  @Get('packages/apply/:id')
+  @ApiResponse('applied')
   async getPackgesForApplyOffer(
     @Req() req: Request,
-    @Res() res: Response,
     @Param('id') offerId: string,
   ) {
-    try {
-      const response = await this._offerService.getPackagesForApplyOffer(
-        req['agency']['sub'],
-        offerId,
-      );
-      if (response.length > 0) {
-        return res.status(HttpStatus.OK).json({
-          succss: true,
-          messsage: 'List of packages for apply offers',
-          packages: response,
-        });
-      }
-      return res.status(HttpStatus.OK).json({
-        info: true,
-        message: 'Add packages for apply offers',
-        packages: [],
-      });
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ suucess: false, message: error.message });
-      }
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ suucess: false, message: error.message });
-    }
+    return await this._offerService.getPackagesForApplyOffer(
+      req['agency']['sub'],
+      offerId,
+    );
   }
 
+  @Post()
+  async addOffer(@Req() req: Request, @Body() offerData: AddOfferDto) {
+    return await this._offerService.createOffer(
+      req['agency']['sub'],
+      offerData,
+    );
+  }
+
+  @Put(':id')
+  async editOffer(
+    @Body() offerData: EditOfferDto,
+    @Param('id') offerId: string,
+  ) {
+    return await this._offerService.editOffer(offerId, offerData);
+  }
   @Patch('apply/:id')
   async applyOffer(
-    @Res() res: Response,
     @Body('packageId') packageId: string,
     @Param('id') offerId: string,
   ) {
-    try {
-      const response = await this._offerService.applyOffer(offerId, packageId);
-      if (response) {
-        return res
-          .status(HttpStatus.OK)
-          .json({ success: true, message: 'Offer applied to the package' });
-      }
-      return res
-        .status(HttpStatus.OK)
-        .json({ success: true, message: 'Offer not applied' });
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ success: false, messahe: error.message });
-      }
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, messahe: error.message });
-    }
+    return await this._offerService.applyOffer(offerId, packageId);
   }
 
-  @Patch('remove/:id')
-  async romoveOffer(
-    @Res() res: Response,
-    @Body('packageId') packageId: string,
-    @Param('id') offerId: string,
+  @Delete(':offerId/:packageId')
+  async removeOffer(
+    @Param('offerId') offerId: string,
+    @Param('packageId') packageId: string,
   ) {
-    try {
-      const response = await this._offerService.removeOffer(offerId, packageId);
-      if (response) {
-        return res
-          .status(HttpStatus.OK)
-          .json({ success: true, message: 'Package removed from the offer' });
-      }
-      return res
-        .status(HttpStatus.OK)
-        .json({ success: true, message: 'Offer cant remove ' });
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return res
-          .status(HttpStatus.NOT_FOUND)
-          .json({ success: false, messahe: error.message });
-      }
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, messahe: error.message });
-    }
+    return await this._offerService.removeOffer(offerId, packageId);
   }
 }
