@@ -310,6 +310,7 @@ export class PackageController {
   }
 
   @Patch(':id/status')
+  @ApiResponse('Package status changed')
   async changeStatus(
     @Param('id') packageId: string,
     @Body('isActive') isActive: boolean,

@@ -4,6 +4,8 @@ import { CouponService } from './coupon.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Coupon, CouponSchema } from './schema/coupon.schema';
 import { Package, PackageSchema } from '../package/schema/package.schema';
+import { CouponRepository } from './repositories/coupon.repository';
+import { PackageRepository } from '../package/repositories/package.repository';
 
 @Module({
   imports: [
@@ -13,6 +15,10 @@ import { Package, PackageSchema } from '../package/schema/package.schema';
     ]),
   ],
   controllers: [CouponController],
-  providers: [CouponService],
+  providers: [
+    CouponService,
+    { provide: 'ICouponRepository', useClass: CouponRepository },
+    { provide: 'IPackageRepository', useClass: PackageRepository },
+  ],
 })
 export class CouponModule {}

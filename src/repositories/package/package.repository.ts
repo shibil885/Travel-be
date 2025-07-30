@@ -18,7 +18,7 @@ export interface IPackageRepository extends IBaseRepository<PackageDocument> {
   updatePackageStatus(packageId: string, isActive: boolean): Promise<boolean>;
 
   findTopBookedPackages(): Promise<any[]>;
-
+  findOnePackageWithOffer(id): Promise<PackageDocument>;
   savePackageChanges(
     packageId: string,
     updateData: Partial<PackageDocument>,

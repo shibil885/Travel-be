@@ -176,6 +176,27 @@ export class PackageRepository
       },
     ]);
   }
+  async findOnePackageWithOffer(id: string) {
+    const result = await this._packageModel.aggregate([
+      { $match: { isActive: true, _id: new Types.ObjectId(id) } },
+      {
+        $lookup: {
+          from: 'offers',
+          localField: 'offerId',
+          foreignField: '_id',
+          as: 'offerId',
+        },
+      },
+      {
+        $unwind: {
+          path: '$offerId',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ]);
+
+    return result[0] || null;
+  }
 
   async savePackageChanges(
     packageId: string,

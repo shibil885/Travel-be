@@ -25,7 +25,6 @@ export class ResponseTransformInterceptor<T>
     return next.handle().pipe(
       map((data) => {
         if (data && typeof data === 'object' && 'success' in data) {
-          // TODO remove after:
           return data;
         }
 

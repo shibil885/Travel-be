@@ -2,7 +2,6 @@ import {
   IsString,
   IsNotEmpty,
   IsNumber,
-  IsDate,
   IsEnum,
   IsOptional,
 } from 'class-validator';
@@ -38,7 +37,7 @@ export class CreateCouponDto {
   maxAmt: number;
 
   @IsNotEmpty()
-  @IsDate()
+  // @IsDate()
   expiry_date: Date;
 
   @IsOptional()
