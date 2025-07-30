@@ -145,7 +145,7 @@ import {
   CreateCouponDto,
   DiscountType,
 } from 'src/common/dtos/createCoupon.gto';
-import { ICouponRepository } from 'src/repositories/coupon.interface';
+import { ICouponRepository } from 'src/repositories/coupon/coupon.interface';
 import { CouponDocument } from './schema/coupon.schema';
 import { EditCouponDto } from 'src/common/dtos/editCoupon.dto';
 import { IPackageRepository } from 'src/repositories/package/package.repository';
