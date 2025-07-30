@@ -94,14 +94,17 @@ import { CreateAgencyDto } from 'src/common/dtos/createAgency.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { CheckEmailDto } from 'src/common/dtos/check-mail.dto';
 import { CheckNameDto } from 'src/common/dtos/check-name.dto';
-import { AgencySuccessMessages } from 'src/common/constants/messages';
+import {
+  AgencyErrorMessages,
+  AgencySuccessMessages,
+} from 'src/common/constants/messages';
 
 @Controller('agency')
 export class AgencyController {
   constructor(private readonly _agencyService: AgencyService) {}
 
   @Get()
-  @ResponseMessage('Agencies fetched successfully')
+  @ResponseMessage(AgencySuccessMessages.AGENCY_LIST_FETCHED)
   async getAllAgencies(@Query() paginationDto: PaginationDto) {
     const { page, limit } = paginationDto;
     return await this._agencyService.getAllAgencies(page, limit);
@@ -109,7 +112,7 @@ export class AgencyController {
 
   @Post()
   @UseInterceptors(FileInterceptor('document'))
-  @ApiResponse('Agency created successfully', HttpStatus.CREATED)
+  @ApiResponse(AgencySuccessMessages.AGENCY_REGISTERED, HttpStatus.CREATED)
   async createAgency(
     @Body() createAgencyDto: CreateAgencyDto,
     @UploadedFile() document: Express.Multer.File,
@@ -134,13 +137,13 @@ export class AgencyController {
   async checkConfirmationStatus(@Req() req: Request) {
     const agencyEmail = req['agency']?.email;
     if (!agencyEmail) {
-      throw new NotFoundException('Agency email not found in request');
+      throw new NotFoundException(AgencyErrorMessages.AGENCY_NOT_FOUND);
     }
     return await this._agencyService.checkAgencyConfirmation(agencyEmail);
   }
 
   @Post('logout')
-  @ResponseMessage('Successfully logged out')
+  @ResponseMessage(AgencySuccessMessages.LOGOUT_SUCCESS)
   async logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('access_token', {
       path: '/',

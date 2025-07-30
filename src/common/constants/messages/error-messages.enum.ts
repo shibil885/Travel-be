@@ -23,6 +23,7 @@ export enum UserErrorMessages {
   PROFILE_PICTURE_UPLOAD_FAILED = 'Failed to upload profile picture',
   INVALID_FILE_FORMAT = 'Invalid file format. Only JPG, PNG allowed',
   FILE_SIZE_EXCEEDED = 'File size exceeded. Maximum 5MB allowed',
+  PASSWORD_UPDATE_FAILED = 'Failed to update password',
 }
 
 export enum AgencyErrorMessages {
@@ -115,6 +116,10 @@ export enum AdminErrorMessages {
   BACKUP_CREATION_FAILED = 'Failed to create system backup',
   SETTINGS_UPDATE_FAILED = 'Failed to update system settings',
   DASHBOARD_LOAD_FAILED = 'Failed to load admin dashboard',
+}
+
+export enum OtpErrorMessages {
+  INVALID_OTP = 'Invalid OTP',
 }
 
 export enum GeneralErrorMessages {

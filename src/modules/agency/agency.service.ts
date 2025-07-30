@@ -183,7 +183,7 @@
 //     return this._AgencyModel.findById(id);
 //   }
 // }
-// src/modules/agency/agency.service.ts - FIXED VERSION
+
 import {
   HttpException,
   Injectable,
@@ -277,21 +277,18 @@ export class AgencyService {
 
       const existingAgency = await this._agencyRepository.findOne({
         email: email,
-        isVerified: false,
+        isVerified: true,
       });
       if (existingAgency) {
         throw new ConflictException(AgencyErrorMessages.AGENCY_ALREADY_EXISTS);
       }
 
-      // Hash password
       const saltRound = 10;
       const hashedPassword = await bcrypt.hash(password, saltRound);
 
-      // Generate OTP
       const otp = Math.floor(1000 + Math.random() * 9000);
       const subject = 'Verification email from "Travel"';
 
-      // Use repositories instead of direct models
       const [savedAgency] = await Promise.all([
         this._agencyRepository.createAgency({
           name: agencyName,
@@ -342,10 +339,9 @@ export class AgencyService {
 
   async resetPassword(resetPasswordData: ResetPasswordDto) {
     try {
-      const { agencyId, password } = resetPasswordData;
+      const { id, password } = resetPasswordData;
 
-      // Verify agency exists
-      const agency = await this._agencyRepository.findById(agencyId);
+      const agency = await this._agencyRepository.findById(id);
       if (!agency) {
         throw new NotFoundException(AgencyErrorMessages.AGENCY_NOT_FOUND);
       }
@@ -356,7 +352,7 @@ export class AgencyService {
 
       // Update password
       const updated = await this._agencyRepository.updatePassword(
-        agencyId,
+        id,
         hashedPassword,
       );
 
@@ -388,7 +384,6 @@ export class AgencyService {
     }
   }
 
-  // OTP related methods using OTP repository
   async verifyOtp(email: string, otpCode: number) {
     try {
       const validOtp = await this._otpRepository.findValidOtp(email, otpCode);
@@ -396,7 +391,6 @@ export class AgencyService {
         throw new BadRequestException('Invalid or expired OTP');
       }
 
-      // Delete used OTP
       await this._otpRepository.deleteByEmail(email);
 
       return { message: 'OTP verified successfully' };
@@ -410,7 +404,6 @@ export class AgencyService {
 
   async resendOtp(email: string) {
     try {
-      // Check if agency exists
       const agency = await this._agencyRepository.findOne({
         email: email,
         isVerified: false,
@@ -419,10 +412,8 @@ export class AgencyService {
         throw new NotFoundException(AgencyErrorMessages.AGENCY_NOT_FOUND);
       }
 
-      // Delete existing OTP
       await this._otpRepository.deleteByEmail(email);
 
-      // Generate new OTP
       const otp = Math.floor(1000 + Math.random() * 9000);
       const subject = 'Verification email from "Travel"';
 

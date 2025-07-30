@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class ResetPasswordDto {
   @IsNotEmpty()
   @IsString()
-  agencyId: string;
+  id: string;
 
   @IsNotEmpty()
   @IsString()

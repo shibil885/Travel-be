@@ -7,6 +7,8 @@ import { Otp, OtpSchema } from '../otp/schema/otp.schema';
 import { Agency, AgencySchema } from '../agency/schema/agency.schema';
 import { Package, PackageSchema } from '../package/schema/package.schema';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
+import { UserRepository } from './repositories/user.repository';
+import { OtpRepository } from '../otp/repositories/otp.repsitory';
 
 @Module({
   imports: [
@@ -19,7 +21,11 @@ import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
     CloudinaryModule,
   ],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [
+    UserService,
+    { provide: 'IOtpRepository', useClass: OtpRepository },
+    { provide: 'IUserRepository', useClass: UserRepository },
+  ],
   exports: [UserService],
 })
 export class UserModule {}

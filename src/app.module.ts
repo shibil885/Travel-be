@@ -78,7 +78,7 @@ export class AppModule implements NestModule {
       .apply(AuthMiddleware)
       .exclude(
         { path: 'auth/(.*)', method: RequestMethod.ALL },
-        { path: '/user/isExistingMail', method: RequestMethod.POST },
+        { path: '/user/check-email', method: RequestMethod.POST },
         { path: '/agency/check-email', method: RequestMethod.POST },
         { path: '/agency/check-name', method: RequestMethod.POST },
         { path: '/agency', method: RequestMethod.GET },
@@ -92,7 +92,7 @@ export class AppModule implements NestModule {
       .exclude(
         { path: 'auth/(.*)', method: RequestMethod.ALL },
         { path: 'admin/(.*)', method: RequestMethod.ALL },
-        { path: '/user/isExistingMail', method: RequestMethod.POST },
+        { path: '/user/check-email', method: RequestMethod.POST },
         { path: '/agency/check-email', method: RequestMethod.POST },
         { path: '/agency/check-name', method: RequestMethod.POST },
         { path: '/agency', method: RequestMethod.GET },

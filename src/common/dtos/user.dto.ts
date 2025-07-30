@@ -4,8 +4,6 @@ import {
   IsNotEmpty,
   MinLength,
   Matches,
-  IsArray,
-  IsNumber,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -25,19 +23,11 @@ export class CreateUserDto {
   })
   password: string;
 
-  @IsNotEmpty({ message: 'profile picture is required' })
-  profilePicture?: string;
-
-  @IsNumber()
   @IsNotEmpty({ message: 'Phone number  is required' })
   phone: number;
 
-  @IsString()
-  @IsNotEmpty({ message: 'Address is required' })
-  address: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty({ message: 'Preferences  is required' })
-  preferences: string[];
+  // @IsArray()
+  // @IsString({ each: true })
+  // @IsNotEmpty({ message: 'Preferences  is required' })
+  // preferences: string[];
 }

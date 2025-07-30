@@ -20,6 +20,9 @@ export enum UserSuccessMessages {
   USER_PROFILE_PICTURE_UPDATED = 'Profile picture updated successfully',
   USER_ACTIVATED = 'User activated successfully',
   USER_DEACTIVATED = 'USER deactivated successfully',
+  USER_VERIFIED = 'User verification completed',
+  PASSWORD_UPDATED = 'Password updated successfully',
+  LOGOUT_SUCCESS = 'Logged out successfully',
 }
 
 export enum AgencySuccessMessages {
@@ -101,4 +104,8 @@ export enum AdminSuccessMessages {
   BULK_ACTION_COMPLETED = 'Bulk action completed successfully',
   SYSTEM_BACKUP_CREATED = 'System backup created successfully',
   SYSTEM_SETTINGS_UPDATED = 'System settings updated successfully',
+}
+export enum OTPSuccessMessages {
+  OTP_VERIFIED = 'USer OTP verified',
+  OTP_RESEND = 'OTP resent successfully',
 }
